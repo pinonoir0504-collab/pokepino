@@ -64,8 +64,8 @@ class MainActivity : ComponentActivity() {
         val json = GZIPInputStream(ByteArrayInputStream(gz))
             .bufferedReader(Charsets.UTF_8).use { it.readText() }
 
-        val out = ArrayList<Figure>()
-        fun appendRows(a:JSONArray) {
+        fun parseRows(a:JSONArray):MutableList<Figure> {
+            val result=ArrayList<Figure>(a.length())
             repeat(a.length()) { i ->
                 val r = a.optJSONArray(i) ?: return@repeat
                 val refs = r.optJSONArray(8)?.let { x ->
@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
                     }
                 } ?: emptyList()
                 val meta:JSONObject? = r.optJSONObject(9)
-                out += Figure(
+                result += Figure(
                     id = r.optString(0),
                     dex = r.optInt(1),
                     pokemon = r.optString(2),
@@ -89,14 +89,46 @@ class MainActivity : ComponentActivity() {
                     source = meta?.optString("source","") ?: ""
                 )
             }
+            return result
         }
 
-        appendRows(JSONArray(json))
-        runCatching {
+        val base=parseRows(JSONArray(json))
+        val generated=runCatching {
             assets.open("catalog_v2.json").bufferedReader(Charsets.UTF_8).use { it.readText() }
-        }.getOrNull()?.takeIf { it.isNotBlank() }?.let { appendRows(JSONArray(it)) }
+        }.getOrNull()?.takeIf { it.isNotBlank() }?.let { parseRows(JSONArray(it)) } ?: mutableListOf()
 
-        return out.filter { it.id.isNotBlank() }.distinctBy { it.id }
+        // If a generated reference points to the same source image as an existing
+        // catalog record, enrich the stable existing ID instead of showing it twice.
+        val generatedByRef=HashMap<String,Figure>()
+        generated.forEach { g -> g.refs.forEach { ref -> generatedByRef.putIfAbsent(ref,g) } }
+        val consumedGeneratedIds=HashSet<String>()
+        val enrichedBase=base.map { b ->
+            val g=b.refs.asSequence().mapNotNull { generatedByRef[it] }.firstOrNull()
+            if(g!=null){
+                consumedGeneratedIds += g.id
+                b.copy(
+                    visualGroupId=g.visualGroupId,
+                    status=if(g.feature.isNotBlank())"direct_reference_ready" else b.status,
+                    kidsNo=if(g.kidsNo>0)g.kidsNo else b.kidsNo,
+                    feature=if(g.feature.isNotBlank())g.feature else b.feature,
+                    source=if(g.source.isNotBlank())g.source else b.source
+                )
+            }else b
+        }
+
+        // The global index page is only a discovery page. If a concrete release
+        // page has the same visual group, don't expose the index row as a fake release.
+        val concreteGroups=generated
+            .filter { it.series!="ポケモンキッズ一覧" }
+            .mapTo(HashSet()) { it.visualGroupId }
+        val extra=generated.filter { g ->
+            g.id !in consumedGeneratedIds &&
+            !(g.series=="ポケモンキッズ一覧" && g.visualGroupId in concreteGroups)
+        }
+
+        return (enrichedBase+extra)
+            .filter { it.id.isNotBlank() }
+            .distinctBy { it.id }
     }
 
     private fun loadBrand(): Bitmap? = null
