@@ -18,19 +18,34 @@ START_URLS = [
     "https://www.yubi-nin.jp/pokemon/_pokeALL/pokemon_ALL00.html",
     "https://www.yubi-nin.jp/pokemon/poke_fukkoku/poke_THE.html",
     "https://www.yubi-nin.jp/pokemon/poke_fukkoku/poke_Fukoku01.html",
+    "https://www.yubi-nin.jp/pokemon/poke_clear/WHF1997.html",
+    "https://www.yubi-nin.jp/pokemon/poke_collab/Poke_FAN.html",
+    "https://www.yubi-nin.jp/pokemon/poke_collab/poke_JELLY.html",
+    "https://www.yubi-nin.jp/pokemon/poke_set/KidsDX.html",
+    "https://www.yubi-nin.jp/pokemon/poke_set/poke_10th.html",
+    "https://www.yubi-nin.jp/pokemon/poke_movie/PokeM.html",
+    "https://www.yubi-nin.jp/pokemon/poke_movie/PokeM04.html",
+    "https://www.yubi-nin.jp/pokemon/poke_movie/PokeM10th.html",
+    "https://www.yubi-nin.jp/pokemon/poke_30th/poke_30th01.html",
+]
+# Probe historical naming patterns too. Missing pages are harmless and recorded as failures.
+START_URLS += [f"https://www.yubi-nin.jp/pokemon/poke_kids01/pokemon1n_{i}.html" for i in range(1, 8)]
+START_URLS += [f"https://www.yubi-nin.jp/pokemon/poke_kids02/pokemon2n_{i}.html" for i in range(1, 10)]
+START_URLS += [f"https://www.yubi-nin.jp/pokemon/poke_kids03AD/pokemon3_{i:02d}.html" for i in range(1, 14)]
+START_URLS += [f"https://www.yubi-nin.jp/pokemon/poke_kids05DP/poke_DP{i:02d}.html" for i in range(1, 12)]
+START_URLS += [f"https://www.yubi-nin.jp/pokemon/poke_kids07BW/poke_BW{i:02d}.html" for i in range(1, 12)]
+START_URLS += [f"https://www.yubi-nin.jp/pokemon/poke_kids08XY/poke_XY{i:02d}.html" for i in range(1, 16)]
+START_URLS += [f"https://www.yubi-nin.jp/pokemon/poke_kids09SM/poke_SuMo{i:02d}.html" for i in range(1, 12)]
+START_URLS += [f"https://www.yubi-nin.jp/pokemon/poke_kids10SS/poke_SS{i:02d}.html" for i in range(1, 14)]
+START_URLS += [f"https://www.yubi-nin.jp/pokemon/poke_kids11SV/poke_SV{i:02d}.html" for i in range(1, 14)]
+START_URLS += [f"https://www.yubi-nin.jp/pokemon/poke_kime03BW/poke_kimeBW{i:02d}.html" for i in range(1, 6)]
+START_URLS += [
     "https://www.yubi-nin.jp/pokemon/poke_kime01/poke_kime3.html",
     "https://www.yubi-nin.jp/pokemon/poke_kime01/poke_kime4.html",
     "https://www.yubi-nin.jp/pokemon/poke_kime01/poke_kime5.html",
     "https://www.yubi-nin.jp/pokemon/poke_kime02DP/poke_kimeDP.html",
     "https://www.yubi-nin.jp/pokemon/poke_kime02DP/poke_kimeDP2.html",
-    "https://www.yubi-nin.jp/pokemon/poke_kime03BW/poke_kimeBW01.html",
     "https://www.yubi-nin.jp/pokemon/poke_kime04XY/poke_kimeXY01.html",
-    "https://www.yubi-nin.jp/pokemon/poke_kids10SS/poke_SS01.html",
-    "https://www.yubi-nin.jp/pokemon/poke_kids10SS/poke_SS03.html",
-    "https://www.yubi-nin.jp/pokemon/poke_kids11SV/poke_SV01.html",
-    "https://www.yubi-nin.jp/pokemon/poke_movie/PokeM.html",
-    "https://www.yubi-nin.jp/pokemon/poke_set/KidsDX.html",
-    "https://www.yubi-nin.jp/pokemon/poke_30th/poke_30th01.html",
 ]
 NAME_CSV = "https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon_species_names.csv"
 SPECIAL = ("クリア","色違","アローラ","ガラル","ヒスイ","パルデア","メガ","キョダイ","ゲンシ","テラスタル","なみのり","おきがえ","サトシ","キャプテン")
