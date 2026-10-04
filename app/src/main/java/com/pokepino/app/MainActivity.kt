@@ -183,33 +183,81 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
                 bitmap=b
                 val r=withContext(Dispatchers.IO){recognizer.recognize(b)}
                 result=r
-                val top=r.candidates.firstOrNull()
 
-                if(r.accepted&&top!=null){
-                    val vars=master.filter{it.dex==top.dex}
+                data class Fused(
+                    val species:PokemonRecognizer.Candidate,
+                    val variants:VariantRecognizer.Result?,
+                    val variantScore:Float,
+                    val combined:Float
+                )
+
+                val fused=withContext(Dispatchers.IO){
+                    r.candidates.take(3).map{species->
+                        val refs=master.filter{it.dex==species.dex&&it.feature.isNotBlank()}
+                        val vres=if(refs.isNotEmpty()) variant.recognize(b,refs) else null
+                        val vs=vres?.candidates?.firstOrNull()?.score?:0f
+                        Fused(species,vres,vs,species.score*.55f+vs*.45f)
+                    }.sortedByDescending{it.combined}
+                }
+
+                val modelTop=r.candidates.firstOrNull()
+                val fusedTop=fused.firstOrNull()
+                val fusedNext=fused.getOrNull(1)
+                val fusedMargin=if(fusedTop!=null&&fusedNext!=null)fusedTop.combined-fusedNext.combined else 1f
+                val corrected=fusedTop!=null &&
+                    fusedTop.variantScore>=.94f &&
+                    fusedTop.species.score>=.08f &&
+                    fusedMargin>=.06f
+
+                val chosenDex=when{
+                    r.accepted&&modelTop!=null->modelTop.dex
+                    corrected->fusedTop!!.species.dex
+                    else->null
+                }
+
+                if(chosenDex!=null){
+                    val vars=master.filter{it.dex==chosenDex}
+                    val precomputed=fused.firstOrNull{it.species.dex==chosenDex}?.variants
+                    val vres=when{
+                        precomputed!=null->precomputed
+                        vars.size>1->withContext(Dispatchers.IO){variant.recognize(b,vars)}
+                        else->null
+                    }
+                    vr=vres
+
+                    if(corrected&&(!r.accepted||modelTop?.dex!=chosenDex)){
+                        msg="実物指人形DBとの照合でポケモン候補を補正しました"
+                    }
+
                     when{
                         vars.size==1->{
-                            val f=vars.first()
-                            setOwned(f.id,maxOf(1,owned[f.id]?:0))
-                            msg="✓ ${f.pokemon} ${f.variant} を自動登録しました"
+                            val fig=vars.first()
+                            setOwned(fig.id,maxOf(1,owned[fig.id]?:0))
+                            msg="✓ ${fig.pokemon} ${fig.variant} を自動登録しました"
                         }
-                        vars.isNotEmpty()->{
-                            val vres=withContext(Dispatchers.IO){variant.recognize(b,vars)}
-                            vr=vres
+                        vres!=null->{
                             val candidate=vres.candidates.firstOrNull()
                             if(vres.accepted&&candidate!=null&&candidate.recordIds.size==1){
                                 val id=candidate.recordIds.first()
                                 setOwned(id,maxOf(1,owned[id]?:0))
-                                msg="✓ 版違いまで判定して登録しました"
+                                val fig=master.firstOrNull{it.id==id}
+                                msg="✓ ${fig?.pokemon?:"候補"} ${fig?.variant?:""} を自動登録しました"
                             }else if(vres.candidates.isEmpty()){
-                                msg="ポケモンは判定できましたが、版違い用の参照画像がありません"
+                                msg="ポケモンは判定できましたが、版違い用の実物参照がありません"
                             }else if(candidate!=null&&candidate.recordIds.size>1){
-                                msg="見た目が同じ版があります。下の候補からシリーズ・年を選んで登録してください"
+                                msg="写真だけでは区別できない同型版があります。シリーズ・年を選んでください"
+                            }else if(msg.isBlank()){
+                                msg="版違いは僅差です。下の候補から確認してください"
                             }
                         }
                     }
                 }else if(r.candidates.isNotEmpty()){
-                    msg="確信度が低いため自動登録していません。候補を確認してください"
+                    if(fusedTop?.variantScore?:0f>=.88f){
+                        vr=fusedTop?.variants
+                        msg="候補は見つかりましたが確信度が足りないため自動登録していません"
+                    }else{
+                        msg="確信度が低いため自動登録していません。候補を確認してください"
+                    }
                 }else{
                     msg="候補を見つけられませんでした"
                 }
