@@ -101,7 +101,6 @@ class VariantRecognizer(private val context:Context){
     private fun signature(src:Bitmap):Signature{
         val working=foregroundCrop(src)
         val b=Bitmap.createScaledBitmap(working,32,32,true)
-        if(working!==src)working.recycle()
 
         val blocks=FloatArray(192)
         var p=0
@@ -149,7 +148,8 @@ class VariantRecognizer(private val context:Context){
             }
         }
         g.recycle()
-        if(b!==src)b.recycle()
+        if(b!==working && b!==src)b.recycle()
+        if(working!==src)working.recycle()
         return Signature(blocks,hist,edge)
     }
 
