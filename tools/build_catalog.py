@@ -329,6 +329,20 @@ def attach_features(records, max_images=2500, workers=8):
             gid=f"SIG-{dex:04d}-{hashlib.sha1(seed.encode()).hexdigest()[:10]}"
             for i in members:
                 records[i]["visualGroupId"]=gid
+    # The global "ポケモンキッズ一覧" is an index, not a release.
+    # When the same visual group is also present on a concrete series page,
+    # keep the concrete release row and drop the synthetic index duplicate.
+    concrete_by_group=set(
+        r["visualGroupId"] for r in records
+        if r.get("series")!="ポケモンキッズ一覧"
+    )
+    records=[
+        r for r in records
+        if not (
+            r.get("series")=="ポケモンキッズ一覧"
+            and r["visualGroupId"] in concrete_by_group
+        )
+    ]
     return records
 
 def compact(r):
