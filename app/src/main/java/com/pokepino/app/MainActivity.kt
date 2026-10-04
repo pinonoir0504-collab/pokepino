@@ -35,6 +35,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.io.ByteArrayInputStream
 import java.util.zip.GZIPInputStream
@@ -62,28 +63,40 @@ class MainActivity : ComponentActivity() {
         val gz = Base64.decode(b64, Base64.DEFAULT)
         val json = GZIPInputStream(ByteArrayInputStream(gz))
             .bufferedReader(Charsets.UTF_8).use { it.readText() }
-        val a = JSONArray(json)
-        val out = ArrayList<Figure>(a.length())
-        repeat(a.length()) { i ->
-            val r = a.getJSONArray(i)
-            val refs = r.optJSONArray(8)?.let { x ->
-                (0 until x.length()).mapNotNull { j ->
-                    x.optString(j).takeIf(String::isNotBlank)
-                }
-            } ?: emptyList()
-            out += Figure(
-                id = r.optString(0),
-                dex = r.optInt(1),
-                pokemon = r.optString(2),
-                variant = r.optString(3),
-                series = r.optString(4),
-                year = r.optString(5),
-                visualGroupId = r.optString(6, r.optString(0)),
-                status = r.optString(7, "species_only"),
-                refs = refs
-            )
+
+        val out = ArrayList<Figure>()
+        fun appendRows(a:JSONArray) {
+            repeat(a.length()) { i ->
+                val r = a.optJSONArray(i) ?: return@repeat
+                val refs = r.optJSONArray(8)?.let { x ->
+                    (0 until x.length()).mapNotNull { j ->
+                        x.optString(j).takeIf(String::isNotBlank)
+                    }
+                } ?: emptyList()
+                val meta:JSONObject? = r.optJSONObject(9)
+                out += Figure(
+                    id = r.optString(0),
+                    dex = r.optInt(1),
+                    pokemon = r.optString(2),
+                    variant = r.optString(3),
+                    series = r.optString(4),
+                    year = r.optString(5),
+                    visualGroupId = r.optString(6, r.optString(0)),
+                    status = r.optString(7, "species_only"),
+                    refs = refs,
+                    kidsNo = meta?.optInt("kidsNo",0) ?: 0,
+                    feature = meta?.optString("feature","") ?: "",
+                    source = meta?.optString("source","") ?: ""
+                )
+            }
         }
-        return out
+
+        appendRows(JSONArray(json))
+        runCatching {
+            assets.open("catalog_v2.json").bufferedReader(Charsets.UTF_8).use { it.readText() }
+        }.getOrNull()?.takeIf { it.isNotBlank() }?.let { appendRows(JSONArray(it)) }
+
+        return out.filter { it.id.isNotBlank() }.distinctBy { it.id }
     }
 
     private fun loadBrand(): Bitmap? = null
@@ -92,7 +105,7 @@ class MainActivity : ComponentActivity() {
 data class Figure(
     val id:String, val dex:Int, val pokemon:String, val variant:String, val series:String,
     val year:String, val visualGroupId:String, val status:String,
-    val refs:List<String>
+    val refs:List<String>, val kidsNo:Int=0, val feature:String="", val source:String=""
 )
 
 enum class Tab { DEX, OWNED, PHOTO }
@@ -140,11 +153,11 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
 @Composable private fun Dex(master:List<Figure>,owned:Map<String,Int>,brand:Bitmap?,open:(Int)->Unit){
     var q by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf(0) }
-    val grouped=remember(master,q,filter,owned){ master.groupBy{it.dex}.values.map{it.first().dex to it}.filter{(_,v)->
+    val grouped=remember(master,q,filter,owned){ master.filter{it.dex>0}.groupBy{it.dex}.values.map{it.first().dex to it}.filter{(_,v)->
         val f=v.first(); val match=q.isBlank()||f.pokemon.contains(q,true)||f.dex.toString()==q.trim(); val has=v.any{(owned[it.id]?:0)>0}; match && (filter==0 || filter==1&&has || filter==2&&!has)
     }.sortedBy{it.first} }
     LazyColumn(Modifier.fillMaxSize().padding(12.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
-        item { if(brand!=null) Image(brand.asImageBitmap(),null,Modifier.fillMaxWidth().height(180.dp),contentScale=ContentScale.Crop); Spacer(Modifier.height(8.dp)); OutlinedTextField(q,{q=it},Modifier.fillMaxWidth(),label={Text("名前・図鑑No.で検索")}); Row{ listOf("全部","所持","未所持").forEachIndexed{i,s-> FilterChip(filter==i,{filter=i},{Text(s)}); Spacer(Modifier.width(6.dp)) } }; Text("${master.size}バリエーション / ${master.map{it.dex}.distinct().size}ポケモン",fontWeight=FontWeight.Bold) }
+        item { if(brand!=null) Image(brand.asImageBitmap(),null,Modifier.fillMaxWidth().height(180.dp),contentScale=ContentScale.Crop); Spacer(Modifier.height(8.dp)); OutlinedTextField(q,{q=it},Modifier.fillMaxWidth(),label={Text("名前・図鑑No.で検索")}); Row{ listOf("全部","所持","未所持").forEachIndexed{i,s-> FilterChip(filter==i,{filter=i},{Text(s)}); Spacer(Modifier.width(6.dp)) } }; Text("${master.count{it.dex>0}}バリエーション / ${master.filter{it.dex>0}.map{it.dex}.distinct().size}ポケモン",fontWeight=FontWeight.Bold) }
         items(grouped,key={it.first}){(dex,v)-> val f=v.first(); val n=v.count{(owned[it.id]?:0)>0}; Card(Modifier.fillMaxWidth().clickable{open(dex)}){ Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically){ Text("No.%03d".format(dex),fontWeight=FontWeight.Black); Spacer(Modifier.width(12.dp)); Column(Modifier.weight(1f)){Text(f.pokemon,fontWeight=FontWeight.Bold);Text("${v.size}種 / 所持 $n",style=MaterialTheme.typography.labelSmall)}; Text(if(n>0)"✓" else "○") } } }
     }
 }
@@ -300,7 +313,8 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
                     Column(Modifier.padding(12.dp)){
                         Text(f.variant,fontWeight=FontWeight.Bold)
                         Text("${f.series} ${f.year}",style=MaterialTheme.typography.bodySmall)
-                        Text(if(f.status=="direct_reference_ready")"実物参照画像あり" else "種判定中心",style=MaterialTheme.typography.labelSmall)
+                        if(f.kidsNo>0) Text("ポケモンキッズ No.${f.kidsNo}",style=MaterialTheme.typography.labelSmall)
+                        Text(if(f.status=="direct_reference_ready")"実物参照特徴量あり" else "種判定中心",style=MaterialTheme.typography.labelSmall)
                         Row(verticalAlignment=Alignment.CenterVertically){
                             Text(if(n>0)"所持 ×$n" else "未所持",Modifier.weight(1f))
                             OutlinedButton({if(n>0)setOwned(f.id,n-1)},enabled=n>0){Text("−")}
