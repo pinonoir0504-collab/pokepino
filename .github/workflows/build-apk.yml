@@ -33,6 +33,6 @@ jobs:
         run: gradle :app:assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: pokepino-v0.9.0-debug-apk
+          name: pokepino-v0.9.1-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error

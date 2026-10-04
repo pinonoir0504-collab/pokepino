@@ -11,8 +11,8 @@ android {
         applicationId = "com.pokepino.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 20
-        versionName = "0.9.0"
+        versionCode = 21
+        versionName = "0.9.1"
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }

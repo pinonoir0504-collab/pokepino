@@ -41,7 +41,14 @@ class VariantRecognizer(private val context:Context){
     private fun cache(url:String):File{
         val d=File(context.filesDir,"refs").apply{mkdirs()}
         val f=File(d,sha(url))
-        if(f.exists()&&f.length()>512)return f
+        if(f.exists()&&f.length()>512){
+            if(BitmapFactory.decodeFile(f.absolutePath)!=null)return f
+            f.delete()
+        }
+
+        val tmp=File(d,f.name+".part")
+        if(tmp.exists())tmp.delete()
+
         val c=(URL(url).openConnection() as HttpURLConnection).apply{
             connectTimeout=10000
             readTimeout=20000
@@ -51,9 +58,22 @@ class VariantRecognizer(private val context:Context){
         try{
             c.connect()
             if(c.responseCode !in 200..299) error("HTTP ${c.responseCode}")
-            c.inputStream.use{i->f.outputStream().use{o->i.copyTo(o)}}
+            c.inputStream.use{i->tmp.outputStream().use{o->i.copyTo(o)}}
+            if(tmp.length()<=512 || BitmapFactory.decodeFile(tmp.absolutePath)==null){
+                tmp.delete()
+                error("参照画像を取得できません")
+            }
+            if(!tmp.renameTo(f)){
+                tmp.copyTo(f,true)
+                tmp.delete()
+            }
             return f
-        }finally{c.disconnect()}
+        }catch(e:Exception){
+            tmp.delete()
+            throw e
+        }finally{
+            c.disconnect()
+        }
     }
 
     private fun feature(src:Bitmap):FloatArray{
