@@ -10,3 +10,5 @@ Android build repository for Pokepino.
 - Uses conservative two-stage recognition: Pokemon species model plus figure-level visual matching.
 - Groups visually indistinguishable reissues and asks the user to choose the release instead of guessing.
 - Validates catalog integrity before every APK build.
+
+- Reference catalog currently contains 1,541 concrete/reference entries covering 889 Pokemon species with offline visual signatures.
