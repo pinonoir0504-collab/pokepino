@@ -265,6 +265,55 @@ def attach_features(records, max_images=2500, workers=8):
         feat=fmap.get(r["refs"][0],"")
         r["feature"]=feat
         if feat: r["status"]="direct_reference_ready"
+
+    # Collapse visually identical references into one appearance group.
+    # Different releases remain separate records, but recognition returns them
+    # together when the photo cannot physically distinguish them.
+    def unpack(sig):
+        raw=base64.b64decode(sig)
+        blocks=np.frombuffer(raw[:192],dtype=np.uint8).astype(np.float32)/255.0
+        hist=np.frombuffer(raw[192:232],dtype=np.uint8).astype(np.float32)/255.0
+        edge=np.frombuffer(raw[232:264],dtype=np.uint8)
+        return blocks,hist,edge
+
+    def cos(a,b):
+        den=float(np.linalg.norm(a)*np.linalg.norm(b))
+        return float(np.dot(a,b)/den) if den else 0.0
+
+    def sim(a,b):
+        aa,ah,ae=unpack(a);ba,bh,be=unpack(b)
+        diff=np.bitwise_xor(ae,be)
+        equal=256-sum(int(x).bit_count() for x in diff.tolist())
+        return .55*cos(aa,ba)+.25*cos(ah,bh)+.20*(equal/256.0)
+
+    by_dex={}
+    for i,r in enumerate(records):
+        if r.get("feature") and r.get("dex",0)>0:
+            by_dex.setdefault(r["dex"],[]).append(i)
+
+    for dex,idxs in by_dex.items():
+        parent={i:i for i in idxs}
+        def root(x):
+            while parent[x]!=x:
+                parent[x]=parent[parent[x]]
+                x=parent[x]
+            return x
+        def union(a,b):
+            ra,rb=root(a),root(b)
+            if ra!=rb: parent[rb]=ra
+        for p in range(len(idxs)):
+            for q in range(p+1,len(idxs)):
+                i,j=idxs[p],idxs[q]
+                if records[i]["feature"]==records[j]["feature"] or sim(records[i]["feature"],records[j]["feature"])>=.985:
+                    union(i,j)
+        clusters={}
+        for i in idxs:
+            clusters.setdefault(root(i),[]).append(i)
+        for members in clusters.values():
+            seed=min(records[i]["feature"] for i in members)
+            gid=f"SIG-{dex:04d}-{hashlib.sha1(seed.encode()).hexdigest()[:10]}"
+            for i in members:
+                records[i]["visualGroupId"]=gid
     return records
 
 def compact(r):
