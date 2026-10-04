@@ -1,0 +1,31 @@
+name: Build Figure Catalog
+
+on:
+  push:
+    branches: [ "feat/full-figure-catalog" ]
+    paths:
+      - "tools/build_catalog.py"
+      - ".github/workflows/build-catalog.yml"
+  workflow_dispatch:
+
+jobs:
+  catalog:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install catalog dependencies
+        run: python -m pip install --disable-pip-version-check requests beautifulsoup4 pillow numpy
+      - name: Build catalog
+        run: python tools/build_catalog.py --max-pages 1200 --max-images 2500
+      - name: Upload generated catalog
+        uses: actions/upload-artifact@v4
+        with:
+          name: pokepino-catalog-v2
+          path: |
+            app/src/main/assets/catalog_v2.json
+            catalog_stats.json
+          if-no-files-found: error
