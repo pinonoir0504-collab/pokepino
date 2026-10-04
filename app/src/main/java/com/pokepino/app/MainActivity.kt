@@ -35,6 +35,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.io.ByteArrayInputStream
 import java.util.zip.GZIPInputStream
@@ -62,28 +63,72 @@ class MainActivity : ComponentActivity() {
         val gz = Base64.decode(b64, Base64.DEFAULT)
         val json = GZIPInputStream(ByteArrayInputStream(gz))
             .bufferedReader(Charsets.UTF_8).use { it.readText() }
-        val a = JSONArray(json)
-        val out = ArrayList<Figure>(a.length())
-        repeat(a.length()) { i ->
-            val r = a.getJSONArray(i)
-            val refs = r.optJSONArray(8)?.let { x ->
-                (0 until x.length()).mapNotNull { j ->
-                    x.optString(j).takeIf(String::isNotBlank)
-                }
-            } ?: emptyList()
-            out += Figure(
-                id = r.optString(0),
-                dex = r.optInt(1),
-                pokemon = r.optString(2),
-                variant = r.optString(3),
-                series = r.optString(4),
-                year = r.optString(5),
-                visualGroupId = r.optString(6, r.optString(0)),
-                status = r.optString(7, "species_only"),
-                refs = refs
-            )
+
+        fun parseRows(a:JSONArray):MutableList<Figure> {
+            val result=ArrayList<Figure>(a.length())
+            repeat(a.length()) { i ->
+                val r = a.optJSONArray(i) ?: return@repeat
+                val refs = r.optJSONArray(8)?.let { x ->
+                    (0 until x.length()).mapNotNull { j ->
+                        x.optString(j).takeIf(String::isNotBlank)
+                    }
+                } ?: emptyList()
+                val meta:JSONObject? = r.optJSONObject(9)
+                result += Figure(
+                    id = r.optString(0),
+                    dex = r.optInt(1),
+                    pokemon = r.optString(2),
+                    variant = r.optString(3),
+                    series = r.optString(4),
+                    year = r.optString(5),
+                    visualGroupId = r.optString(6, r.optString(0)),
+                    status = r.optString(7, "species_only"),
+                    refs = refs,
+                    kidsNo = meta?.optInt("kidsNo",0) ?: 0,
+                    feature = meta?.optString("feature","") ?: "",
+                    source = meta?.optString("source","") ?: ""
+                )
+            }
+            return result
         }
-        return out
+
+        val base=parseRows(JSONArray(json))
+        val generated=runCatching {
+            assets.open("catalog_v2.json").bufferedReader(Charsets.UTF_8).use { it.readText() }
+        }.getOrNull()?.takeIf { it.isNotBlank() }?.let { parseRows(JSONArray(it)) } ?: mutableListOf()
+
+        // If a generated reference points to the same source image as an existing
+        // catalog record, enrich the stable existing ID instead of showing it twice.
+        val generatedByRef=HashMap<String,Figure>()
+        generated.forEach { g -> g.refs.forEach { ref -> generatedByRef.putIfAbsent(ref,g) } }
+        val consumedGeneratedIds=HashSet<String>()
+        val enrichedBase=base.map { b ->
+            val g=b.refs.asSequence().mapNotNull { generatedByRef[it] }.firstOrNull()
+            if(g!=null){
+                consumedGeneratedIds += g.id
+                b.copy(
+                    visualGroupId=g.visualGroupId,
+                    status=if(g.feature.isNotBlank())"direct_reference_ready" else b.status,
+                    kidsNo=if(g.kidsNo>0)g.kidsNo else b.kidsNo,
+                    feature=if(g.feature.isNotBlank())g.feature else b.feature,
+                    source=if(g.source.isNotBlank())g.source else b.source
+                )
+            }else b
+        }
+
+        // The global index page is only a discovery page. If a concrete release
+        // page has the same visual group, don't expose the index row as a fake release.
+        val concreteGroups=generated
+            .filter { it.series!="ポケモンキッズ一覧" }
+            .mapTo(HashSet()) { it.visualGroupId }
+        val extra=generated.filter { g ->
+            g.id !in consumedGeneratedIds &&
+            !(g.series=="ポケモンキッズ一覧" && g.visualGroupId in concreteGroups)
+        }
+
+        return (enrichedBase+extra)
+            .filter { it.id.isNotBlank() }
+            .distinctBy { it.id }
     }
 
     private fun loadBrand(): Bitmap? = null
@@ -92,7 +137,7 @@ class MainActivity : ComponentActivity() {
 data class Figure(
     val id:String, val dex:Int, val pokemon:String, val variant:String, val series:String,
     val year:String, val visualGroupId:String, val status:String,
-    val refs:List<String>
+    val refs:List<String>, val kidsNo:Int=0, val feature:String="", val source:String=""
 )
 
 enum class Tab { DEX, OWNED, PHOTO }
@@ -140,11 +185,11 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
 @Composable private fun Dex(master:List<Figure>,owned:Map<String,Int>,brand:Bitmap?,open:(Int)->Unit){
     var q by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf(0) }
-    val grouped=remember(master,q,filter,owned){ master.groupBy{it.dex}.values.map{it.first().dex to it}.filter{(_,v)->
+    val grouped=remember(master,q,filter,owned){ master.filter{it.dex>0}.groupBy{it.dex}.values.map{it.first().dex to it}.filter{(_,v)->
         val f=v.first(); val match=q.isBlank()||f.pokemon.contains(q,true)||f.dex.toString()==q.trim(); val has=v.any{(owned[it.id]?:0)>0}; match && (filter==0 || filter==1&&has || filter==2&&!has)
     }.sortedBy{it.first} }
     LazyColumn(Modifier.fillMaxSize().padding(12.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
-        item { if(brand!=null) Image(brand.asImageBitmap(),null,Modifier.fillMaxWidth().height(180.dp),contentScale=ContentScale.Crop); Spacer(Modifier.height(8.dp)); OutlinedTextField(q,{q=it},Modifier.fillMaxWidth(),label={Text("名前・図鑑No.で検索")}); Row{ listOf("全部","所持","未所持").forEachIndexed{i,s-> FilterChip(filter==i,{filter=i},{Text(s)}); Spacer(Modifier.width(6.dp)) } }; Text("${master.size}バリエーション / ${master.map{it.dex}.distinct().size}ポケモン",fontWeight=FontWeight.Bold) }
+        item { if(brand!=null) Image(brand.asImageBitmap(),null,Modifier.fillMaxWidth().height(180.dp),contentScale=ContentScale.Crop); Spacer(Modifier.height(8.dp)); OutlinedTextField(q,{q=it},Modifier.fillMaxWidth(),label={Text("名前・図鑑No.で検索")}); Row{ listOf("全部","所持","未所持").forEachIndexed{i,s-> FilterChip(filter==i,{filter=i},{Text(s)}); Spacer(Modifier.width(6.dp)) } }; Text("${master.count{it.dex>0}}バリエーション / ${master.filter{it.dex>0}.map{it.dex}.distinct().size}ポケモン",fontWeight=FontWeight.Bold) }
         items(grouped,key={it.first}){(dex,v)-> val f=v.first(); val n=v.count{(owned[it.id]?:0)>0}; Card(Modifier.fillMaxWidth().clickable{open(dex)}){ Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically){ Text("No.%03d".format(dex),fontWeight=FontWeight.Black); Spacer(Modifier.width(12.dp)); Column(Modifier.weight(1f)){Text(f.pokemon,fontWeight=FontWeight.Bold);Text("${v.size}種 / 所持 $n",style=MaterialTheme.typography.labelSmall)}; Text(if(n>0)"✓" else "○") } } }
     }
 }
@@ -170,33 +215,81 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
                 bitmap=b
                 val r=withContext(Dispatchers.IO){recognizer.recognize(b)}
                 result=r
-                val top=r.candidates.firstOrNull()
 
-                if(r.accepted&&top!=null){
-                    val vars=master.filter{it.dex==top.dex}
+                data class Fused(
+                    val species:PokemonRecognizer.Candidate,
+                    val variants:VariantRecognizer.Result?,
+                    val variantScore:Float,
+                    val combined:Float
+                )
+
+                val fused=withContext(Dispatchers.IO){
+                    r.candidates.take(3).map{species->
+                        val refs=master.filter{it.dex==species.dex&&it.feature.isNotBlank()}
+                        val vres=if(refs.isNotEmpty()) variant.recognize(b,refs) else null
+                        val vs=vres?.candidates?.firstOrNull()?.score?:0f
+                        Fused(species,vres,vs,species.score*.55f+vs*.45f)
+                    }.sortedByDescending{it.combined}
+                }
+
+                val modelTop=r.candidates.firstOrNull()
+                val fusedTop=fused.firstOrNull()
+                val fusedNext=fused.getOrNull(1)
+                val fusedMargin=if(fusedTop!=null&&fusedNext!=null)fusedTop.combined-fusedNext.combined else 1f
+                val corrected=fusedTop!=null &&
+                    fusedTop.variantScore>=.94f &&
+                    fusedTop.species.score>=.08f &&
+                    fusedMargin>=.06f
+
+                val chosenDex=when{
+                    r.accepted&&modelTop!=null->modelTop.dex
+                    corrected->fusedTop!!.species.dex
+                    else->null
+                }
+
+                if(chosenDex!=null){
+                    val vars=master.filter{it.dex==chosenDex}
+                    val precomputed=fused.firstOrNull{it.species.dex==chosenDex}?.variants
+                    val vres=when{
+                        precomputed!=null->precomputed
+                        vars.size>1->withContext(Dispatchers.IO){variant.recognize(b,vars)}
+                        else->null
+                    }
+                    vr=vres
+
+                    if(corrected&&(!r.accepted||modelTop?.dex!=chosenDex)){
+                        msg="実物指人形DBとの照合でポケモン候補を補正しました"
+                    }
+
                     when{
                         vars.size==1->{
-                            val f=vars.first()
-                            setOwned(f.id,maxOf(1,owned[f.id]?:0))
-                            msg="✓ ${f.pokemon} ${f.variant} を自動登録しました"
+                            val fig=vars.first()
+                            setOwned(fig.id,maxOf(1,owned[fig.id]?:0))
+                            msg="✓ ${fig.pokemon} ${fig.variant} を自動登録しました"
                         }
-                        vars.isNotEmpty()->{
-                            val vres=withContext(Dispatchers.IO){variant.recognize(b,vars)}
-                            vr=vres
+                        vres!=null->{
                             val candidate=vres.candidates.firstOrNull()
                             if(vres.accepted&&candidate!=null&&candidate.recordIds.size==1){
                                 val id=candidate.recordIds.first()
                                 setOwned(id,maxOf(1,owned[id]?:0))
-                                msg="✓ 版違いまで判定して登録しました"
+                                val fig=master.firstOrNull{it.id==id}
+                                msg="✓ ${fig?.pokemon?:"候補"} ${fig?.variant?:""} を自動登録しました"
                             }else if(vres.candidates.isEmpty()){
-                                msg="ポケモンは判定できましたが、版違い用の参照画像がありません"
+                                msg="ポケモンは判定できましたが、版違い用の実物参照がありません"
                             }else if(candidate!=null&&candidate.recordIds.size>1){
-                                msg="見た目が同じ版があります。下の候補からシリーズ・年を選んで登録してください"
+                                msg="写真だけでは区別できない同型版があります。シリーズ・年を選んでください"
+                            }else if(msg.isBlank()){
+                                msg="版違いは僅差です。下の候補から確認してください"
                             }
                         }
                     }
                 }else if(r.candidates.isNotEmpty()){
-                    msg="確信度が低いため自動登録していません。候補を確認してください"
+                    if(fusedTop?.variantScore?:0f>=.88f){
+                        vr=fusedTop?.variants
+                        msg="候補は見つかりましたが確信度が足りないため自動登録していません"
+                    }else{
+                        msg="確信度が低いため自動登録していません。候補を確認してください"
+                    }
                 }else{
                     msg="候補を見つけられませんでした"
                 }
@@ -300,7 +393,8 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
                     Column(Modifier.padding(12.dp)){
                         Text(f.variant,fontWeight=FontWeight.Bold)
                         Text("${f.series} ${f.year}",style=MaterialTheme.typography.bodySmall)
-                        Text(if(f.status=="direct_reference_ready")"実物参照画像あり" else "種判定中心",style=MaterialTheme.typography.labelSmall)
+                        if(f.kidsNo>0) Text("ポケモンキッズ No.${f.kidsNo}",style=MaterialTheme.typography.labelSmall)
+                        Text(if(f.status=="direct_reference_ready")"実物参照特徴量あり" else "種判定中心",style=MaterialTheme.typography.labelSmall)
                         Row(verticalAlignment=Alignment.CenterVertically){
                             Text(if(n>0)"所持 ×$n" else "未所持",Modifier.weight(1f))
                             OutlinedButton({if(n>0)setOwned(f.id,n-1)},enabled=n>0){Text("−")}
