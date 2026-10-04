@@ -32,7 +32,8 @@ jobs:
           git add app/src/main/assets/catalog_v2.json catalog_stats.json
           if ! git diff --cached --quiet; then
             git commit -m "Update generated figure reference catalog"
-            git push
+            git pull --rebase origin "$GITHUB_REF_NAME"
+            git push origin HEAD:"$GITHUB_REF_NAME"
           fi
       - name: Upload generated catalog
         uses: actions/upload-artifact@v4
