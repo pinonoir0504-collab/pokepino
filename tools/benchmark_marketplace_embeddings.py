@@ -8,7 +8,8 @@ import requests
 from PIL import Image
 import torch
 import torch.nn as nn
-from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights, resnet18, ResNet18_Weights
+from torchvision import transforms
+from torchvision.models import mobilenet_v3_small, MobileNet_V3_Small_Weights, resnet18, ResNet18_Weights, efficientnet_b0, EfficientNet_B0_Weights, convnext_tiny, ConvNeXt_Tiny_Weights
 
 ROOT=Path(__file__).resolve().parents[1]
 ASSETS=ROOT/"app"/"src"/"main"/"assets"
@@ -75,9 +76,28 @@ def embed_images(images,kind):
         weights=ResNet18_Weights.DEFAULT
         model=resnet18(weights=weights)
         model.fc=nn.Identity()
+        tfm=weights.transforms()
+    elif kind=="efficientnet_b0":
+        weights=EfficientNet_B0_Weights.DEFAULT
+        model=efficientnet_b0(weights=weights)
+        model.classifier=nn.Identity()
+        tfm=weights.transforms()
+    elif kind=="convnext_tiny":
+        weights=ConvNeXt_Tiny_Weights.DEFAULT
+        model=convnext_tiny(weights=weights)
+        model.classifier=nn.Identity()
+        tfm=weights.transforms()
+    elif kind=="dinov2_vits14":
+        weights=None
+        model=torch.hub.load("facebookresearch/dinov2","dinov2_vits14",trust_repo=True)
+        tfm=transforms.Compose([
+            transforms.Resize(256,interpolation=transforms.InterpolationMode.BICUBIC),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=(0.485,0.456,0.406),std=(0.229,0.224,0.225)),
+        ])
     else:raise ValueError(kind)
     model.eval()
-    tfm=weights.transforms()
     keys=list(images)
     result={}
     with torch.inference_mode():
@@ -170,6 +190,57 @@ def fusion(qrows,embres,aires):
         return ok/max(1,n)
     return {"gate_ai_probability":thr,"tune_top1":calc(tune),"validation_top1":calc(test),"all_top1":calc(rows)}
 
+
+def ensemble_embeddings(qrows,models,aires):
+    # Tune ensemble weights only on first 250, report the untouched second 250.
+    score_maps={}
+    for name,res in models.items():
+        score_maps[name]={x["qkey"]:x for x in res["scores"]}
+    ai={x["qkey"]:x for x in aires["scores"]}
+    rows=sorted(qrows,key=lambda r:r["qkey"])
+    tune=rows[:len(rows)//2];val=rows[len(rows)//2:]
+
+    model_names=list(models)
+    candidates=[]
+    # Rank voting is robust because cosine scales differ by architecture.
+    weight_sets=[]
+    if len(model_names)>=2:
+        for primary in model_names:
+            w={n:1.0 for n in model_names}
+            w[primary]=2.0
+            weight_sets.append(w)
+        weight_sets.append({n:1.0 for n in model_names})
+    else:
+        weight_sets=[{model_names[0]:1.0}]
+
+    def pred(row,w,use_ai=False,ai_thr=.5):
+        votes=defaultdict(float)
+        for n,wt in w.items():
+            x=score_maps[n].get(row["qkey"])
+            if not x:continue
+            for rank,d in enumerate(x["top5"]):
+                votes[d]+=wt*(5-rank)
+        if use_ai:
+            a=ai.get(row["qkey"])
+            if a and a["prob"]>=ai_thr:
+                votes[a["pred"]]+=8.0
+        return max(votes.items(),key=lambda z:z[1])[0] if votes else 0
+
+    best=None
+    for w in weight_sets:
+        for use_ai in [False,True]:
+            for thr in ([.35,.50,.65,.80] if use_ai else [.0]):
+                acc=sum(pred(r,w,use_ai,thr)==r["target_dex"] for r in tune)/max(1,len(tune))
+                item=(acc,w,use_ai,thr)
+                if best is None or item[0]>best[0]:best=item
+    _,w,use_ai,thr=best
+    def acc(rs):
+        return sum(pred(r,w,use_ai,thr)==r["target_dex"] for r in rs)/max(1,len(rs))
+    return {
+        "weights":w,"use_generic_ai":use_ai,"ai_threshold":thr,
+        "tune_top1":acc(tune),"validation_top1":acc(val),"all_top1":acc(rows)
+    }
+
 def main():
     audit=json.loads(AUDIT.read_text())
     qrows=[]
@@ -183,10 +254,13 @@ def main():
     result={"query_download_failures":qfails[:30],"reference_download_failures":rfails[:30],
             "queries_ok":len(qimgs),"references_ok":len(rimgs)}
     ai=generic_ai(qrows,qimgs);result["generic_pokemon_ai"]=ai
-    for kind in ["mobilenet_v3_small","resnet18"]:
+    models={}
+    for kind in ["mobilenet_v3_small","resnet18","efficientnet_b0","convnext_tiny","dinov2_vits14"]:
         er=evaluate_embedding(kind,qrows,qimgs,refs,rimgs)
         result[kind]=er
+        models[kind]=er
         result[f"fusion_{kind}"]=fusion(qrows,er,ai)
+    result["ensemble"]=ensemble_embeddings(qrows,models,ai)
     # Strip per-query score dumps from final summary artifact to keep it small.
     summary={}
     for k,v in result.items():
