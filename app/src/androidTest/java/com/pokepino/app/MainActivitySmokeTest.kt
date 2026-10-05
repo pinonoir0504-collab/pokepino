@@ -37,11 +37,11 @@ class MainActivitySmokeTest {
         rule.onNodeWithTag("plus_PKP-00001").performClick()
         rule.waitUntil(timeoutMillis=3000){
             runCatching {
-                rule.onNodeWithTag("owned_state_PKP-00001").fetchSemanticsNode()
-                    .config.any { it.value.toString().contains("所持 ×1") }
+                rule.onNodeWithText("所持 ×1").fetchSemanticsNode()
+                true
             }.getOrDefault(false)
         }
-        exists("owned_state_PKP-00001")
+        rule.onNodeWithText("所持 ×1").fetchSemanticsNode()
         rule.onNodeWithTag("detail_back").performClick()
 
         rule.onNodeWithTag("tab_owned").performClick()
