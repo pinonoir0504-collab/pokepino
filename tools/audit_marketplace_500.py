@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import base64,csv,gzip,io,json,re,sys,unicodedata,hashlib,math,time
 from collections import Counter,defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 import numpy as np
 import requests
@@ -18,6 +19,7 @@ MODEL_URL=f"{BASE}/pokemon_classifier.onnx?download=true"
 LABELS_URL=f"{BASE}/pokemon_labels.json?download=true"
 UA="Mozilla/5.0 PokepinoMarketplaceAudit/1.0"
 s=requests.Session();s.headers.update({"User-Agent":UA,"Accept-Language":"ja,en;q=0.7"})
+_IMG_CACHE={}
 
 def get(url,timeout=30,max_bytes=None):
     r=s.get(url,timeout=timeout);r.raise_for_status()
@@ -54,9 +56,12 @@ MULTI=re.compile(r"まとめ|セット|大量|詰め合わせ|コンプリート
 FIG=re.compile(r"ポケモン\s*キッズ|指人形|ソフビ",re.I)
 
 def download_image(url):
-    r=get(url,25,8_000_000)
+    cached=_IMG_CACHE.get(url)
+    if cached is not None:return cached.copy()
+    r=get(url,20,8_000_000)
     im=Image.open(io.BytesIO(r.content)).convert("RGB")
     if min(im.size)<120:raise ValueError("small")
+    _IMG_CACHE[url]=im.copy()
     return im
 
 def ahash(im):
@@ -183,7 +188,7 @@ def main():
     names,ordered=species_names();raw=json.loads(CAND.read_text())
     runtime=runtime_catalog();refs,sigs,groups=matcher(runtime)
     kept=[];seen_hash=set();reject=Counter()
-    # stable order by URL so reruns use same test set
+    pre=[]
     for item in sorted(raw,key=lambda x:x["url"]):
         text=(item.get("title","")+" "+item.get("snippet","")).strip()
         if not FIG.search(text):reject["not_figure"]+=1;continue
@@ -191,12 +196,29 @@ def main():
         hits=infer_one(text,ordered)
         if len(hits)!=1:reject["species_not_unique"]+=1;continue
         if MULTI.search(item.get("title","")):reject["multi_listing"]+=1;continue
-        try:im=download_image(item["thumbnail_url"])
-        except Exception:reject["image_download"]+=1;continue
-        h=ahash(im)
+        pre.append((item,text,hits[0]))
+
+    def fetch_one(row):
+        item,text,hit=row
+        try:
+            im=download_image(item["thumbnail_url"])
+            return row,ahash(im),None
+        except Exception as e:
+            return row,None,str(e)
+
+    fetched={}
+    with ThreadPoolExecutor(max_workers=20) as ex:
+        fut=[ex.submit(fetch_one,row) for row in pre]
+        for i,x in enumerate(as_completed(fut),1):
+            row,h,err=x.result()
+            fetched[row[0]["url"]]=(h,err)
+            if i%100==0:print(f"selection images {i}/{len(pre)}",flush=True)
+
+    for item,text,(dex,name) in pre:
+        h,err=fetched.get(item["url"],(None,"missing"))
+        if err or not h:reject["image_download"]+=1;continue
         if h in seen_hash:reject["duplicate_image"]+=1;continue
         seen_hash.add(h)
-        dex,name=hits[0]
         kept.append({**item,"target_dex":dex,"target_name":name,"exact_group":exact_label(text,dex,runtime),"image_hash":h})
         if len(kept)>=500:break
     print("selection",json.dumps({"raw":len(raw),"kept":len(kept),"reject":dict(reject)},ensure_ascii=False),flush=True)
