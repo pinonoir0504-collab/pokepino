@@ -94,6 +94,29 @@ def infer_species(text,en,ja,aliases):
     if 151 in hits and 150 in hits: hits.discard(151) # Mew in Mewtwo noise
     return hits
 
+def ebay_search_results(name):
+    q=quote_plus(f'{name} Pokemon Kids Finger Puppet Bandai')
+    url=f"https://www.ebay.com/sch/i.html?_nkw={q}&_ipg=120&_sop=10"
+    try:
+        text=get(url,timeout=25).text
+    except Exception as e:
+        return []
+    soup=BeautifulSoup(text,"html.parser")
+    out=[]
+    for li in soup.select("li.s-item"):
+        a=li.select_one("a.s-item__link")
+        title_el=li.select_one(".s-item__title")
+        img=li.select_one("img.s-item__image-img, img")
+        if not a or not title_el or not img: continue
+        href=(a.get("href") or "").split("?")[0]
+        src=img.get("data-defer-load") or img.get("data-src") or img.get("src")
+        title=title_el.get_text(" ",strip=True)
+        if not href.startswith("http") or not src or not src.startswith("http"): continue
+        if "shop on ebay" in title.lower(): continue
+        out.append({"source_url":href,"image_url":src,"meta":title,"query":name})
+    print(f"ebay search {name}: html={len(text)} items={len(out)}",flush=True)
+    return out
+
 def bing_web_results(query,pages=1):
     seen=set()
     for p in range(pages):
@@ -237,24 +260,20 @@ def collect(target,en,ja,aliases,max_pages):
     per_species=Counter();per_domain=Counter();out=[]
 
     dexes=collect_species_list(en,ja)
-    # Search broadly in parallel, but ground truth still comes from the result/listing text.
+    # Primary source: eBay result cards provide title + listing URL + image URL as
+    # one bound record, which is ideal for a labeled image audit.
     def search_one(dex):
         name=en[dex]
-        qs=[
-            f'site:ebay.com/itm "{name}" "Pokemon Kids" "Finger Puppet" Bandai',
-            f'"{name}" "Pokemon Kids" "Finger Puppet" Bandai',
-        ]
-        found=[]
-        for q in qs:
-            try:
-                found.extend((dex,x) for x in bing_web_results(q,pages=1))
-            except Exception:
-                pass
-            if len(found)>=6:break
-        return found
+        direct=ebay_search_results(name)
+        if direct:
+            return [(dex,x) for x in direct]
+        # Fallback only if eBay search is unavailable for this query.
+        q=f'site:ebay.com/itm "{name}" "Pokemon Kids" "Finger Puppet" Bandai'
+        try:return [(dex,x) for x in bing_web_results(q,pages=1)]
+        except Exception:return []
 
     candidates=[]
-    with ThreadPoolExecutor(max_workers=12) as ex:
+    with ThreadPoolExecutor(max_workers=8) as ex:
         fut={ex.submit(search_one,d):d for d in dexes}
         for n,f in enumerate(as_completed(fut),1):
             try:candidates.extend(f.result())
@@ -286,7 +305,10 @@ def collect(target,en,ja,aliases,max_pages):
     def hydrate(pair):
         expected_dex,cand=pair
         source=cand["source_url"]
-        image_url,page_meta=listing_main_image(source)
+        image_url=cand.get("image_url")
+        page_meta=""
+        if not image_url:
+            image_url,page_meta=listing_main_image(source)
         if not image_url:return None,"no_main_image"
         text=(cand.get("meta","")+" "+page_meta).strip()
         hits=infer_species(text,en,ja,aliases)
