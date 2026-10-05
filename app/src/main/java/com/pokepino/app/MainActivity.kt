@@ -250,9 +250,14 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
                     val variants=withContext(Dispatchers.IO){embedding.rankVariants(high,chosenDex,master)}
                     highVariants=variants
                     val topVariant=variants.candidates.firstOrNull()
-                    val agreement=highTop?.dex==aiTop?.dex
-                    val speciesTrusted=agreement || high.veryStrongSpecies || (ai?.accepted==true && (aiTop?.score?:0f)>=0.55f)
-                    val variantTrusted=variants.accepted && (agreement || high.veryStrongSpecies)
+                    val agreement=highTop?.dex!=null && highTop.dex==aiTop?.dex
+                    val highSupportsChosen=highTop?.dex==chosenDex
+                    val aiSupportsChosen=aiTop?.dex==chosenDex
+                    val speciesTrusted=agreement ||
+                        (highSupportsChosen && high.veryStrongSpecies) ||
+                        (aiSupportsChosen && ai?.accepted==true && (aiTop?.score?:0f)>=0.55f)
+                    val variantTrusted=variants.accepted &&
+                        (agreement || (highSupportsChosen && high.veryStrongSpecies))
 
                     if(variantTrusted && topVariant!=null && topVariant.recordIds.size==1){
                         val id=topVariant.recordIds.first()
