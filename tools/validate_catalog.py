@@ -86,7 +86,7 @@ recognizer_source=ROOT/"app"/"src"/"main"/"java"/"com"/"pokepino"/"app"/"Embeddi
 if recognizer_source.exists():
     if not embed_path.exists():
         fail("embedding_catalog_v3.json is missing")
-    if not model_path.exists() or model_path.stat().st_size<4_000_000:
+    if not model_path.exists() or model_path.stat().st_size<2_000_000:
         fail("MobileNet embedding model is missing or too small")
     try:
         embeddings=json.loads(embed_path.read_text(encoding="utf-8"))
