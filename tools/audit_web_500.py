@@ -259,7 +259,7 @@ def collect(target,en,ja,aliases,max_pages):
     seen_urls=set();seen_sources=set();seen_hashes=set();stats=Counter()
     per_species=Counter();per_domain=Counter();out=[]
 
-    dexes=collect_species_list(en,ja)
+    dexes=collect_species_list(en,ja)[:320]
     # Primary source: eBay result cards provide title + listing URL + image URL as
     # one bound record, which is ideal for a labeled image audit.
     def search_one(dex):
