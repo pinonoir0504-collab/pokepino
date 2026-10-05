@@ -21,6 +21,7 @@ class VariantRecognizer(private val context:Context){
         val hist:FloatArray,
         val edge:ByteArray
     )
+    private val decodedSignatureCache=HashMap<String,Signature>()
 
     fun recognize(bitmap:Bitmap,vars:List<Figure>):Result{
         val q=signature(bitmap)
@@ -44,7 +45,7 @@ class VariantRecognizer(private val context:Context){
         val a=scored.firstOrNull()
         val b=scored.getOrNull(1)
         val margin=if(a!=null&&b!=null)a.score-b.score else 1f
-        val ok=a!=null&&a.score>=.92f&&margin>=.045f
+        val ok=a!=null&&a.score>=.90f&&margin>=.03f
         return Result(scored,ok)
     }
 
@@ -86,9 +87,11 @@ class VariantRecognizer(private val context:Context){
         }
     }
 
+    @Synchronized
     private fun decodeSignature(encoded:String):Signature?{
         if(encoded.isBlank())return null
-        return runCatching{
+        decodedSignatureCache[encoded]?.let{return it}
+        val decoded=runCatching{
             val raw=Base64.decode(encoded,Base64.DEFAULT)
             if(raw.size<264)return@runCatching null
             val blocks=FloatArray(192){i->(raw[i].toInt() and 255)/255f}
@@ -96,6 +99,8 @@ class VariantRecognizer(private val context:Context){
             val edge=raw.copyOfRange(232,264)
             Signature(blocks,hist,edge)
         }.getOrNull()
+        if(decoded!=null)decodedSignatureCache[encoded]=decoded
+        return decoded
     }
 
     private fun signature(src:Bitmap):Signature{
