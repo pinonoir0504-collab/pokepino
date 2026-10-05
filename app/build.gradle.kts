@@ -1,3 +1,5 @@
+val includeEmulatorAbi = providers.gradleProperty("pokepinoEmulator").orNull == "true"
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -12,10 +14,11 @@ android {
         minSdk = 26
         targetSdk = 35
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionCode = 31
-        versionName = "1.0.1"
+        versionCode = 32
+        versionName = "1.1.0"
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            if (includeEmulatorAbi) abiFilters += "x86_64"
         }
     }
     buildFeatures { compose = true }
@@ -25,13 +28,6 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
-    }
-    buildTypes {
-        getByName("debug") {
-            ndk {
-                abiFilters += "x86_64"
-            }
-        }
     }
 }
 
