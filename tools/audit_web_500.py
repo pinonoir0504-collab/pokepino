@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse, base64, csv, gzip, html, io, json, math, random, re, sys, time, unicodedata
 from collections import defaultdict, Counter
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from urllib.parse import quote_plus, urlparse
 
@@ -232,100 +233,137 @@ def parse_kids_no(text):
     return 0
 
 def collect(target,en,ja,aliases,max_pages):
-    out=[];seen_urls=set();seen_sources=set();seen_hashes=set();stats=Counter()
-    per_species=Counter();per_domain=Counter()
+    seen_urls=set();seen_sources=set();seen_hashes=set();stats=Counter()
+    per_species=Counter();per_domain=Counter();out=[]
 
-    def consider(c,expected_dex=None):
-        nonlocal out
-        source=c["source_url"]
+    dexes=collect_species_list(en,ja)
+    # Search broadly in parallel, but ground truth still comes from the result/listing text.
+    def search_one(dex):
+        name=en[dex]
+        qs=[
+            f'site:ebay.com/itm "{name}" "Pokemon Kids" "Finger Puppet" Bandai',
+            f'"{name}" "Pokemon Kids" "Finger Puppet" Bandai',
+        ]
+        found=[]
+        for q in qs:
+            try:
+                found.extend((dex,x) for x in bing_web_results(q,pages=1))
+            except Exception:
+                pass
+            if len(found)>=6:break
+        return found
+
+    candidates=[]
+    with ThreadPoolExecutor(max_workers=12) as ex:
+        fut={ex.submit(search_one,d):d for d in dexes}
+        for n,f in enumerate(as_completed(fut),1):
+            try:candidates.extend(f.result())
+            except Exception:stats["search_fail"]+=1
+            if n%100==0:print(f"searches {n}/{len(dexes)} candidates={len(candidates)}",flush=True)
+    random.Random(20261005).shuffle(candidates)
+
+    # Cheap metadata filtering before touching listing/image URLs.
+    filtered=[]
+    for expected_dex,cand in candidates:
+        source=cand["source_url"]
+        if source in seen_sources:continue
         dom=urlparse(source).netloc.lower().replace("www.","")
-        if any(x in dom for x in EXCLUDED_DOMAINS): stats["excluded_domain"]+=1;return
-        if source in seen_sources: return
-        seen_sources.add(source)
-
-        meta=c.get("meta","")
-        image_url=c.get("image_url")
-        page_meta=""
-        if not image_url:
-            image_url,page_meta=listing_main_image(source)
-        text=(meta+" "+page_meta).strip()
-        if not image_url:
-            stats["no_main_image"]+=1;return
-        if image_url in seen_urls:return
+        if any(x in dom for x in EXCLUDED_DOMAINS):continue
+        text=cand.get("meta","")
         low=text.lower()
         if not any(x in low for x in CONTEXT):
-            stats["no_context"]+=1;return
-
+            stats["no_context_search"]+=1;continue
         hits=infer_species(text,en,ja,aliases)
-        if expected_dex is not None:
-            if expected_dex not in hits:
-                stats["expected_species_missing"]+=1;return
-            # Other species names in the same listing means mixed/ambiguous.
-            if len(hits)!=1:
-                stats["label_ambiguous"]+=1;return
-            dex=expected_dex
-        else:
-            if len(hits)!=1:
-                stats["label_ambiguous"]+=1;return
-            dex=next(iter(hits))
-
+        if hits!={expected_dex}:
+            stats["label_ambiguous_search"]+=1;continue
         alow=" "+ascii_norm(text)+" "
         if any(x in alow for x in MULTI):
-            stats["multi_title"]+=1;return
-        if per_species[dex]>=4:
-            stats["species_cap"]+=1;return
-        if per_domain[dom]>=180:
-            stats["domain_cap"]+=1;return
-        try:
-            im=decode_image(image_url)
-        except Exception:
-            stats["image_fail"]+=1;return
+            stats["multi_title"]+=1;continue
+        seen_sources.add(source)
+        filtered.append((expected_dex,cand))
+    print(f"metadata-qualified candidates={len(filtered)}",flush=True)
+
+    def hydrate(pair):
+        expected_dex,cand=pair
+        source=cand["source_url"]
+        image_url,page_meta=listing_main_image(source)
+        if not image_url:return None,"no_main_image"
+        text=(cand.get("meta","")+" "+page_meta).strip()
+        hits=infer_species(text,en,ja,aliases)
+        if hits!={expected_dex}:return None,"label_ambiguous_page"
+        try:im=decode_image(image_url)
+        except Exception:return None,"image_fail"
+        return (expected_dex,cand,image_url,text,im),None
+
+    # Fetch many listing pages/images concurrently. We oversample because dead listings are common.
+    hydrated=[]
+    max_hydrate=min(len(filtered),max(target*5,1800))
+    with ThreadPoolExecutor(max_workers=20) as ex:
+        fut=[ex.submit(hydrate,p) for p in filtered[:max_hydrate]]
+        for n,f in enumerate(as_completed(fut),1):
+            try:item,err=f.result()
+            except Exception:
+                item,err=None,"hydrate_exception"
+            if err:stats[err]+=1
+            elif item:hydrated.append(item)
+            if n%200==0:print(f"hydrated {n}/{max_hydrate} usable={len(hydrated)}",flush=True)
+
+    random.Random(20261006).shuffle(hydrated)
+    for expected_dex,cand,image_url,text,im in hydrated:
+        if len(out)>=target:break
+        dex=expected_dex
+        dom=urlparse(cand["source_url"]).netloc.lower().replace("www.","")
+        if per_species[dex]>=4:stats["species_cap"]+=1;continue
+        if per_domain[dom]>=220:stats["domain_cap"]+=1;continue
+        if image_url in seen_urls:continue
         h=phashish(im)
-        if h in seen_hashes:
-            stats["duplicate"]+=1;return
+        if h in seen_hashes:stats["duplicate"]+=1;continue
         seen_hashes.add(h);seen_urls.add(image_url)
-        per_domain[dom]+=1;per_species[dex]+=1
+        per_species[dex]+=1;per_domain[dom]+=1
         out.append({
             "target_dex":dex,
             "target_name_ja":ja.get(dex,""),
             "target_name_en":en.get(dex,""),
             "image_url":image_url,
-            "source_url":source,
+            "source_url":cand["source_url"],
             "source_domain":dom,
             "kids_no":parse_kids_no(text),
             "year":(re.search(r"\b(199[6-9]|20[0-2]\d)\b",text) or [None,""])[1],
             "is_clear":bool(re.search(r"\bclear\b|クリア",text,re.I)),
             "label_text":re.sub(r"\s+"," ",text)[:500],
         })
-        if len(out)%50==0:
-            print(f"accepted {len(out)}/{target} domains={len(per_domain)} species={len(per_species)}",flush=True)
+        if len(out)%50==0:print(f"accepted {len(out)}/{target} species={len(per_species)} domains={len(per_domain)}",flush=True)
 
-    # Primary: species-specific web searches. The listing text itself must independently
-    # confirm the queried species, so the search query is not treated as ground truth.
-    dexes=collect_species_list(en,ja)
-    for qi,dex in enumerate(dexes,1):
-        if len(out)>=target:break
-        name=en[dex]
-        queries=[
-            f'site:ebay.com/itm "{name}" "Pokemon Kids" "Finger Puppet" Bandai',
-            f'"{name}" "Pokemon Kids" "Finger Puppet" Bandai',
-        ]
-        for q in queries:
-            for cand in bing_web_results(q,pages=1):
-                consider(cand,expected_dex=dex)
-                if len(out)>=target or per_species[dex]>=4:break
-            if len(out)>=target or per_species[dex]>=4:break
-        if qi%50==0:
-            print(f"species searches {qi}/{len(dexes)} accepted={len(out)}",flush=True)
-        time.sleep(.06)
-
-    # Fallback: generic image search can add listings missed by web search.
+    # Fallback generic image search only if the species-specific listings weren't enough.
     if len(out)<target:
+        generic=[]
         for q in SEARCHES:
-            for cand in bing_results(q,pages=max_pages):
-                consider(cand)
-                if len(out)>=target:break
+            generic.extend((None,x) for x in bing_results(q,pages=max_pages))
+        for _,cand in generic:
             if len(out)>=target:break
+            source=cand["source_url"]
+            dom=urlparse(source).netloc.lower().replace("www.","")
+            if any(x in dom for x in EXCLUDED_DOMAINS):continue
+            text=source_context(cand)
+            if not text:continue
+            hits=infer_species(text,en,ja,aliases)
+            if len(hits)!=1:continue
+            dex=next(iter(hits))
+            if per_species[dex]>=4:continue
+            try:im=decode_image(cand["image_url"])
+            except Exception:continue
+            h=phashish(im)
+            if h in seen_hashes:continue
+            seen_hashes.add(h)
+            out.append({
+                "target_dex":dex,"target_name_ja":ja.get(dex,""),"target_name_en":en.get(dex,""),
+                "image_url":cand["image_url"],"source_url":source,"source_domain":dom,
+                "kids_no":parse_kids_no(text),
+                "year":(re.search(r"\b(199[6-9]|20[0-2]\d)\b",text) or [None,""])[1],
+                "is_clear":bool(re.search(r"\bclear\b|クリア",text,re.I)),
+                "label_text":re.sub(r"\s+"," ",text)[:500],
+            })
+            per_species[dex]+=1
 
     print("collection stats",dict(stats),flush=True)
     return out
