@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -165,9 +166,9 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
         Scaffold(
             topBar={ TopAppBar(title={ Row(verticalAlignment=Alignment.CenterVertically){ Brand(brand,42.dp); Spacer(Modifier.width(8.dp)); Column{Text("ポケピーノ",fontWeight=FontWeight.Black);Text("ポケモンキッズ図鑑",style=MaterialTheme.typography.labelSmall)} } }) },
             bottomBar={ NavigationBar {
-                NavigationBarItem(selected=tab==Tab.DEX,onClick={tab=Tab.DEX},icon={Text("▦")},label={Text("図鑑")})
-                NavigationBarItem(selected=tab==Tab.OWNED,onClick={tab=Tab.OWNED},icon={Text("✓")},label={Text("所持")})
-                NavigationBarItem(selected=tab==Tab.PHOTO,onClick={tab=Tab.PHOTO},icon={Text("◎")},label={Text("判定")})
+                NavigationBarItem(selected=tab==Tab.DEX,onClick={tab=Tab.DEX},modifier=Modifier.testTag("tab_dex"),icon={Text("▦")},label={Text("図鑑")})
+                NavigationBarItem(selected=tab==Tab.OWNED,onClick={tab=Tab.OWNED},modifier=Modifier.testTag("tab_owned"),icon={Text("✓")},label={Text("所持")})
+                NavigationBarItem(selected=tab==Tab.PHOTO,onClick={tab=Tab.PHOTO},modifier=Modifier.testTag("tab_photo"),icon={Text("◎")},label={Text("判定")})
             }}
         ){ pad -> Box(Modifier.padding(pad).fillMaxSize()){
             when(tab){
