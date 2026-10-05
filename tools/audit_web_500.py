@@ -99,23 +99,57 @@ def ebay_search_results(name):
     url=f"https://www.ebay.com/sch/i.html?_nkw={q}&_ipg=120&_sop=10"
     try:
         text=get(url,timeout=25).text
-    except Exception as e:
+    except Exception:
         return []
     soup=BeautifulSoup(text,"html.parser")
-    out=[]
-    for li in soup.select("li.s-item"):
-        a=li.select_one("a.s-item__link")
-        title_el=li.select_one(".s-item__title")
-        img=li.select_one("img.s-item__image-img, img")
-        if not a or not title_el or not img: continue
-        href=(a.get("href") or "").split("?")[0]
-        src=img.get("data-defer-load") or img.get("data-src") or img.get("src")
-        title=title_el.get_text(" ",strip=True)
-        if not href.startswith("http") or not src or not src.startswith("http"): continue
-        if "shop on ebay" in title.lower(): continue
-        out.append({"source_url":href,"image_url":src,"meta":title,"query":name})
-    print(f"ebay search {name}: html={len(text)} items={len(out)}",flush=True)
+    out=[];seen=set()
+
+    # eBay changes CSS class names frequently. Bind by the stable /itm/ URL,
+    # then walk upward until we find the card's image and descriptive text.
+    for a in soup.select('a[href*="/itm/"]'):
+        href=(a.get("href") or "")
+        m=re.search(r'https?://(?:www\.)?ebay\.com/itm/(?:[^/?]+/)?(\d+)',href)
+        if not m: continue
+        item_id=m.group(1)
+        if item_id in seen: continue
+        clean=f"https://www.ebay.com/itm/{item_id}"
+        node=a
+        card=None;img=None
+        for _ in range(7):
+            node=node.parent if node else None
+            if node is None:break
+            candidate=node.find("img")
+            txt=node.get_text(" ",strip=True)
+            if candidate is not None and len(txt)>=20:
+                card=node;img=candidate;break
+        if card is None or img is None:continue
+        src=img.get("data-defer-load") or img.get("data-src") or img.get("src") or img.get("srcset","").split(" ")[0]
+        if not src or not str(src).startswith("http"):continue
+        title=a.get_text(" ",strip=True)
+        card_text=card.get_text(" ",strip=True)
+        meta=(title+" "+card_text).strip()
+        if len(meta)<15:continue
+        seen.add(item_id)
+        out.append({"source_url":clean,"image_url":str(src),"meta":meta[:1000],"query":name})
+
+    # Structured data fallback: many eBay layouts embed item URLs and image URLs
+    # even when the visible card markup changes.
+    if not out:
+        item_ids=list(dict.fromkeys(re.findall(r'(?:/itm/|itemId["\s:]+)(\d{10,15})',text)))
+        image_urls=re.findall(r'https://i\.ebayimg\.com/images/g/[^"\\]+?/(?:s-l\d+|s-l\d+\.webp|s-l\d+\.jpg)',text)
+        for item_id,img in zip(item_ids,image_urls):
+            if item_id in seen:continue
+            seen.add(item_id)
+            out.append({
+                "source_url":f"https://www.ebay.com/itm/{item_id}",
+                "image_url":img.replace("\\u002F","/"),
+                "meta":name+" Pokemon Kids Finger Puppet Bandai",
+                "query":name,
+                "_needs_page_label":True,
+            })
+    print(f"ebay search {name}: html={len(text)} bound_items={len(out)}",flush=True)
     return out
+
 
 def bing_web_results(query,pages=1):
     seen=set()
@@ -311,7 +345,8 @@ def collect(target,en,ja,aliases,max_pages):
             image_url,page_meta=listing_main_image(source)
         if not image_url:return None,"no_main_image"
         text=(cand.get("meta","")+" "+page_meta).strip()
-        hits=infer_species(text,en,ja,aliases)
+        label_text=page_meta if cand.get("_needs_page_label") else text
+        hits=infer_species(label_text,en,ja,aliases)
         if hits!={expected_dex}:return None,"label_ambiguous_page"
         try:im=decode_image(image_url)
         except Exception:return None,"image_fail"
