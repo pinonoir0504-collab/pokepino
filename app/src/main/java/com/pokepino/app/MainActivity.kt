@@ -158,8 +158,9 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
     var splash by remember { mutableStateOf(true) }
     fun setOwned(id:String,n:Int){ val v=n.coerceAtLeast(0); prefs.edit().putInt(id,v).apply(); owned=owned.toMutableMap().also{it[id]=v} }
     val recognizer=remember { PokemonRecognizer(context.applicationContext) }
+    val embeddingRecognizer=remember { EmbeddingRecognizer(context.applicationContext) }
     val variantRecognizer=remember { VariantRecognizer(context.applicationContext) }
-    DisposableEffect(Unit){ onDispose { recognizer.close() } }
+    DisposableEffect(Unit){ onDispose { recognizer.close(); embeddingRecognizer.close() } }
     MaterialTheme(colorScheme=lightColorScheme(primary=Red,secondary=Gold,background=Cream)) {
         if(splash){ Splash(brand){splash=false}; return@MaterialTheme }
         selectedDex?.let { dex -> Detail(master.filter{it.dex==dex},owned,::setOwned){selectedDex=null}; return@MaterialTheme }
@@ -174,7 +175,7 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
             when(tab){
                 Tab.DEX -> Dex(master,owned,brand){selectedDex=it}
                 Tab.OWNED -> Owned(master,owned){selectedDex=it}
-                Tab.PHOTO -> Photo(master,owned,recognizer,variantRecognizer,::setOwned){selectedDex=it}
+                Tab.PHOTO -> Photo(master,owned,recognizer,embeddingRecognizer,variantRecognizer,::setOwned){selectedDex=it}
             }
         }}
     }
@@ -197,12 +198,22 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
 
 @Composable private fun Owned(master:List<Figure>,owned:Map<String,Int>,open:(Int)->Unit){ val list=master.filter{(owned[it.id]?:0)>0}; LazyColumn(Modifier.fillMaxSize().testTag("owned_screen").padding(12.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){ item{Text("所持 ${list.size}件",Modifier.testTag("owned_count"),fontWeight=FontWeight.Black)}; items(list,key={it.id}){f-> Card(Modifier.fillMaxWidth().testTag("owned_item_${f.id}").clickable{open(f.dex)}){Column(Modifier.padding(12.dp)){Text("No.%03d ${f.pokemon}".format(f.dex),fontWeight=FontWeight.Bold);Text(f.variant);Text("${f.series} ${f.year}",style=MaterialTheme.typography.labelSmall)}}} } }
 
-@Composable private fun Photo(master:List<Figure>,owned:Map<String,Int>,recognizer:PokemonRecognizer,variant:VariantRecognizer,setOwned:(String,Int)->Unit,open:(Int)->Unit){
+@Composable private fun Photo(
+    master:List<Figure>,
+    owned:Map<String,Int>,
+    recognizer:PokemonRecognizer,
+    embedding:EmbeddingRecognizer,
+    fallback:VariantRecognizer,
+    setOwned:(String,Int)->Unit,
+    open:(Int)->Unit
+){
     val context=LocalContext.current
     val scope=rememberCoroutineScope()
     var bitmap by remember{mutableStateOf<Bitmap?>(null)}
-    var result by remember{mutableStateOf<PokemonRecognizer.Result?>(null)}
-    var vr by remember{mutableStateOf<VariantRecognizer.Result?>(null)}
+    var aiResult by remember{mutableStateOf<PokemonRecognizer.Result?>(null)}
+    var highResult by remember{mutableStateOf<EmbeddingRecognizer.Result?>(null)}
+    var highVariants by remember{mutableStateOf<EmbeddingRecognizer.VariantResult?>(null)}
+    var fallbackResult by remember{mutableStateOf<VariantRecognizer.Result?>(null)}
     var busy by remember{mutableStateOf(false)}
     var msg by remember{mutableStateOf("")}
     var cameraFile by remember{mutableStateOf<File?>(null)}
@@ -210,85 +221,74 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
 
     fun analyze(u:Uri){
         if(busy)return
-        result=null;vr=null;msg="";busy=true
+        aiResult=null;highResult=null;highVariants=null;fallbackResult=null;msg="";busy=true
         scope.launch{
             try{
                 val b=withContext(Dispatchers.IO){decodeBitmap(context,u,1280)}
                 bitmap=b
+                val high=runCatching{
+                    withContext(Dispatchers.IO){
+                        if(embedding.isAvailable()) embedding.recognize(b) else null
+                    }
+                }.getOrNull()
+                highResult=high
 
-                // Primary path: compare directly against the real-figure catalog.
-                // This is offline and measured substantially better on figure photos
-                // than the generic Pokemon species classifier.
-                val visual=withContext(Dispatchers.IO){
-                    variant.recognize(b,visualReferences)
+                val ai=runCatching{
+                    withContext(Dispatchers.IO){recognizer.recognize(b)}
+                }.getOrNull()
+                aiResult=ai
+
+                val highTop=high?.speciesCandidates?.firstOrNull()
+                val aiTop=ai?.candidates?.firstOrNull()
+                val chosenDex=when{
+                    aiTop!=null && aiTop.score>=0.20f -> aiTop.dex
+                    highTop!=null -> highTop.dex
+                    else -> null
                 }
-                vr=visual
-                val visualTop=visual.candidates.firstOrNull()
-                val visualTopFigures=visualTop?.recordIds
-                    ?.mapNotNull{id->master.firstOrNull{it.id==id}}
-                    ?: emptyList()
-                val visualDex=visualTopFigures.map{it.dex}.filter{it>0}.distinct().singleOrNull()
 
-                if(visual.accepted&&visualTop!=null&&visualDex!=null){
-                    if(visualTop.recordIds.size==1){
-                        val id=visualTop.recordIds.first()
+                if(high!=null && chosenDex!=null){
+                    val variants=withContext(Dispatchers.IO){embedding.rankVariants(high,chosenDex,master)}
+                    highVariants=variants
+                    val topVariant=variants.candidates.firstOrNull()
+                    val agreement=highTop?.dex==aiTop?.dex
+                    val speciesTrusted=agreement || high.veryStrongSpecies || (ai?.accepted==true && (aiTop?.score?:0f)>=0.55f)
+                    val variantTrusted=variants.accepted && (agreement || high.veryStrongSpecies)
+
+                    if(variantTrusted && topVariant!=null && topVariant.recordIds.size==1){
+                        val id=topVariant.recordIds.first()
                         val fig=master.firstOrNull{it.id==id}
                         if(fig!=null){
                             setOwned(id,maxOf(1,owned[id]?:0))
-                            msg="✓ ${fig.pokemon} ${fig.variant} を実物DBで判定して登録しました"
-                        }else{
-                            msg="実物DBで高確度一致しました"
+                            msg="✓ 高精度AI＋実物DBで ${fig.pokemon} ${fig.variant} を登録しました"
                         }
                     }else{
-                        msg="実物DBで高確度一致しましたが、写真だけでは区別できない同型版があります"
+                        val sameDex=master.filter{it.dex==chosenDex}
+                        if(speciesTrusted && sameDex.size==1){
+                            val fig=sameDex.first()
+                            setOwned(fig.id,maxOf(1,owned[fig.id]?:0))
+                            msg="✓ ${fig.pokemon} を高信頼度で判定して登録しました"
+                        }else if(topVariant!=null && topVariant.recordIds.size>1){
+                            msg="ポケモンは有力候補まで絞れました。同じ見た目の発売違いがあるため自動登録はしていません"
+                        }else{
+                            val name=sameDex.firstOrNull()?.pokemon?:"No.$chosenDex"
+                            msg="$name が有力です。誤登録防止のため候補を確認してください"
+                        }
                     }
                 }else{
-                    // Secondary path: the generic species AI is used only when the
-                    // real-figure matcher cannot safely decide. Model download/network
-                    // failure must not break offline figure matching.
-                    val aiAttempt=runCatching{
-                        withContext(Dispatchers.IO){recognizer.recognize(b)}
-                    }
-                    val ai=aiAttempt.getOrNull()
-                    result=ai
-                    val top=ai?.candidates?.firstOrNull()
-
-                    if(ai?.accepted==true&&top!=null){
-                        val vars=master.filter{it.dex==top.dex}
-                        val localRefs=vars.filter{it.feature.isNotBlank()}
-                        val local=if(localRefs.isNotEmpty()){
-                            withContext(Dispatchers.IO){variant.recognize(b,localRefs)}
-                        }else null
-
-                        if(vars.size==1){
-                            val fig=vars.first()
-                            setOwned(fig.id,maxOf(1,owned[fig.id]?:0))
-                            msg="✓ ${fig.pokemon} ${fig.variant} をAI判定して登録しました"
-                        }else if(local!=null){
-                            vr=local
-                            val candidate=local.candidates.firstOrNull()
-                            if(local.accepted&&candidate!=null&&candidate.recordIds.size==1){
-                                val id=candidate.recordIds.first()
-                                val fig=master.firstOrNull{it.id==id}
-                                setOwned(id,maxOf(1,owned[id]?:0))
-                                msg="✓ ${fig?.pokemon?:"候補"} ${fig?.variant?:""} をAI＋実物DBで登録しました"
-                            }else if(candidate!=null&&candidate.recordIds.size>1){
-                                msg="ポケモンは特定できましたが、同じ見た目の発売違いがあります"
-                            }else{
-                                msg="ポケモンは${vars.firstOrNull()?.pokemon?:"候補"}が有力です。版違いは候補から確認してください"
-                            }
-                        }else{
-                            msg="ポケモンは${vars.firstOrNull()?.pokemon?:"候補"}が有力ですが、版違い用の実物参照がありません"
+                    val visual=withContext(Dispatchers.IO){fallback.recognize(b,visualReferences)}
+                    fallbackResult=visual
+                    val top=visual.candidates.firstOrNull()
+                    if(visual.accepted&&top!=null&&top.recordIds.size==1){
+                        val id=top.recordIds.first()
+                        val fig=master.firstOrNull{it.id==id}
+                        if(fig!=null){
+                            setOwned(id,maxOf(1,owned[id]?:0))
+                            msg="✓ 従来実物DBで ${fig.pokemon} ${fig.variant} を登録しました"
                         }
+                    }else if(visual.candidates.isNotEmpty()){
+                        msg="高精度AIを利用できなかったため、従来DBの候補を表示しています"
                     }else{
-                        if(visual.candidates.isNotEmpty()){
-                            val aiNote=if(aiAttempt.isFailure)"（AI補助は通信またはモデル取得に失敗）" else ""
-                            msg="実物DBの候補を表示しています。確信度不足のため自動登録していません$aiNote"
-                        }else if(aiAttempt.isFailure){
-                            msg="判定できませんでした。AI補助データも取得できませんでした"
-                        }else{
-                            msg="候補を見つけられませんでした"
-                        }
+                        msg="候補を見つけられませんでした"
                     }
                 }
             }catch(e:Exception){
@@ -316,37 +316,56 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
     LazyColumn(Modifier.fillMaxSize().padding(12.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){
         item{
             Text("写真で判定",fontWeight=FontWeight.Black)
-            Text("1体だけ大きく、なるべく無地背景で撮影してください。",style=MaterialTheme.typography.bodySmall)
+            Text("1体だけ大きく写すと精度が上がります。背景はできるだけ単色がおすすめです。",style=MaterialTheme.typography.bodySmall)
             Row{
                 Button({pick.launch("image/*")},enabled=!busy){Text("画像を選ぶ")}
                 Spacer(Modifier.width(8.dp))
                 Button({
-                    val f=File(context.cacheDir,"pokepino_${System.currentTimeMillis()}.jpg")
-                    cameraFile=f
-                    take.launch(FileProvider.getUriForFile(context,"${context.packageName}.fileprovider",f))
+                    val file=File(context.cacheDir,"pokepino_${System.currentTimeMillis()}.jpg")
+                    cameraFile=file
+                    take.launch(FileProvider.getUriForFile(context,"${context.packageName}.fileprovider",file))
                 },enabled=!busy){Text("写真を撮る")}
             }
             if(busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             bitmap?.let{Image(it.asImageBitmap(),null,Modifier.fillMaxWidth().height(260.dp),contentScale=ContentScale.Fit)}
             if(msg.isNotBlank()) Text(msg,fontWeight=FontWeight.Bold)
         }
-        result?.let{r->
-            item{Text("ポケモン候補 (${r.engine})",fontWeight=FontWeight.Black)}
-            items(r.candidates){candidate->
-                val vars=master.filter{it.dex==candidate.dex}
-                val name=vars.firstOrNull()?.pokemon?:"No.${candidate.dex}"
-                Card(Modifier.fillMaxWidth().clickable(enabled=vars.isNotEmpty()){open(candidate.dex)}){
+
+        highResult?.let{r->
+            item{Text("高精度・実物写真候補",fontWeight=FontWeight.Black)}
+            items(r.speciesCandidates){candidate->
+                val fig=master.firstOrNull{it.dex==candidate.dex}
+                val name=fig?.pokemon?:"No.${candidate.dex}"
+                Card(Modifier.fillMaxWidth().clickable(enabled=fig!=null){open(candidate.dex)}){
                     Row(Modifier.padding(12.dp)){
                         Column(Modifier.weight(1f)){
                             Text("No.%03d $name".format(candidate.dex),fontWeight=FontWeight.Bold)
-                            Text(if(r.accepted&&candidate==r.candidates.first())"第一候補" else "候補",style=MaterialTheme.typography.labelSmall)
+                            Text(if(candidate==r.speciesCandidates.first())"実物DB 第一候補" else "実物DB候補",style=MaterialTheme.typography.labelSmall)
                         }
                         Text("${(candidate.score*100).toInt()}%")
                     }
                 }
             }
         }
-        vr?.let{x->
+
+        aiResult?.let{r->
+            item{Text("ポケモンAI補助候補",fontWeight=FontWeight.Black)}
+            items(r.candidates){candidate->
+                val fig=master.firstOrNull{it.dex==candidate.dex}
+                val name=fig?.pokemon?:"No.${candidate.dex}"
+                Card(Modifier.fillMaxWidth().clickable(enabled=fig!=null){open(candidate.dex)}){
+                    Row(Modifier.padding(12.dp)){
+                        Column(Modifier.weight(1f)){
+                            Text("No.%03d $name".format(candidate.dex),fontWeight=FontWeight.Bold)
+                            Text(if(candidate==r.candidates.first())"AI 第一候補" else "AI候補",style=MaterialTheme.typography.labelSmall)
+                        }
+                        Text("${(candidate.score*100).toInt()}%")
+                    }
+                }
+            }
+        }
+
+        highVariants?.let{x->
             val rows=x.candidates.flatMap{candidate->
                 candidate.recordIds.mapNotNull{id->
                     master.firstOrNull{it.id==id}?.let{candidate to it}
@@ -356,22 +375,37 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
                 item{Text("指人形バリエーション候補",fontWeight=FontWeight.Black)}
                 items(rows,key={it.second.id}){row->
                     val candidate=row.first
-                    val f=row.second
+                    val fig=row.second
                     Card(Modifier.fillMaxWidth()){
                         Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically){
                             Column(Modifier.weight(1f)){
-                                Text(f.variant,fontWeight=FontWeight.Bold)
-                                Text("${f.series} ${f.year}",style=MaterialTheme.typography.labelSmall)
+                                Text(fig.variant,fontWeight=FontWeight.Bold)
+                                Text("${fig.series} ${fig.year}",style=MaterialTheme.typography.labelSmall)
                                 Text(
-                                    if(candidate.recordIds.size>1)"見た目同一候補・類似 ${(candidate.score*100).toInt()}%"
+                                    if(candidate.recordIds.size>1)"同型候補・類似 ${(candidate.score*100).toInt()}%"
                                     else "類似 ${(candidate.score*100).toInt()}%",
                                     style=MaterialTheme.typography.labelSmall
                                 )
                             }
                             Button({
-                                setOwned(f.id,maxOf(1,owned[f.id]?:0))
-                                msg="✓ ${f.variant} を登録しました"
+                                setOwned(fig.id,maxOf(1,owned[fig.id]?:0))
+                                msg="✓ ${fig.variant} を登録しました"
                             }){Text("これで登録")}
+                        }
+                    }
+                }
+            }
+        }
+
+        fallbackResult?.let{x->
+            if(x.candidates.isNotEmpty()){
+                item{Text("従来DB候補",fontWeight=FontWeight.Black)}
+                items(x.candidates){candidate->
+                    val fig=candidate.recordIds.asSequence().mapNotNull{id->master.firstOrNull{it.id==id}}.firstOrNull()
+                    if(fig!=null) Card(Modifier.fillMaxWidth().clickable{open(fig.dex)}){
+                        Row(Modifier.padding(12.dp)){
+                            Text("${fig.pokemon} ${fig.variant}",Modifier.weight(1f))
+                            Text("${(candidate.score*100).toInt()}%")
                         }
                     }
                 }
