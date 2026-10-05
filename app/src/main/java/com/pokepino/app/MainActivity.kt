@@ -191,7 +191,7 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
     }.sortedBy{it.first} }
     LazyColumn(Modifier.fillMaxSize().padding(12.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
         item { if(brand!=null) Image(brand.asImageBitmap(),null,Modifier.fillMaxWidth().height(180.dp),contentScale=ContentScale.Crop); Spacer(Modifier.height(8.dp)); OutlinedTextField(q,{q=it},Modifier.fillMaxWidth(),label={Text("名前・図鑑No.で検索")}); Row{ listOf("全部","所持","未所持").forEachIndexed{i,s-> FilterChip(filter==i,{filter=i},{Text(s)}); Spacer(Modifier.width(6.dp)) } }; Text("${master.count{it.dex>0}}バリエーション / ${master.filter{it.dex>0}.map{it.dex}.distinct().size}ポケモン",fontWeight=FontWeight.Bold) }
-        items(grouped,key={it.first}){(dex,v)-> val f=v.first(); val n=v.count{(owned[it.id]?:0)>0}; Card(Modifier.fillMaxWidth().clickable{open(dex)}){ Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically){ Text("No.%03d".format(dex),fontWeight=FontWeight.Black); Spacer(Modifier.width(12.dp)); Column(Modifier.weight(1f)){Text(f.pokemon,fontWeight=FontWeight.Bold);Text("${v.size}種 / 所持 $n",style=MaterialTheme.typography.labelSmall)}; Text(if(n>0)"✓" else "○") } } }
+        items(grouped,key={it.first}){(dex,v)-> val f=v.first(); val n=v.count{(owned[it.id]?:0)>0}; Card(Modifier.fillMaxWidth().testTag("dex_$dex").clickable{open(dex)}){ Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically){ Text("No.%03d".format(dex),fontWeight=FontWeight.Black); Spacer(Modifier.width(12.dp)); Column(Modifier.weight(1f)){Text(f.pokemon,fontWeight=FontWeight.Bold);Text("${v.size}種 / 所持 $n",style=MaterialTheme.typography.labelSmall)}; Text(if(n>0)"✓" else "○") } } }
     }
 }
 
@@ -383,7 +383,7 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun Detail(vars:List<Figure>,owned:Map<String,Int>,setOwned:(String,Int)->Unit,back:()->Unit){
     val first=vars.firstOrNull()?:return
-    Scaffold(modifier=Modifier.testTag("detail_screen"),topBar={TopAppBar(title={Text("No.%03d ${first.pokemon}".format(first.dex))},navigationIcon={TextButton(back){Text("←")}})}){pad->
+    Scaffold(modifier=Modifier.testTag("detail_screen"),topBar={TopAppBar(title={Text("No.%03d ${first.pokemon}".format(first.dex))},navigationIcon={TextButton(onClick=back,modifier=Modifier.testTag("detail_back")){Text("←")}})}){pad->
         LazyColumn(Modifier.padding(pad).padding(12.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
             items(vars,key={it.id}){f->
                 val n=owned[f.id]?:0
@@ -397,7 +397,7 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
                             Text(if(n>0)"所持 ×$n" else "未所持",Modifier.weight(1f))
                             OutlinedButton({if(n>0)setOwned(f.id,n-1)},enabled=n>0){Text("−")}
                             Spacer(Modifier.width(6.dp))
-                            Button({setOwned(f.id,n+1)}){Text("＋")}
+                            Button(onClick={setOwned(f.id,n+1)},modifier=Modifier.testTag("plus_${f.id}")){Text("＋")}
                         }
                     }
                 }
