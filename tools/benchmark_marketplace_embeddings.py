@@ -192,6 +192,57 @@ def fusion(qrows,embres,aires):
     return {"gate_ai_probability":thr,"tune_top1":calc(tune),"validation_top1":calc(test),"all_top1":calc(rows)}
 
 
+
+def pokemon_logits_embedding(qrows,qimgs,refs,rimgs):
+    import sys
+    sys.path.insert(0,str(ROOT/"tools"))
+    import audit_marketplace_500 as a
+    sess,labels=a.load_ai()
+    input_name=sess.get_inputs()[0].name
+
+    def inp(im):
+        x=np.asarray(im.convert("RGB").resize((224,224),Image.Resampling.BILINEAR),dtype=np.float32)/255.0
+        x=(x-np.array([.485,.456,.406],dtype=np.float32))/np.array([.229,.224,.225],dtype=np.float32)
+        return np.transpose(x,(2,0,1))[None].astype(np.float32)
+
+    def logits(im):
+        z=np.asarray(sess.run(None,{input_name:inp(im)})[0]).reshape(-1).astype(np.float32)
+        # Centering removes global "all classes low/high" effects.
+        z=z-z.mean()
+        n=float(np.linalg.norm(z))
+        return z/n if n else z
+
+    usable_refs=[r for r in refs if r["key"] in rimgs]
+    print(f"pokemon logits refs {len(usable_refs)}",flush=True)
+    R=[]
+    for i,r in enumerate(usable_refs,1):
+        R.append(logits(rimgs[r["key"]]))
+        if i%250==0:print(f"pokemon logits ref embeddings {i}/{len(usable_refs)}",flush=True)
+    R=np.stack(R)
+    ref_dex=np.array([r["dex"] for r in usable_refs],dtype=np.int32)
+    ref_group=[r["group"] for r in usable_refs]
+    species=sorted(set(ref_dex.tolist()))
+    idx_by_species={d:np.where(ref_dex==d)[0] for d in species}
+
+    top1=top5=exact_n=exact_ok=n=0;scores=[]
+    for i,row in enumerate(qrows,1):
+        im=qimgs.get(row["qkey"])
+        if im is None:continue
+        q=logits(im)
+        sims=R@q
+        sp=[(d,float(sims[ix].max())) for d,ix in idx_by_species.items()]
+        sp.sort(key=lambda x:x[1],reverse=True)
+        pred=sp[0][0];tops=[d for d,_ in sp[:5]]
+        n+=1;top1+=pred==row["target_dex"];top5+=row["target_dex"] in tops
+        best_i=int(np.argmax(sims));pg=ref_group[best_i]
+        if row.get("exact_group"):
+            exact_n+=1;exact_ok+=pg==row["exact_group"]
+        scores.append({"qkey":row["qkey"],"target":row["target_dex"],"pred":pred,"top5":tops,
+                       "top_score":sp[0][1],"margin":sp[0][1]-sp[1][1],"pred_group":pg})
+        if i%100==0:print(f"pokemon logits queries {i}/{len(qrows)}",flush=True)
+    return {"n":n,"species_top1":top1/max(1,n),"species_top5":top5/max(1,n),
+            "exact_n":exact_n,"exact_accuracy":exact_ok/max(1,exact_n),"scores":scores}
+
 def ensemble_embeddings(qrows,models,aires):
     # Tune ensemble weights only on first 250, report the untouched second 250.
     score_maps={}
@@ -255,7 +306,10 @@ def main():
     result={"query_download_failures":qfails[:30],"reference_download_failures":rfails[:30],
             "queries_ok":len(qimgs),"references_ok":len(rimgs)}
     ai=generic_ai(qrows,qimgs);result["generic_pokemon_ai"]=ai
-    models={}
+    pokemon_logits=pokemon_logits_embedding(qrows,qimgs,refs,rimgs)
+    result["pokemon_logits_embedding"]=pokemon_logits
+    result["fusion_pokemon_logits"]=fusion(qrows,pokemon_logits,ai)
+    models={"pokemon_logits_embedding":pokemon_logits}
     for kind in ["mobilenet_v3_small","resnet18","efficientnet_b0","convnext_tiny","dinov2_vits14"]:
         er=evaluate_embedding(kind,qrows,qimgs,refs,rimgs)
         result[kind]=er
