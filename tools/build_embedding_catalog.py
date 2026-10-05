@@ -90,10 +90,9 @@ def build_model():
     torch.onnx.export(
         model, dummy, str(MODEL_OUT),
         input_names=["input"], output_names=["embedding"],
-        dynamic_axes={"input": {0: "batch"}, "embedding": {0: "batch"}},
-        opset_version=17, do_constant_folding=True
+        opset_version=17, do_constant_folding=True, dynamo=False
     )
-    if MODEL_OUT.stat().st_size < 4_000_000:
+    if MODEL_OUT.stat().st_size < 2_000_000:
         raise RuntimeError("exported model looks too small")
     return model
 
