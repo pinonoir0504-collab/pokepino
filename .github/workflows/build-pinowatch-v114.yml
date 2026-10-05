@@ -95,3 +95,5 @@ jobs:
           name: PinoWatch-v1.14.0-debug-apk
           path: /tmp/pinowatch/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+# rebuild after complete payload
