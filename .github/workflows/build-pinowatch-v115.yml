@@ -1,0 +1,95 @@
+name: Build PinoWatch v1.15.0
+
+on:
+  push:
+    branches: [ "pinowatch-build-v115" ]
+    paths:
+      - ".github/workflows/build-pinowatch-v115.yml"
+      - "pinowatch-build/PinoWatch_v1.15.0_source.zip"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify and extract source
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "1d4196eff00b0231b5de0905194d6939ad4c1fa627fe6dcb4e35959f397c6264  pinowatch-build/PinoWatch_v1.15.0_source.zip" | sha256sum -c -
+          unzip -t pinowatch-build/PinoWatch_v1.15.0_source.zip
+          mkdir -p /tmp/pinowatch
+          unzip -q pinowatch-build/PinoWatch_v1.15.0_source.zip -d /tmp/pinowatch
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Prepare Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find /usr/local/lib/android/sdk -type f -name sdkmanager | head -n 1)"
+          test -n "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Static feature checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/pinowatch
+          node --check app/src/main/assets/app.js
+          python3 -c 'import json,xml.etree.ElementTree as ET; json.load(open("app/google-services.json",encoding="utf-8")); ET.parse("app/src/main/AndroidManifest.xml"); print("JSON/XML: PASS")'
+          grep -q 'versionCode = 15' app/build.gradle.kts
+          grep -q 'versionName = "1.15.0"' app/build.gradle.kts
+          grep -q 'boolean notifyDisclosure' app/src/main/java/com/tdwatch/stockwatchv4/MainActivity.java
+          grep -q 'reconcileEarningsFavorites' app/src/main/assets/app.js
+          grep -q 'catchUpAndSchedule' app/src/main/java/com/tdwatch/stockwatchv4/EarningsReminderReceiver.java
+          grep -q 'HOUR_OF_DAY, 20' app/src/main/java/com/tdwatch/stockwatchv4/EarningsReminderReceiver.java
+          grep -q 'timeEstimated' app/src/main/java/com/tdwatch/stockwatchv4/EarningsScheduleService.java
+          grep -q 'hasXBRL=1' app/src/main/java/com/tdwatch/stockwatchv4/EarningsScheduleService.java
+          grep -q 'firstValue(values, "銘柄名"' app/src/main/java/com/tdwatch/stockwatchv4/EarningsScheduleService.java
+          grep -q 'onAppResume' app/src/main/assets/app.js
+          grep -q 'newFixedThreadPool(Math.min(8' app/src/main/java/com/tdwatch/stockwatchv4/EarningsScheduleService.java
+          grep -q 'last_attempt_error' app/src/main/java/com/tdwatch/stockwatchv4/EarningsScheduleService.java
+          echo "PinoWatch feature checks: PASS"
+
+      - name: Assemble debug APK
+        working-directory: /tmp/pinowatch
+        run: gradle :app:assembleDebug --stacktrace
+
+      - name: Android lint
+        working-directory: /tmp/pinowatch
+        run: gradle :app:lintDebug --stacktrace
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=/tmp/pinowatch/app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          unzip -t "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt2" dump badging "$APK" | tee /tmp/apk-badging.txt
+          grep -q "package: name='com.tdwatch.stockwatchv4'" /tmp/apk-badging.txt
+          grep -q "versionCode='15'" /tmp/apk-badging.txt
+          grep -q "versionName='1.15.0'" /tmp/apk-badging.txt
+          sha256sum "$APK" | tee /tmp/apk-sha256.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PinoWatch-v1.15.0-debug-apk
+          path: /tmp/pinowatch/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
