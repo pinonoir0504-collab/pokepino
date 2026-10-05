@@ -1,10 +1,11 @@
-name: Audit 500 External Figure Images
+name: Audit 500 Mercari Rakuma Figures
 
 on:
   push:
     branches: [ "audit/web-500-recognition" ]
     paths:
-      - "tools/audit_web_500.py"
+      - "tools/audit_marketplace_500.py"
+      - "audit/marketplace_500_candidates.json"
       - ".github/workflows/audit-web-500.yml"
       - "app/src/main/java/com/pokepino/app/VariantRecognizer.kt"
       - "app/src/main/assets/catalog_v2.json"
@@ -21,12 +22,13 @@ jobs:
           python-version: "3.12"
       - name: Install audit dependencies
         run: python -m pip install --disable-pip-version-check requests beautifulsoup4 pillow numpy onnxruntime
-      - name: Run independent 500-image audit
-        run: python tools/audit_web_500.py --target 500 --pages 18
+      - name: Run Mercari/Rakuma 500-image audit
+        run: python tools/audit_marketplace_500.py
       - uses: actions/upload-artifact@v4
         with:
-          name: pokepino-web500-audit
+          name: pokepino-marketplace500-audit
           path: |
-            web500_audit.json
-            web500_failures.csv
+            marketplace500_audit.json
+            marketplace500_failures.csv
+            marketplace500_selection.json
           if-no-files-found: error
