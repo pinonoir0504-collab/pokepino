@@ -93,6 +93,61 @@ def infer_species(text,en,ja,aliases):
     if 151 in hits and 150 in hits: hits.discard(151) # Mew in Mewtwo noise
     return hits
 
+def bing_web_results(query,pages=1):
+    seen=set()
+    for p in range(pages):
+        first=1+p*10
+        url=f"https://www.bing.com/search?q={quote_plus(query)}&first={first}&count=10&setlang=en"
+        try:
+            text=get(url,timeout=20).text
+        except Exception:
+            continue
+        soup=BeautifulSoup(text,"html.parser")
+        found=0
+        for li in soup.select("li.b_algo"):
+            a=li.select_one("h2 a")
+            if not a or not a.get("href"): continue
+            u=a.get("href")
+            if u in seen: continue
+            seen.add(u);found+=1
+            title=a.get_text(" ",strip=True)
+            snip=li.get_text(" ",strip=True)
+            yield {"source_url":u,"meta":title+" "+snip,"query":query}
+        if found<3: break
+        time.sleep(.10)
+
+def listing_main_image(source_url):
+    try:
+        raw=get(source_url,timeout=18,max_bytes=3_500_000).text[:1_000_000]
+        soup=BeautifulSoup(raw,"html.parser")
+        candidates=[]
+        for prop in ("og:image","twitter:image","twitter:image:src"):
+            x=soup.find("meta",attrs={"property":prop}) or soup.find("meta",attrs={"name":prop})
+            if x and x.get("content"): candidates.append(x["content"])
+        # eBay occasionally exposes main image through image tags when og:image is generic.
+        for img in soup.select('img[id*="icImg"], img[data-zoom-src], img[src*="ebayimg"]'):
+            u=img.get("data-zoom-src") or img.get("src")
+            if u: candidates.append(u)
+        title=(soup.title.get_text(" ",strip=True) if soup.title else "")
+        desc=" ".join(
+            x.get("content","") for x in soup.find_all(
+                "meta",attrs={"property":re.compile("og:title|og:description",re.I)}
+            )
+        )
+        for u in candidates:
+            if u and u.startswith("http") and "logo" not in u.lower():
+                return u,(title+" "+desc).strip()
+    except Exception:
+        pass
+    return None,""
+
+def collect_species_list(en,ja):
+    runtime=load_runtime_catalog()
+    dexes=sorted({x["dex"] for x in runtime if x["dex"]>0 and x["dex"] in en})
+    rng=random.Random(20261005)
+    rng.shuffle(dexes)
+    return dexes
+
 def bing_results(query,pages=12):
     seen=set()
     for p in range(pages):
@@ -177,56 +232,101 @@ def parse_kids_no(text):
     return 0
 
 def collect(target,en,ja,aliases,max_pages):
-    out=[]; seen_urls=set(); seen_hashes=set(); stats=Counter()
-    all_candidates=[]
-    for q in SEARCHES:
-        for x in bing_results(q,pages=max_pages):
-            if x["image_url"] not in seen_urls:
-                seen_urls.add(x["image_url"]);all_candidates.append(x)
-    random.Random(20261005).shuffle(all_candidates)
-    print(f"search candidates={len(all_candidates)}",flush=True)
-    per_species=Counter()
-    per_domain=Counter()
-    for i,c in enumerate(all_candidates,1):
-        if len(out)>=target:break
-        text=source_context(c)
-        if not text:
-            stats["no_context"]+=1;continue
+    out=[];seen_urls=set();seen_sources=set();seen_hashes=set();stats=Counter()
+    per_species=Counter();per_domain=Counter()
+
+    def consider(c,expected_dex=None):
+        nonlocal out
+        source=c["source_url"]
+        dom=urlparse(source).netloc.lower().replace("www.","")
+        if any(x in dom for x in EXCLUDED_DOMAINS): stats["excluded_domain"]+=1;return
+        if source in seen_sources: return
+        seen_sources.add(source)
+
+        meta=c.get("meta","")
+        image_url=c.get("image_url")
+        page_meta=""
+        if not image_url:
+            image_url,page_meta=listing_main_image(source)
+        text=(meta+" "+page_meta).strip()
+        if not image_url:
+            stats["no_main_image"]+=1;return
+        if image_url in seen_urls:return
+        low=text.lower()
+        if not any(x in low for x in CONTEXT):
+            stats["no_context"]+=1;return
+
         hits=infer_species(text,en,ja,aliases)
-        if len(hits)!=1:
-            stats["label_ambiguous"]+=1;continue
-        dex=next(iter(hits))
-        # Prefer diversity but allow repeats once broad coverage is established.
-        if per_species[dex]>=3:
-            stats["species_cap"]+=1;continue
-        low=" "+ascii_norm(text)+" "
-        if any(x in low for x in MULTI):
-            stats["multi_title"]+=1;continue
+        if expected_dex is not None:
+            if expected_dex not in hits:
+                stats["expected_species_missing"]+=1;return
+            # Other species names in the same listing means mixed/ambiguous.
+            if len(hits)!=1:
+                stats["label_ambiguous"]+=1;return
+            dex=expected_dex
+        else:
+            if len(hits)!=1:
+                stats["label_ambiguous"]+=1;return
+            dex=next(iter(hits))
+
+        alow=" "+ascii_norm(text)+" "
+        if any(x in alow for x in MULTI):
+            stats["multi_title"]+=1;return
+        if per_species[dex]>=4:
+            stats["species_cap"]+=1;return
+        if per_domain[dom]>=180:
+            stats["domain_cap"]+=1;return
         try:
-            im=decode_image(c["image_url"])
+            im=decode_image(image_url)
         except Exception:
-            stats["image_fail"]+=1;continue
+            stats["image_fail"]+=1;return
         h=phashish(im)
         if h in seen_hashes:
-            stats["duplicate"]+=1;continue
-        seen_hashes.add(h)
-        dom=urlparse(c["source_url"]).netloc.lower().replace("www.","")
-        # Keep one marketplace/domain from dominating.
-        if per_domain[dom]>=120:
-            stats["domain_cap"]+=1;continue
+            stats["duplicate"]+=1;return
+        seen_hashes.add(h);seen_urls.add(image_url)
         per_domain[dom]+=1;per_species[dex]+=1
         out.append({
             "target_dex":dex,
             "target_name_ja":ja.get(dex,""),
             "target_name_en":en.get(dex,""),
-            "image_url":c["image_url"],
-            "source_url":c["source_url"],
+            "image_url":image_url,
+            "source_url":source,
             "source_domain":dom,
             "kids_no":parse_kids_no(text),
-            "label_text":re.sub(r"\s+"," ",text)[:400],
+            "year":(re.search(r"\b(199[6-9]|20[0-2]\d)\b",text) or [None,""])[1],
+            "is_clear":bool(re.search(r"\bclear\b|クリア",text,re.I)),
+            "label_text":re.sub(r"\s+"," ",text)[:500],
         })
         if len(out)%50==0:
-            print(f"accepted {len(out)}/{target} scanned={i} domains={len(per_domain)} species={len(per_species)}",flush=True)
+            print(f"accepted {len(out)}/{target} domains={len(per_domain)} species={len(per_species)}",flush=True)
+
+    # Primary: species-specific web searches. The listing text itself must independently
+    # confirm the queried species, so the search query is not treated as ground truth.
+    dexes=collect_species_list(en,ja)
+    for qi,dex in enumerate(dexes,1):
+        if len(out)>=target:break
+        name=en[dex]
+        queries=[
+            f'site:ebay.com/itm "{name}" "Pokemon Kids" "Finger Puppet" Bandai',
+            f'"{name}" "Pokemon Kids" "Finger Puppet" Bandai',
+        ]
+        for q in queries:
+            for cand in bing_web_results(q,pages=1):
+                consider(cand,expected_dex=dex)
+                if len(out)>=target or per_species[dex]>=4:break
+            if len(out)>=target or per_species[dex]>=4:break
+        if qi%50==0:
+            print(f"species searches {qi}/{len(dexes)} accepted={len(out)}",flush=True)
+        time.sleep(.06)
+
+    # Fallback: generic image search can add listings missed by web search.
+    if len(out)<target:
+        for q in SEARCHES:
+            for cand in bing_results(q,pages=max_pages):
+                consider(cand)
+                if len(out)>=target:break
+            if len(out)>=target:break
+
     print("collection stats",dict(stats),flush=True)
     return out
 
@@ -410,13 +510,20 @@ def evaluate(samples,runtime,weights=(.55,.25,.20),with_ai=True):
             stats["auto_correct"]+=final_dex==s["target_dex"]
         if pred_dex!=s["target_dex"]:stats["visual_miss"]+=1
         exact_known=False;exact_correct=False
+        matches=[]
         if s.get("kids_no"):
             matches=[x for x in runtime if x["dex"]==s["target_dex"] and x["kids_no"]==s["kids_no"]]
-            target_groups={x["group"] for x in matches}
-            if len(target_groups)==1:
-                exact_known=True
-                exact_correct=bool(top and top[0] in target_groups)
-                stats["exact_known"]+=1;stats["exact_correct"]+=exact_correct
+        elif s.get("year"):
+            y=str(s["year"])
+            matches=[x for x in runtime if x["dex"]==s["target_dex"] and x["year"]==y]
+            if s.get("is_clear"):
+                clear=[x for x in matches if "クリア" in (x["variant"]+x["series"])]
+                if clear:matches=clear
+        target_groups={x["group"] for x in matches}
+        if len(target_groups)==1:
+            exact_known=True
+            exact_correct=bool(top and top[0] in target_groups)
+            stats["exact_known"]+=1;stats["exact_correct"]+=exact_correct
         r=dict(s)
         r.update({
             "visual_pred_dex":pred_dex,"visual_pred_name":top[2][0]["pokemon"] if top else "",
