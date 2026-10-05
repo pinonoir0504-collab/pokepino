@@ -8,6 +8,6 @@
   "embedding_groups": 1530,
   "prototypes_per_reference_target": 4,
   "model_bytes": 3717006,
-  "database_bytes": 5026961,
+  "database_bytes": 5076017,
   "sample_failures": []
 }
