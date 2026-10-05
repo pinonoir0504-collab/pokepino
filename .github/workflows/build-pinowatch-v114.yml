@@ -27,6 +27,8 @@ jobs:
           unzip -t /tmp/PinoWatch_v1.14.0_min.zip
           mkdir -p /tmp/pinowatch
           unzip -q /tmp/PinoWatch_v1.14.0_min.zip -d /tmp/pinowatch
+          mkdir -p /tmp/pinowatch/app/src/main
+          cp /tmp/pinowatch/app/AndroidManifest.xml /tmp/pinowatch/app/src/main/AndroidManifest.xml
 
       - uses: actions/setup-java@v5
         with:
