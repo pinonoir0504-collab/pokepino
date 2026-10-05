@@ -41,6 +41,10 @@ jobs:
         run: |
           test "$(stat -c%s nemupino-ci/app/src/main/res/drawable/pino_logo.png)" -gt 100000
           test "$(stat -c%s nemupino-ci/app/src/main/res/drawable/pino_icon_foreground.png)" -gt 100000
+      - name: Apply NemuPino 3.6.3 hotfix
+        shell: bash
+        run: |
+          cp .nemupino-build/SoundCandidates.kt nemupino-ci/app/src/main/java/com/oyasumi/recorder/SoundCandidates.kt
       - name: Unit tests
         working-directory: nemupino-ci
         run: gradle clean testDebugUnitTest --stacktrace
