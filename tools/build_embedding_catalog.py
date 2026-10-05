@@ -92,7 +92,9 @@ def build_model():
         input_names=["input"], output_names=["embedding"],
         opset_version=17, do_constant_folding=True, dynamo=False
     )
-    if MODEL_OUT.stat().st_size < 2_000_000:
+    model_bytes = MODEL_OUT.stat().st_size
+    print(f"exported embedding model bytes={model_bytes}", flush=True)
+    if model_bytes < 2_000_000:
         raise RuntimeError("exported model looks too small")
     return model
 
