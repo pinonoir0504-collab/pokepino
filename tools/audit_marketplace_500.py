@@ -238,23 +238,32 @@ def main():
         accepted=bool(top and score>=.90 and margin>=.03)
         metrics["n"]+=1;metrics["visual_top1"]+=pred==item["target_dex"];metrics["visual_top5"]+=item["target_dex"] in top5[:5]
         metrics["visual_accept"]+=accepted;metrics["visual_accept_correct"]+=accepted and pred==item["target_dex"]
+        acs=[];aok=False
+        if sess is not None:
+            acs,aok=ai(sess,labels,im)
+            if acs:
+                metrics["ai_n"]+=1
+                metrics["ai_top1"]+=acs[0][0]==item["target_dex"]
+                metrics["ai_top5"]+=item["target_dex"] in [x[0] for x in acs]
+                metrics["ai_accept"]+=aok
+                metrics["ai_accept_correct"]+=aok and acs[0][0]==item["target_dex"]
         auto=False;auto_dex=0;mode=""
         if accepted and top and len(top[2])==1:auto=True;auto_dex=pred;mode="visual"
-        elif sess is not None:
-            acs,aok=ai(sess,labels,im)
-            if aok:
-                ad=acs[0][0]
-                if species_counts[ad]==1:auto=True;auto_dex=ad;mode="ai_single"
-                else:
-                    lr=rank(q,refs,sigs,groups,allowed=ad);la=lr[0] if lr else None;lb=lr[1] if len(lr)>1 else None
-                    lm=la[1]-(lb[1] if lb else 0) if la else 0
-                    if la and la[1]>=.90 and lm>=.03 and len(la[2])==1:auto=True;auto_dex=ad;mode="ai_visual"
+        elif acs and aok:
+            ad=acs[0][0]
+            if species_counts[ad]==1:auto=True;auto_dex=ad;mode="ai_single"
+            else:
+                lr=rank(q,refs,sigs,groups,allowed=ad);la=lr[0] if lr else None;lb=lr[1] if len(lr)>1 else None
+                lm=la[1]-(lb[1] if lb else 0) if la else 0
+                if la and la[1]>=.90 and lm>=.03 and len(la[2])==1:auto=True;auto_dex=ad;mode="ai_visual"
         metrics["auto"]+=auto;metrics["auto_correct"]+=auto and auto_dex==item["target_dex"]
         exact=""
         if item["exact_group"]:
             metrics["exact_n"]+=1;exact=(top[0]==item["exact_group"] if top else False);metrics["exact_correct"]+=bool(exact)
         row={**item,"visual_pred_dex":pred,"visual_pred_name":top[2][0]["pokemon"] if top else "","visual_score":score,"visual_margin":margin,
-             "visual_top5":top5[:5],"visual_accepted":accepted,"auto_registered":auto,"auto_dex":auto_dex,"auto_mode":mode,
+             "visual_top5":top5[:5],"visual_accepted":accepted,
+             "ai_top5":acs,"ai_accepted":aok,
+             "auto_registered":auto,"auto_dex":auto_dex,"auto_mode":mode,
              "species_correct":pred==item["target_dex"],"auto_correct":(auto and auto_dex==item["target_dex"]),"exact_correct":exact,
              "bbox_ratio":bbox,"border_std":bstd}
         rows.append(row)
@@ -263,6 +272,10 @@ def main():
       "n":metrics["n"],
       "species_top1":metrics["visual_top1"]/500,
       "species_top5":metrics["visual_top5"]/500,
+      "generic_ai_top1":metrics["ai_top1"]/max(1,metrics["ai_n"]),
+      "generic_ai_top5":metrics["ai_top5"]/max(1,metrics["ai_n"]),
+      "generic_ai_accept_rate":metrics["ai_accept"]/max(1,metrics["ai_n"]),
+      "generic_ai_precision_when_accepted":metrics["ai_accept_correct"]/max(1,metrics["ai_accept"]),
       "visual_accept_rate":metrics["visual_accept"]/500,
       "visual_precision_when_accepted":metrics["visual_accept_correct"]/max(1,metrics["visual_accept"]),
       "full_app_auto_rate":metrics["auto"]/500,
