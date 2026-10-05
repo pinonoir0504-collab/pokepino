@@ -72,6 +72,7 @@ def embed_images(images,kind):
         weights=MobileNet_V3_Small_Weights.DEFAULT
         model=mobilenet_v3_small(weights=weights)
         model.classifier=nn.Identity()
+        tfm=weights.transforms()
     elif kind=="resnet18":
         weights=ResNet18_Weights.DEFAULT
         model=resnet18(weights=weights)
