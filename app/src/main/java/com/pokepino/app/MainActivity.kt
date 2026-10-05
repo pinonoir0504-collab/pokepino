@@ -205,6 +205,7 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
     var busy by remember{mutableStateOf(false)}
     var msg by remember{mutableStateOf("")}
     var cameraFile by remember{mutableStateOf<File?>(null)}
+    val visualReferences=remember(master){master.filter{it.dex>0&&it.feature.isNotBlank()}}
 
     fun analyze(u:Uri){
         if(busy)return
@@ -213,85 +214,81 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
             try{
                 val b=withContext(Dispatchers.IO){decodeBitmap(context,u,1280)}
                 bitmap=b
-                val r=withContext(Dispatchers.IO){recognizer.recognize(b)}
-                result=r
 
-                data class Fused(
-                    val species:PokemonRecognizer.Candidate,
-                    val variants:VariantRecognizer.Result?,
-                    val variantScore:Float,
-                    val combined:Float
-                )
-
-                val fused=withContext(Dispatchers.IO){
-                    r.candidates.take(3).map{species->
-                        val refs=master.filter{it.dex==species.dex&&it.feature.isNotBlank()}
-                        val vres=if(refs.isNotEmpty()) variant.recognize(b,refs) else null
-                        val vs=vres?.candidates?.firstOrNull()?.score?:0f
-                        Fused(species,vres,vs,species.score*.55f+vs*.45f)
-                    }.sortedByDescending{it.combined}
+                // Primary path: compare directly against the real-figure catalog.
+                // This is offline and measured substantially better on figure photos
+                // than the generic Pokemon species classifier.
+                val visual=withContext(Dispatchers.IO){
+                    variant.recognize(b,visualReferences)
                 }
+                vr=visual
+                val visualTop=visual.candidates.firstOrNull()
+                val visualTopFigures=visualTop?.recordIds
+                    ?.mapNotNull{id->master.firstOrNull{it.id==id}}
+                    ?: emptyList()
+                val visualDex=visualTopFigures.map{it.dex}.filter{it>0}.distinct().singleOrNull()
 
-                val modelTop=r.candidates.firstOrNull()
-                val fusedTop=fused.firstOrNull()
-                val fusedNext=fused.getOrNull(1)
-                val fusedMargin=if(fusedTop!=null&&fusedNext!=null)fusedTop.combined-fusedNext.combined else 1f
-                val corrected=fusedTop!=null &&
-                    fusedTop.variantScore>=.94f &&
-                    fusedTop.species.score>=.08f &&
-                    fusedMargin>=.06f
-
-                val chosenDex=when{
-                    r.accepted&&modelTop!=null->modelTop.dex
-                    corrected->fusedTop!!.species.dex
-                    else->null
-                }
-
-                if(chosenDex!=null){
-                    val vars=master.filter{it.dex==chosenDex}
-                    val precomputed=fused.firstOrNull{it.species.dex==chosenDex}?.variants
-                    val vres=when{
-                        precomputed!=null->precomputed
-                        vars.size>1->withContext(Dispatchers.IO){variant.recognize(b,vars)}
-                        else->null
-                    }
-                    vr=vres
-
-                    if(corrected&&(!r.accepted||modelTop?.dex!=chosenDex)){
-                        msg="実物指人形DBとの照合でポケモン候補を補正しました"
-                    }
-
-                    when{
-                        vars.size==1->{
-                            val fig=vars.first()
-                            setOwned(fig.id,maxOf(1,owned[fig.id]?:0))
-                            msg="✓ ${fig.pokemon} ${fig.variant} を自動登録しました"
+                if(visual.accepted&&visualTop!=null&&visualDex!=null){
+                    if(visualTop.recordIds.size==1){
+                        val id=visualTop.recordIds.first()
+                        val fig=master.firstOrNull{it.id==id}
+                        if(fig!=null){
+                            setOwned(id,maxOf(1,owned[id]?:0))
+                            msg="✓ ${fig.pokemon} ${fig.variant} を実物DBで判定して登録しました"
+                        }else{
+                            msg="実物DBで高確度一致しました"
                         }
-                        vres!=null->{
-                            val candidate=vres.candidates.firstOrNull()
-                            if(vres.accepted&&candidate!=null&&candidate.recordIds.size==1){
-                                val id=candidate.recordIds.first()
-                                setOwned(id,maxOf(1,owned[id]?:0))
-                                val fig=master.firstOrNull{it.id==id}
-                                msg="✓ ${fig?.pokemon?:"候補"} ${fig?.variant?:""} を自動登録しました"
-                            }else if(vres.candidates.isEmpty()){
-                                msg="ポケモンは判定できましたが、版違い用の実物参照がありません"
-                            }else if(candidate!=null&&candidate.recordIds.size>1){
-                                msg="写真だけでは区別できない同型版があります。シリーズ・年を選んでください"
-                            }else if(msg.isBlank()){
-                                msg="版違いは僅差です。下の候補から確認してください"
-                            }
-                        }
-                    }
-                }else if(r.candidates.isNotEmpty()){
-                    if(fusedTop?.variantScore?:0f>=.88f){
-                        vr=fusedTop?.variants
-                        msg="候補は見つかりましたが確信度が足りないため自動登録していません"
                     }else{
-                        msg="確信度が低いため自動登録していません。候補を確認してください"
+                        msg="実物DBで高確度一致しましたが、写真だけでは区別できない同型版があります"
                     }
                 }else{
-                    msg="候補を見つけられませんでした"
+                    // Secondary path: the generic species AI is used only when the
+                    // real-figure matcher cannot safely decide. Model download/network
+                    // failure must not break offline figure matching.
+                    val aiAttempt=runCatching{
+                        withContext(Dispatchers.IO){recognizer.recognize(b)}
+                    }
+                    val ai=aiAttempt.getOrNull()
+                    result=ai
+                    val top=ai?.candidates?.firstOrNull()
+
+                    if(ai?.accepted==true&&top!=null){
+                        val vars=master.filter{it.dex==top.dex}
+                        val localRefs=vars.filter{it.feature.isNotBlank()}
+                        val local=if(localRefs.isNotEmpty()){
+                            withContext(Dispatchers.IO){variant.recognize(b,localRefs)}
+                        }else null
+
+                        if(vars.size==1){
+                            val fig=vars.first()
+                            setOwned(fig.id,maxOf(1,owned[fig.id]?:0))
+                            msg="✓ ${fig.pokemon} ${fig.variant} をAI判定して登録しました"
+                        }else if(local!=null){
+                            vr=local
+                            val candidate=local.candidates.firstOrNull()
+                            if(local.accepted&&candidate!=null&&candidate.recordIds.size==1){
+                                val id=candidate.recordIds.first()
+                                val fig=master.firstOrNull{it.id==id}
+                                setOwned(id,maxOf(1,owned[id]?:0))
+                                msg="✓ ${fig?.pokemon?:"候補"} ${fig?.variant?:""} をAI＋実物DBで登録しました"
+                            }else if(candidate!=null&&candidate.recordIds.size>1){
+                                msg="ポケモンは特定できましたが、同じ見た目の発売違いがあります"
+                            }else{
+                                msg="ポケモンは${vars.firstOrNull()?.pokemon?:"候補"}が有力です。版違いは候補から確認してください"
+                            }
+                        }else{
+                            msg="ポケモンは${vars.firstOrNull()?.pokemon?:"候補"}が有力ですが、版違い用の実物参照がありません"
+                        }
+                    }else{
+                        if(visual.candidates.isNotEmpty()){
+                            val aiNote=if(aiAttempt.isFailure)"（AI補助は通信またはモデル取得に失敗）" else ""
+                            msg="実物DBの候補を表示しています。確信度不足のため自動登録していません$aiNote"
+                        }else if(aiAttempt.isFailure){
+                            msg="判定できませんでした。AI補助データも取得できませんでした"
+                        }else{
+                            msg="候補を見つけられませんでした"
+                        }
+                    }
                 }
             }catch(e:Exception){
                 msg="処理エラー: ${e.message ?: e.javaClass.simpleName}"
