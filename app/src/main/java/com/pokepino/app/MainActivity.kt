@@ -195,7 +195,7 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
     }
 }
 
-@Composable private fun Owned(master:List<Figure>,owned:Map<String,Int>,open:(Int)->Unit){ val list=master.filter{(owned[it.id]?:0)>0}; LazyColumn(Modifier.fillMaxSize().padding(12.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){ item{Text("所持 ${list.size}件",fontWeight=FontWeight.Black)}; items(list,key={it.id}){f-> Card(Modifier.fillMaxWidth().clickable{open(f.dex)}){Column(Modifier.padding(12.dp)){Text("No.%03d ${f.pokemon}".format(f.dex),fontWeight=FontWeight.Bold);Text(f.variant);Text("${f.series} ${f.year}",style=MaterialTheme.typography.labelSmall)}}} } }
+@Composable private fun Owned(master:List<Figure>,owned:Map<String,Int>,open:(Int)->Unit){ val list=master.filter{(owned[it.id]?:0)>0}; LazyColumn(Modifier.fillMaxSize().testTag("owned_screen").padding(12.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){ item{Text("所持 ${list.size}件",fontWeight=FontWeight.Black)}; items(list,key={it.id}){f-> Card(Modifier.fillMaxWidth().clickable{open(f.dex)}){Column(Modifier.padding(12.dp)){Text("No.%03d ${f.pokemon}".format(f.dex),fontWeight=FontWeight.Bold);Text(f.variant);Text("${f.series} ${f.year}",style=MaterialTheme.typography.labelSmall)}}} } }
 
 @Composable private fun Photo(master:List<Figure>,owned:Map<String,Int>,recognizer:PokemonRecognizer,variant:VariantRecognizer,setOwned:(String,Int)->Unit,open:(Int)->Unit){
     val context=LocalContext.current
@@ -383,7 +383,7 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun Detail(vars:List<Figure>,owned:Map<String,Int>,setOwned:(String,Int)->Unit,back:()->Unit){
     val first=vars.firstOrNull()?:return
-    Scaffold(topBar={TopAppBar(title={Text("No.%03d ${first.pokemon}".format(first.dex))},navigationIcon={TextButton(back){Text("←")}})}){pad->
+    Scaffold(modifier=Modifier.testTag("detail_screen"),topBar={TopAppBar(title={Text("No.%03d ${first.pokemon}".format(first.dex))},navigationIcon={TextButton(back){Text("←")}})}){pad->
         LazyColumn(Modifier.padding(pad).padding(12.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
             items(vars,key={it.id}){f->
                 val n=owned[f.id]?:0
