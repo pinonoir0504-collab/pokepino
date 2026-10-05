@@ -158,6 +158,8 @@ def main():
         raise SystemExit("too few evaluation records")
 
     exact_total=0; exact_group=0; aug_total=0; aug_group=0; aug_species=0; aug_top5_group=0
+    visual_accept=0; visual_accept_correct=0
+    visual_accept_loose=0; visual_accept_loose_correct=0
     fetch_fail=0
     model_items=[]
     for idx,r in enumerate(selected,1):
@@ -180,9 +182,19 @@ def main():
             else:
                 aug_total+=1
                 top=int(order[0])
-                if groups[top]==target_group: aug_group+=1
+                top_score=float(scores[top])
+                second_score=float(scores[int(order[1])]) if len(order)>1 else 0.0
+                margin=top_score-second_score
+                correct=(groups[top]==target_group)
+                if correct: aug_group+=1
                 if dexes[top]==target_dex: aug_species+=1
                 if target_group in [groups[int(x)] for x in order[:5]]: aug_top5_group+=1
+                if top_score>=.92 and margin>=.045:
+                    visual_accept+=1
+                    if correct: visual_accept_correct+=1
+                if top_score>=.90 and margin>=.03:
+                    visual_accept_loose+=1
+                    if correct: visual_accept_loose_correct+=1
         if idx%25==0:
             print(f"visual eval {idx}/{len(selected)} fetch_fail={fetch_fail}",flush=True)
 
@@ -224,6 +236,10 @@ def main():
         "visual_augmented_group_top5": aug_top5_group/max(1,aug_total),
         "visual_augmented_species_top1": aug_species/max(1,aug_total),
         "visual_augmented_queries":aug_total,
+        "visual_accept_rate_strict":visual_accept/max(1,aug_total),
+        "visual_precision_when_accepted_strict":visual_accept_correct/max(1,visual_accept),
+        "visual_accept_rate_loose":visual_accept_loose/max(1,aug_total),
+        "visual_precision_when_accepted_loose":visual_accept_loose_correct/max(1,visual_accept_loose),
         "model_total":model_total,
         "model_species_top1":model_top1/max(1,model_total),
         "model_species_top5":model_top5/max(1,model_total),
