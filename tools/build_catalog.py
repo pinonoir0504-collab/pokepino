@@ -48,6 +48,12 @@ START_URLS += [
     "https://www.yubi-nin.jp/pokemon/poke_kime04XY/poke_kimeXY01.html",
 ]
 NAME_CSV = "https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon_species_names.csv"
+BANDAI_PRODUCTS = [
+    "https://www.bandai.co.jp/candy/products/2026/4570117926402000.html",
+    "https://www.bandai.co.jp/candy/products/2026/4570117928116000.html",
+    "https://www.bandai.co.jp/candy/products/2026/4570117928123000.html",
+    "https://www.bandai.co.jp/candy/products/2026/4570117921056000.html",
+]
 SPECIAL = ("クリア","色違","アローラ","ガラル","ヒスイ","パルデア","メガ","キョダイ","ゲンシ","テラスタル","なみのり","おきがえ","サトシ","キャプテン")
 TRAINERS = ("サトシ","ゴウ","シロナ","リコ","ロイ","フリード")
 
@@ -349,6 +355,52 @@ def compact(r):
     meta={"kidsNo":r.get("kidsNo",0),"source":r.get("source",""),"feature":r.get("feature","")}
     return [r["id"],r["dex"],r["pokemon"],r["variant"],r["series"],r["year"],r["visualGroupId"],r["status"],r["refs"],meta]
 
+def scrape_bandai_lineups(species_names):
+    records=[]
+    for url in BANDAI_PRODUCTS:
+        try:
+            r=get(url,timeout=30)
+            soup=BeautifulSoup(r.text,"html.parser")
+            title=page_title(soup,url)
+            text=soup.get_text("\n",strip=True)
+            year=page_year(text) or "2026"
+            product_key=Path(urlparse(url).path).stem
+            seen=set()
+            for raw in text.splitlines():
+                line=re.sub(r"\s+"," ",raw).strip()
+                m=re.match(r"^(\d{1,2})[．.]\s*(.+)$",line)
+                if not m:
+                    continue
+                item_no=int(m.group(1))
+                name=m.group(2).strip(" 　")
+                if len(name)<2 or len(name)>80:
+                    continue
+                dex,pokemon=resolve_species(name,species_names)
+                if dex<=0 or not pokemon:
+                    continue
+                key=(item_no,dex,name)
+                if key in seen:
+                    continue
+                seen.add(key)
+                rid="BANDAI-"+hashlib.sha1((url+"|"+str(item_no)+"|"+name).encode()).hexdigest()[:14]
+                records.append({
+                    "id":rid,
+                    "dex":dex,
+                    "pokemon":pokemon,
+                    "variant":name,
+                    "series":title[:140],
+                    "year":year,
+                    "visualGroupId":f"BANDAI-{product_key}-{item_no:02d}",
+                    "status":"official_metadata",
+                    "refs":[],
+                    "kidsNo":0,
+                    "source":url,
+                    "feature":"",
+                })
+        except Exception as e:
+            print(f"bandai metadata failed {url}: {e}",file=sys.stderr)
+    return records
+
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument("--max-pages",type=int,default=1200)
@@ -365,6 +417,14 @@ def main():
     scraped=list(dedup.values())
     if not args.no_images:
         scraped=attach_features(scraped,args.max_images)
+
+    official=scrape_bandai_lineups(names)
+    existing_keys={(r.get("source",""),r.get("variant",""),r.get("dex",0)) for r in scraped}
+    scraped.extend(
+        r for r in official
+        if (r.get("source",""),r.get("variant",""),r.get("dex",0)) not in existing_keys
+    )
+
     by_dex={}
     for r in scraped:
         by_dex[r["dex"]]=by_dex.get(r["dex"],0)+1
@@ -377,6 +437,7 @@ def main():
         "scraped_records":len(scraped),
         "scraped_with_features":sum(1 for r in scraped if r["feature"]),
         "scraped_species":len({r["dex"] for r in scraped if r["dex"]>0}),
+        "official_bandai_records":sum(1 for r in scraped if str(r.get("source","")).startswith("https://www.bandai.co.jp/")),
         "trainer_or_other":sum(1 for r in scraped if r["dex"]==0),
         "top_dex_counts":sorted(by_dex.items(), key=lambda x:x[1], reverse=True)[:30],
     }
