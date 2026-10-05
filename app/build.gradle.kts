@@ -26,6 +26,13 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    buildTypes {
+        getByName("debug") {
+            ndk {
+                abiFilters += "x86_64"
+            }
+        }
+    }
 }
 
 dependencies {
