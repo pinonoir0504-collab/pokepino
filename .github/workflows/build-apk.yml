@@ -5,6 +5,10 @@ on:
   push:
     branches: [ "main", "feat/recognition-v3" ]
 
+concurrency:
+  group: pokepino-android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-24.04
