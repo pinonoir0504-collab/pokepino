@@ -38,11 +38,11 @@ class MainActivitySmokeTest {
                 true
             }.getOrDefault(false)
         }
-        rule.onNodeWithText("所持 ×1").assertExists()
+        rule.onNodeWithText("所持 ×1").assertIsDisplayed()
         rule.onNodeWithText("←").performClick()
 
         rule.onNodeWithTag("tab_owned").performClick()
-        rule.onNodeWithText("所持 1件").assertExists()
+        rule.onNodeWithText("所持 1件").assertIsDisplayed()
         rule.onNodeWithText("フシギダネ").assertIsDisplayed()
 
         rule.onNodeWithTag("tab_photo").performClick()
