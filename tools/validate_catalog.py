@@ -78,3 +78,43 @@ print(json.dumps({
     "visual_signatures":features,
     "visual_groups":len(groups),
 },ensure_ascii=False,indent=2))
+
+
+embed_path=ASSETS/"embedding_catalog_v3.json"
+model_path=ASSETS/"mobilenet_v3_small_features.onnx"
+recognizer_source=ROOT/"app"/"src"/"main"/"java"/"com"/"pokepino"/"app"/"EmbeddingRecognizer.kt"
+if recognizer_source.exists():
+    if not embed_path.exists():
+        fail("embedding_catalog_v3.json is missing")
+    if not model_path.exists() or model_path.stat().st_size<4_000_000:
+        fail("MobileNet embedding model is missing or too small")
+    try:
+        embeddings=json.loads(embed_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        fail(f"embedding catalog is invalid: {e}")
+    if len(embeddings)<3500:
+        fail(f"embedding catalog too small: {len(embeddings)}")
+    embed_species=set()
+    bad_embeddings=[]
+    for i,row in enumerate(embeddings):
+        if not isinstance(row,list) or len(row)<4:
+            bad_embeddings.append((i,"shape"))
+            continue
+        dex=int(row[1])
+        if dex>0:
+            embed_species.add(dex)
+        try:
+            raw=base64.b64decode(str(row[3]),validate=True)
+            if len(raw)!=576:
+                bad_embeddings.append((i,len(raw)))
+        except Exception:
+            bad_embeddings.append((i,-1))
+    if len(embed_species)<800:
+        fail(f"embedding species coverage too small: {len(embed_species)}")
+    if bad_embeddings:
+        fail(f"invalid embedding rows: {bad_embeddings[:5]}")
+    print(json.dumps({
+        "embedding_rows":len(embeddings),
+        "embedding_species":len(embed_species),
+        "embedding_model_bytes":model_path.stat().st_size,
+    },ensure_ascii=False,indent=2))
