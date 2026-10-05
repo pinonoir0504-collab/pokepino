@@ -11,6 +11,10 @@ on:
       - "app/src/main/assets/catalog_v2.json"
   workflow_dispatch:
 
+concurrency:
+  group: marketplace-500-audit
+  cancel-in-progress: true
+
 jobs:
   audit:
     runs-on: ubuntu-24.04
