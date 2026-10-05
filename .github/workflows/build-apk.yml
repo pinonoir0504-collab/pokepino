@@ -3,7 +3,11 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "feat/recognition-v3" ]
+
+concurrency:
+  group: pokepino-android-apk-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -35,6 +39,6 @@ jobs:
         run: gradle :app:assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: pokepino-v1.0.1-debug-apk
+          name: pokepino-v1.1.0-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
