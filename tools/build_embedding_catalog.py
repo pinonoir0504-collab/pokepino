@@ -179,7 +179,7 @@ def main():
             z = model(batch)
             z = torch.nn.functional.normalize(z, dim=1).cpu().numpy()
         for meta, vec in zip(batch_meta, z):
-            output.append([meta["id"], meta["dex"], meta["group"], quantize(vec)])
+            output.append([meta["id"], meta["dex"], meta["group"], quantize(vec), meta["prototype"]])
         batch_tensors = []
         batch_meta = []
 
@@ -190,9 +190,9 @@ def main():
         made = []
         try:
             made = list(variants(image))
-            for _, vim in made:
+            for variant_name, vim in made:
                 batch_tensors.append(transform(vim))
-                batch_meta.append(item)
+                batch_meta.append({**item, "prototype": variant_name})
                 if len(batch_tensors) >= 64:
                     flush()
         finally:
@@ -206,7 +206,7 @@ def main():
             print(f"embed {i}/{len(refs)} prototypes={len(output) + len(batch_tensors)}", flush=True)
     flush()
 
-    output.sort(key=lambda x: (x[1], x[2], x[0], x[3]))
+    output.sort(key=lambda x: (x[1], x[2], x[0], x[4], x[3]))
     EMBED_OUT.write_text(json.dumps(output, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
     species = {int(x[1]) for x in output if int(x[1]) > 0}
