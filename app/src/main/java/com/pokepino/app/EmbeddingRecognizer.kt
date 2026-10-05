@@ -280,13 +280,13 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
     private fun ensureAssetModel(): File {
         val dir = File(context.filesDir, "models").apply { mkdirs() }
         val f = File(dir, MODEL_ASSET)
-        if (f.exists() && f.length() > 4_000_000L) return f
+        if (f.exists() && f.length() > 2_000_000L) return f
         val tmp = File(dir, "$MODEL_ASSET.part")
         if (tmp.exists()) tmp.delete()
         context.assets.open(MODEL_ASSET).use { input ->
             tmp.outputStream().use { output -> input.copyTo(output) }
         }
-        if (tmp.length() <= 4_000_000L) {
+        if (tmp.length() <= 2_000_000L) {
             tmp.delete()
             error("高精度AIモデルが壊れています")
         }
