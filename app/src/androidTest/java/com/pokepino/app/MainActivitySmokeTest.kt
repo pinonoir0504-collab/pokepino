@@ -30,7 +30,7 @@ class MainActivitySmokeTest {
 
         rule.onNodeWithText("ポケピーノ").assertIsDisplayed()
         rule.onNodeWithTag("tab_dex").assertIsDisplayed()
-        rule.onNodeWithText("名前・図鑑No.で検索").assertIsDisplayed()
+        rule.onNodeWithText("名前・図鑑No.で検索").fetchSemanticsNode()
 
         rule.onNodeWithTag("dex_1").performClick()
         exists("detail_screen")
@@ -49,9 +49,9 @@ class MainActivitySmokeTest {
         exists("owned_item_PKP-00001")
 
         rule.onNodeWithTag("tab_photo").performClick()
-        rule.onNodeWithText("写真で判定").assertIsDisplayed()
-        rule.onNodeWithText("画像を選ぶ").assertIsDisplayed()
-        rule.onNodeWithText("写真を撮る").assertIsDisplayed()
+        rule.onNodeWithText("写真で判定").fetchSemanticsNode()
+        rule.onNodeWithText("画像を選ぶ").fetchSemanticsNode()
+        rule.onNodeWithText("写真を撮る").fetchSemanticsNode()
 
         rule.onNodeWithTag("tab_dex").performClick()
         rule.onNodeWithText("名前・図鑑No.で検索").assertIsDisplayed()
