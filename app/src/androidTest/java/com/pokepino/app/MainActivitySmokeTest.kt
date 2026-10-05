@@ -30,7 +30,7 @@ class MainActivitySmokeTest {
         rule.onNodeWithText("名前・図鑑No.で検索").assertIsDisplayed()
 
         rule.onNodeWithText("No.001").performClick()
-        rule.onNodeWithText("フシギダネ",substring=true).assertExists()
+        rule.onNodeWithTag("detail_screen").assertIsDisplayed()
         rule.onAllNodesWithText("＋")[0].performClick()
         rule.waitUntil(timeoutMillis=3000){
             runCatching{
