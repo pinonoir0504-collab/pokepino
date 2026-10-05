@@ -86,7 +86,8 @@ def embed_images(images,kind):
     elif kind=="convnext_tiny":
         weights=ConvNeXt_Tiny_Weights.DEFAULT
         model=convnext_tiny(weights=weights)
-        model.classifier=nn.Identity()
+        # Keep normalization + flatten, remove only the final classifier.
+        model.classifier=nn.Sequential(model.classifier[0],model.classifier[1])
         tfm=weights.transforms()
     elif kind=="dinov2_vits14":
         weights=None
@@ -310,11 +311,17 @@ def main():
     result["pokemon_logits_embedding"]=pokemon_logits
     result["fusion_pokemon_logits"]=fusion(qrows,pokemon_logits,ai)
     models={"pokemon_logits_embedding":pokemon_logits}
+    print("pokemon_logits_embedding",json.dumps({k:v for k,v in pokemon_logits.items() if k!="scores"},ensure_ascii=False),flush=True)
     for kind in ["mobilenet_v3_small","resnet18","efficientnet_b0","convnext_tiny","dinov2_vits14"]:
-        er=evaluate_embedding(kind,qrows,qimgs,refs,rimgs)
-        result[kind]=er
-        models[kind]=er
-        result[f"fusion_{kind}"]=fusion(qrows,er,ai)
+        try:
+            er=evaluate_embedding(kind,qrows,qimgs,refs,rimgs)
+            result[kind]=er
+            models[kind]=er
+            result[f"fusion_{kind}"]=fusion(qrows,er,ai)
+            print(kind,json.dumps({k:v for k,v in er.items() if k!="scores"},ensure_ascii=False),flush=True)
+        except Exception as e:
+            result[kind+"_error"]=repr(e)
+            print(kind,"ERROR",repr(e),flush=True)
     result["ensemble"]=ensemble_embeddings(qrows,models,ai)
     # Strip per-query score dumps from final summary artifact to keep it small.
     summary={}
