@@ -25,9 +25,11 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install audit dependencies
-        run: python -m pip install --disable-pip-version-check requests beautifulsoup4 pillow numpy onnxruntime
+        run: python -m pip install --disable-pip-version-check requests beautifulsoup4 pillow numpy onnxruntime torch torchvision
       - name: Run Mercari/Rakuma 500-image audit
         run: python tools/audit_marketplace_500.py
+      - name: Benchmark alternative recognition on the same fixed 500
+        run: python tools/benchmark_marketplace_embeddings.py
       - uses: actions/upload-artifact@v4
         with:
           name: pokepino-marketplace500-audit
@@ -35,4 +37,5 @@ jobs:
             marketplace500_audit.json
             marketplace500_failures.csv
             marketplace500_selection.json
+            embedding_benchmark.json
           if-no-files-found: error
