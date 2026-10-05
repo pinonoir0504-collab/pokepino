@@ -40,7 +40,8 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         val dex: Int,
         val group: String,
         val vector: ByteArray,
-        val norm: Float
+        val norm: Float,
+        val penalty: Float
     )
 
     private val env by lazy { OrtEnvironment.getEnvironment() }
@@ -127,12 +128,19 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
                 ss += v * v
             }
             val n = sqrt(ss).coerceAtLeast(1e-6f)
+            val prototype=row.optString(4,"base")
+            val penalty=when(prototype){
+                "mirror" -> 0.012f
+                "dark","bright" -> 0.008f
+                else -> 0f
+            }
             out += Ref(
                 id = row.optString(0),
                 dex = row.optInt(1),
                 group = row.optString(2),
                 vector = bytes,
-                norm = n
+                norm = n,
+                penalty = penalty
             )
         }
         if (out.size < 1000) error("高精度認識DBが不足しています: ${out.size}")
@@ -274,7 +282,7 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         if (q.size != r.vector.size) return -1f
         var dot = 0f
         for (i in q.indices) dot += q[i] * (r.vector[i].toInt() / 127f)
-        return (dot / r.norm).coerceIn(-1f, 1f)
+        return (dot / r.norm - r.penalty).coerceIn(-1f, 1f)
     }
 
     private fun ensureAssetModel(): File {
