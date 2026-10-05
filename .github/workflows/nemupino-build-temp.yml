@@ -55,7 +55,7 @@ jobs:
         run: |
           mkdir -p build-artifact
           ZIPALIGN="/usr/local/lib/android/sdk/build-tools/36.0.0/zipalign"
-          "$ZIPALIGN" -f -p 4 nemupino-ci/app/build/outputs/apk/release/app-release-unsigned.apk build-artifact/NemuPino_3.6.1_aligned_unsigned.apk
+          "$ZIPALIGN" -f -p 4 nemupino-ci/app/build/outputs/apk/release/app-release-unsigned.apk build-artifact/NemuPino_3.6.3_aligned_unsigned.apk
           cp /usr/local/lib/android/sdk/build-tools/36.0.0/lib/apksigner.jar build-artifact/apksigner.jar
           cp /usr/local/lib/android/sdk/build-tools/36.0.0/zipalign build-artifact/zipalign
           chmod +x build-artifact/zipalign
@@ -63,6 +63,6 @@ jobs:
           cp -r nemupino-ci/app/build/test-results/testDebugUnitTest build-artifact/test-results || true
       - uses: actions/upload-artifact@v4
         with:
-          name: nemupino-3.6.1-build
+          name: nemupino-3.6.3-build
           path: build-artifact/
           if-no-files-found: error
