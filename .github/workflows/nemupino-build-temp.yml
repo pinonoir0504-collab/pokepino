@@ -54,7 +54,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p build-artifact
-          cp nemupino-ci/app/build/outputs/apk/release/app-release-unsigned.apk build-artifact/NemuPino_3.6.1_unsigned.apk
+          ZIPALIGN="/usr/local/lib/android/sdk/build-tools/36.0.0/zipalign"\n          "$ZIPALIGN" -f -p 4 nemupino-ci/app/build/outputs/apk/release/app-release-unsigned.apk build-artifact/NemuPino_3.6.1_aligned_unsigned.apk
           cp /usr/local/lib/android/sdk/build-tools/36.0.0/lib/apksigner.jar build-artifact/apksigner.jar
           cp /usr/local/lib/android/sdk/build-tools/36.0.0/zipalign build-artifact/zipalign
           chmod +x build-artifact/zipalign
