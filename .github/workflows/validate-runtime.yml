@@ -50,4 +50,4 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
-          script: gradle :app:connectedDebugAndroidTest --stacktrace
+          script: gradle -PpokepinoEmulator=true :app:connectedDebugAndroidTest --stacktrace
