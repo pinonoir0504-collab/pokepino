@@ -22,7 +22,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies
-        run: python -m pip install --disable-pip-version-check requests pillow numpy onnxruntime torch torchvision beautifulsoup4
+        run: |
+          python -m pip install --disable-pip-version-check requests pillow numpy onnxruntime beautifulsoup4
+          python -m pip install --disable-pip-version-check --index-url https://download.pytorch.org/whl/cpu torch torchvision
       - name: Build fixed 500-image marketplace audit
         run: python tools/audit_marketplace_500.py
       - name: Benchmark semantic image embeddings
