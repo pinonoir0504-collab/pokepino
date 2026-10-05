@@ -29,9 +29,9 @@ class MainActivitySmokeTest {
         rule.onNodeWithText("図鑑").assertIsDisplayed()
         rule.onNodeWithText("名前・図鑑No.で検索").assertIsDisplayed()
 
-        rule.onNodeWithText("No.001").performClick()
-        rule.onNodeWithTag("detail_screen").assertIsDisplayed()
-        rule.onAllNodesWithText("＋")[0].performClick()
+        rule.onNodeWithTag("dex_1").performClick()
+        rule.onNodeWithTag("detail_screen").fetchSemanticsNode()
+        rule.onNodeWithTag("plus_PKP-00001").performClick()
         rule.waitUntil(timeoutMillis=3000){
             runCatching{
                 rule.onNodeWithText("所持 ×1").fetchSemanticsNode()
@@ -39,7 +39,7 @@ class MainActivitySmokeTest {
             }.getOrDefault(false)
         }
         rule.onNodeWithText("所持 ×1").assertIsDisplayed()
-        rule.onNodeWithText("←").performClick()
+        rule.onNodeWithTag("detail_back").performClick()
 
         rule.onNodeWithTag("tab_owned").performClick()
         rule.onNodeWithText("所持 1件").assertIsDisplayed()
