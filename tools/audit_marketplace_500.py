@@ -51,7 +51,7 @@ def infer_one(text,ordered):
             uniq.append((dex,name))
     return uniq
 
-BAD=re.compile(r"カード|シール|ステッカー|図鑑|本\b|パンフ|ポスター|ケース|空箱|箱のみ|パッケージのみ",re.I)
+BAD=re.compile(r"カード|シール|ステッカー|図鑑|本\\b|パンフ|ポスター|ケース|空箱|箱のみ|パッケージのみ|未開封|箱入|箱入り|袋未開封",re.I)
 MULTI=re.compile(r"まとめ|セット|大量|詰め合わせ|コンプリート|全種|\d+\s*体|\d+\s*個|＆|&|\+|、|・.+・",re.I)
 FIG=re.compile(r"ポケモン\s*キッズ|指人形|ソフビ",re.I)
 
