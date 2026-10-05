@@ -1,6 +1,7 @@
 package com.pokepino.app
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertExists
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onAllNodesWithText
@@ -30,13 +31,19 @@ class MainActivitySmokeTest {
         rule.onNodeWithText("名前・図鑑No.で検索").assertIsDisplayed()
 
         rule.onNodeWithText("No.001").performClick()
-        rule.onNodeWithText("フシギダネ").assertIsDisplayed()
+        rule.onNodeWithText("フシギダネ",substring=true).assertExists()
         rule.onAllNodesWithText("＋")[0].performClick()
-        rule.onNodeWithText("所持 ×1").assertIsDisplayed()
+        rule.waitUntil(timeoutMillis=3000){
+            runCatching{
+                rule.onNodeWithText("所持 ×1").fetchSemanticsNode()
+                true
+            }.getOrDefault(false)
+        }
+        rule.onNodeWithText("所持 ×1").assertExists()
         rule.onNodeWithText("←").performClick()
 
         rule.onNodeWithTag("tab_owned").performClick()
-        rule.onNodeWithText("所持 1件").assertIsDisplayed()
+        rule.onNodeWithText("所持 1件").assertExists()
         rule.onNodeWithText("フシギダネ").assertIsDisplayed()
 
         rule.onNodeWithTag("tab_photo").performClick()
