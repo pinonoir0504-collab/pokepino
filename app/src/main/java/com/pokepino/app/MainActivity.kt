@@ -195,7 +195,7 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
     }
 }
 
-@Composable private fun Owned(master:List<Figure>,owned:Map<String,Int>,open:(Int)->Unit){ val list=master.filter{(owned[it.id]?:0)>0}; LazyColumn(Modifier.fillMaxSize().testTag("owned_screen").padding(12.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){ item{Text("所持 ${list.size}件",fontWeight=FontWeight.Black)}; items(list,key={it.id}){f-> Card(Modifier.fillMaxWidth().clickable{open(f.dex)}){Column(Modifier.padding(12.dp)){Text("No.%03d ${f.pokemon}".format(f.dex),fontWeight=FontWeight.Bold);Text(f.variant);Text("${f.series} ${f.year}",style=MaterialTheme.typography.labelSmall)}}} } }
+@Composable private fun Owned(master:List<Figure>,owned:Map<String,Int>,open:(Int)->Unit){ val list=master.filter{(owned[it.id]?:0)>0}; LazyColumn(Modifier.fillMaxSize().testTag("owned_screen").padding(12.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){ item{Text("所持 ${list.size}件",Modifier.testTag("owned_count"),fontWeight=FontWeight.Black)}; items(list,key={it.id}){f-> Card(Modifier.fillMaxWidth().testTag("owned_item_${f.id}").clickable{open(f.dex)}){Column(Modifier.padding(12.dp)){Text("No.%03d ${f.pokemon}".format(f.dex),fontWeight=FontWeight.Bold);Text(f.variant);Text("${f.series} ${f.year}",style=MaterialTheme.typography.labelSmall)}}} } }
 
 @Composable private fun Photo(master:List<Figure>,owned:Map<String,Int>,recognizer:PokemonRecognizer,variant:VariantRecognizer,setOwned:(String,Int)->Unit,open:(Int)->Unit){
     val context=LocalContext.current
@@ -394,7 +394,7 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
                         if(f.kidsNo>0) Text("ポケモンキッズ No.${f.kidsNo}",style=MaterialTheme.typography.labelSmall)
                         Text(if(f.status=="direct_reference_ready")"実物参照特徴量あり" else "種判定中心",style=MaterialTheme.typography.labelSmall)
                         Row(verticalAlignment=Alignment.CenterVertically){
-                            Text(if(n>0)"所持 ×$n" else "未所持",Modifier.weight(1f))
+                            Text(if(n>0)"所持 ×$n" else "未所持",Modifier.weight(1f).testTag("owned_state_${f.id}"))
                             OutlinedButton({if(n>0)setOwned(f.id,n-1)},enabled=n>0){Text("−")}
                             Spacer(Modifier.width(6.dp))
                             Button(onClick={setOwned(f.id,n+1)},modifier=Modifier.testTag("plus_${f.id}")){Text("＋")}
