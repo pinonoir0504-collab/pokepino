@@ -11,7 +11,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -31,6 +31,13 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+      - name: Enable KVM
+        shell: bash
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; ls -l /dev/kvm; else echo 'NO_KVM_DEVICE'; fi
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.13"
@@ -47,9 +54,10 @@ jobs:
           api-level: 35
           target: google_apis
           arch: x86_64
-          profile: pixel_6
+          profile: pixel_3a
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -camera-back none -camera-front none
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -camera-back none -camera-front none
           script: |
             set -o pipefail
             cd nemupino-ci
@@ -59,7 +67,7 @@ jobs:
             adb shell pm grant com.oyasumi.recorder android.permission.RECORD_AUDIO || true
             adb shell pm grant com.oyasumi.recorder android.permission.POST_NOTIFICATIONS || true
             set +e
-            timeout 600s adb shell am instrument -w -r -e class "${{ matrix.test_class }}" com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee ../diag/instrumentation.txt
+            timeout 420s adb shell am instrument -w -r -e class "${{ matrix.test_class }}" com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee ../diag/instrumentation.txt
             STATUS=${PIPESTATUS[0]}
             adb logcat -d > ../diag/logcat.txt 2>&1 || true
             adb shell dumpsys meminfo com.oyasumi.recorder > ../diag/meminfo.txt 2>&1 || true
