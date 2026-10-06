@@ -1,0 +1,318 @@
+{
+  "version": "1.2.2",
+  "status": "validation completed, APK build pending",
+  "reference_sources": 60,
+  "reference_species": 44,
+  "prototype_vectors": 240,
+  "test_count": 16,
+  "before_correct": 13,
+  "after_correct": 13,
+  "method": "fresh search-discovered single figure images, no optimization on these16, PC recognition reproduction, not Android upload",
+  "telemetry": "disabled before ONNX initialization in Python and Android",
+  "records": [
+    {
+      "item_id": "m64100464636",
+      "page_url": "https://jp.mercari.com/item/m64100464636",
+      "sha256": "93d54a19665ef0689210119ce2009d4d4416fa50c3d920ee323907da30fa82b5",
+      "truth_dex": 258,
+      "truth_name": "ミズゴロウ",
+      "before_correct": true,
+      "after_correct": true,
+      "before": {
+        "dex": 258,
+        "name": "ミズゴロウ",
+        "score": 0.013233720429990943
+      },
+      "after": {
+        "dex": 258,
+        "name": "ミズゴロウ",
+        "score": 0.013159126635979982
+      }
+    },
+    {
+      "item_id": "m20280901272",
+      "page_url": "https://jp.mercari.com/item/m20280901272",
+      "sha256": "9190eeca897333ebf2841908c1d3d49f3a711ac105b0b39c029641b198eb188d",
+      "truth_dex": 343,
+      "truth_name": "ヤジロン",
+      "before_correct": true,
+      "after_correct": true,
+      "before": {
+        "dex": 343,
+        "name": "ヤジロン",
+        "score": 0.026300215413187427
+      },
+      "after": {
+        "dex": 343,
+        "name": "ヤジロン",
+        "score": 0.026254626783473692
+      }
+    },
+    {
+      "item_id": "m67168382097",
+      "page_url": "https://jp.mercari.com/item/m67168382097",
+      "sha256": "d12341eaa1b4f824920815b24764fa34ac627c6e0e469206dcf3e9c0e09c72be",
+      "truth_dex": 358,
+      "truth_name": "チリーン",
+      "before_correct": true,
+      "after_correct": true,
+      "before": {
+        "dex": 358,
+        "name": "チリーン",
+        "score": 0.015024757209586194
+      },
+      "after": {
+        "dex": 358,
+        "name": "チリーン",
+        "score": 0.015010621328205085
+      }
+    },
+    {
+      "item_id": "m47834360489",
+      "page_url": "https://jp.mercari.com/item/m47834360489",
+      "sha256": "63bcc080077e1cc517776ddc0d06545360462777b1e785fd441c1a0b95c767d3",
+      "truth_dex": 255,
+      "truth_name": "アチャモ",
+      "before_correct": true,
+      "after_correct": true,
+      "before": {
+        "dex": 255,
+        "name": "アチャモ",
+        "score": 0.01293930326633697
+      },
+      "after": {
+        "dex": 255,
+        "name": "アチャモ",
+        "score": 0.01290562702326421
+      }
+    },
+    {
+      "item_id": "m79320353357",
+      "page_url": "https://jp.mercari.com/item/m79320353357",
+      "sha256": "2c2efbf96b81496faa522111271c8f1d5fed4de7792994ad507fec2ea75a4402",
+      "truth_dex": 300,
+      "truth_name": "エネコ",
+      "before_correct": true,
+      "after_correct": true,
+      "before": {
+        "dex": 300,
+        "name": "エネコ",
+        "score": 0.00817722253095493
+      },
+      "after": {
+        "dex": 300,
+        "name": "エネコ",
+        "score": 0.008149468827241515
+      }
+    },
+    {
+      "item_id": "m14572636016",
+      "page_url": "https://jp.mercari.com/item/m14572636016",
+      "sha256": "d0245ee3f256e083745a7bc977ba5189da19392025e0651f62d667e51e27cdc8",
+      "truth_dex": 382,
+      "truth_name": "カイオーガ",
+      "before_correct": true,
+      "after_correct": true,
+      "before": {
+        "dex": 382,
+        "name": "カイオーガ",
+        "score": 0.02074825728295985
+      },
+      "after": {
+        "dex": 382,
+        "name": "カイオーガ",
+        "score": 0.020619505624816244
+      }
+    },
+    {
+      "item_id": "m85722270054",
+      "page_url": "https://jp.mercari.com/item/m85722270054",
+      "sha256": "1251df385eb32865b1aefa00789b8dac9099038000a1f1261a630bba7e780c96",
+      "truth_dex": 461,
+      "truth_name": "マニューラ",
+      "before_correct": true,
+      "after_correct": true,
+      "before": {
+        "dex": 461,
+        "name": "マニューラ",
+        "score": 0.01678695806938046
+      },
+      "after": {
+        "dex": 461,
+        "name": "マニューラ",
+        "score": 0.01677008309686715
+      }
+    },
+    {
+      "item_id": "m46594708515",
+      "page_url": "https://jp.mercari.com/item/m46594708515",
+      "sha256": "7593c361b15057d920e834d54b4bc6b2c8b5bc6fbaf637933a3eadab0088c978",
+      "truth_dex": 280,
+      "truth_name": "ラルトス",
+      "before_correct": false,
+      "after_correct": false,
+      "before": {
+        "dex": 610,
+        "name": "キバゴ",
+        "score": 0.023431083879237823
+      },
+      "after": {
+        "dex": 330,
+        "name": "フライゴン",
+        "score": 0.02485742974358738
+      }
+    },
+    {
+      "item_id": "m18141009120",
+      "page_url": "https://jp.mercari.com/item/m18141009120",
+      "sha256": "cbbc7a4cd1bbd4694851a28930c175485a73e92b226f60932da1835df5191af4",
+      "truth_dex": 384,
+      "truth_name": "レックウザ",
+      "before_correct": true,
+      "after_correct": true,
+      "before": {
+        "dex": 384,
+        "name": "レックウザ",
+        "score": 0.039250069544057284
+      },
+      "after": {
+        "dex": 384,
+        "name": "レックウザ",
+        "score": 0.039058333690188525
+      }
+    },
+    {
+      "item_id": "m18900067709",
+      "page_url": "https://jp.mercari.com/item/m18900067709",
+      "sha256": "7491221a66f516bcf1f7cc4862ced05308a6fee3d6448f1a5160bff929e4db55",
+      "truth_dex": 146,
+      "truth_name": "ファイヤー",
+      "before_correct": false,
+      "after_correct": false,
+      "before": {
+        "dex": 533,
+        "name": "ドテッコツ",
+        "score": 0.009321202131167296
+      },
+      "after": {
+        "dex": 533,
+        "name": "ドテッコツ",
+        "score": 0.00931615440316184
+      }
+    },
+    {
+      "item_id": "m25286360049",
+      "page_url": "https://jp.mercari.com/item/m25286360049",
+      "sha256": "ffb10e07c57674797a7a778bdd6e0e2014141d8870f6da9817bb8e576c2cecb9",
+      "truth_dex": 1,
+      "truth_name": "フシギダネ",
+      "before_correct": true,
+      "after_correct": true,
+      "before": {
+        "dex": 1,
+        "name": "フシギダネ",
+        "score": 0.00871489973506341
+      },
+      "after": {
+        "dex": 1,
+        "name": "フシギダネ",
+        "score": 0.00865802288628715
+      }
+    },
+    {
+      "item_id": "m93892292538",
+      "page_url": "https://jp.mercari.com/item/m93892292538",
+      "sha256": "c2105ff2c4da5fb7796b66f5017c00641285d683a17d1209142810af087bce8b",
+      "truth_dex": 384,
+      "truth_name": "レックウザ",
+      "before_correct": true,
+      "after_correct": true,
+      "before": {
+        "dex": 384,
+        "name": "レックウザ",
+        "score": 0.024124898795922473
+      },
+      "after": {
+        "dex": 384,
+        "name": "レックウザ",
+        "score": 0.02391668914072359
+      }
+    },
+    {
+      "item_id": "m29687021104",
+      "page_url": "https://jp.mercari.com/item/m29687021104",
+      "sha256": "19aac74a14fda72a83e39996a78e8a8d0a4d1e7ddfc90cff925b9626c599336a",
+      "truth_dex": 382,
+      "truth_name": "カイオーガ",
+      "before_correct": true,
+      "after_correct": true,
+      "before": {
+        "dex": 382,
+        "name": "カイオーガ",
+        "score": 0.02577800618816105
+      },
+      "after": {
+        "dex": 382,
+        "name": "カイオーガ",
+        "score": 0.025745045784936343
+      }
+    },
+    {
+      "item_id": "m25908742276",
+      "page_url": "https://jp.mercari.com/item/m25908742276",
+      "sha256": "d5e5d947a87ec207c596e5e14fcd451f4b5ed727e1f8f3e47b2229aebbd3086d",
+      "truth_dex": 133,
+      "truth_name": "イーブイ",
+      "before_correct": true,
+      "after_correct": true,
+      "before": {
+        "dex": 133,
+        "name": "イーブイ",
+        "score": 0.030091013786267044
+      },
+      "after": {
+        "dex": 133,
+        "name": "イーブイ",
+        "score": 0.02998977401959606
+      }
+    },
+    {
+      "item_id": "m88326411167",
+      "page_url": "https://jp.mercari.com/item/m88326411167",
+      "sha256": "fa870db28b660acf5c36affaad93166c03379b822f3d7ba08753b24e654d616b",
+      "truth_dex": 79,
+      "truth_name": "ヤドン",
+      "before_correct": false,
+      "after_correct": false,
+      "before": {
+        "dex": 559,
+        "name": "ズルッグ",
+        "score": 0.019977213634257092
+      },
+      "after": {
+        "dex": 559,
+        "name": "ズルッグ",
+        "score": 0.019957074193398518
+      }
+    },
+    {
+      "item_id": "m71634178174",
+      "page_url": "https://jp.mercari.com/item/m71634178174",
+      "sha256": "04522414706331948e10a30cbd5dc5a0d54756ce15bd2fb9639589302e8a9032",
+      "truth_dex": 386,
+      "truth_name": "デオキシス",
+      "before_correct": true,
+      "after_correct": true,
+      "before": {
+        "dex": 386,
+        "name": "デオキシス",
+        "score": 0.007816413197804777
+      },
+      "after": {
+        "dex": 386,
+        "name": "デオキシス",
+        "score": 0.007792458387759647
+      }
+    }
+  ]
+}

@@ -12,8 +12,8 @@ android {
         minSdk = 26
         targetSdk = 35
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionCode = 34
-        versionName = "1.2.1"
+        versionCode = 35
+        versionName = "1.2.2"
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }
@@ -28,7 +28,7 @@ android {
     }
     buildTypes {
         getByName("debug") {
-            applicationIdSuffix = ".precision121"
+            applicationIdSuffix = ".precision122"
             ndk {
                 abiFilters += "x86_64"
             }

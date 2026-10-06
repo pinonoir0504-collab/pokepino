@@ -45,7 +45,7 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         val penalty: Float
     )
 
-    private val env by lazy { OrtEnvironment.getEnvironment() }
+    private val env by lazy { OrtEnvironment.getEnvironment().apply { setTelemetry(false) } }
     private var session: OrtSession? = null
     private val refs by lazy { loadRefs() }
     private val photoRefs by lazy { loadRefs(PHOTO_REFS_ASSET, 1, speciesOnly = true) }

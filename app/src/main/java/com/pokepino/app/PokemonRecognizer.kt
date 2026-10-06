@@ -17,7 +17,7 @@ import kotlin.math.exp
 class PokemonRecognizer(private val context: Context):Closeable{
     data class Candidate(val dex:Int,val score:Float)
     data class Result(val candidates:List<Candidate>,val accepted:Boolean,val engine:String, val allCandidates:List<Candidate> = candidates)
-    private val env by lazy{OrtEnvironment.getEnvironment()}
+    private val env by lazy{OrtEnvironment.getEnvironment().apply { setTelemetry(false) }}
     private var session:OrtSession?=null
 
     @Synchronized fun recognize(bitmap:Bitmap):Result{

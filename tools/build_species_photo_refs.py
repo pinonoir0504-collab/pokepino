@@ -8,7 +8,10 @@ Never add holdout photographs to this manifest before independent evaluation.
 import argparse, base64, hashlib, json
 from pathlib import Path
 import numpy as np
+import os
+os.environ["ORT_DISABLE_TELEMETRY"] = "1"
 import onnxruntime as ort
+ort.disable_telemetry_events()
 from PIL import Image, ImageEnhance, ImageOps
 ROOT=Path(__file__).resolve().parents[1]
 ASSETS=ROOT/'app/src/main/assets'
