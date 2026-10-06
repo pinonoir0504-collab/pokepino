@@ -37,6 +37,8 @@ jobs:
           mkdir nemupino-ci diag
           unzip -q .nemupino-build/source.zip -d nemupino-ci
           cp .nemupino-build/SoundCandidates.kt nemupino-ci/app/src/main/java/com/oyasumi/recorder/SoundCandidates.kt
+          cp .nemupino-build/DesignSmokeTest.kt nemupino-ci/app/src/androidTest/java/com/oyasumi/recorder/DesignSmokeTest.kt
+          sed -i 's/click("候補のみ ✓")/click("いびき候補")/' nemupino-ci/app/src/androidTest/java/com/oyasumi/recorder/RecordingIntegrationTest.kt
       - name: Build test APKs
         working-directory: nemupino-ci
         run: gradle :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
