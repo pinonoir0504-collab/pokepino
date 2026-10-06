@@ -6,9 +6,14 @@ import org.junit.Test
 class SpeciesPhotoRankingTest {
     private fun c(d: Int, s: Float) = SpeciesPhotoRanking.Candidate(d, s)
 
-    @Test fun photoEvidenceCanRecoverSpeciesWithoutChangingCatalogScope() {
+    @Test fun photoEvidenceCanRecoverSpeciesWhileRejectingInvalidSpecies() {
         val ranked = SpeciesPhotoRanking.rank(listOf(c(6,.74f), c(252,.73f)), listOf(c(252,.92f), c(9999,1f)))
         assertEquals(listOf(252,6),ranked.map { it.dex })
+    }
+    @Test fun verifiedPhotoCanSupplyMissingSpeciesWithoutInheritingTrust() {
+        val ranked = SpeciesPhotoRanking.rank(listOf(c(25,.7f)), listOf(c(474,.9f)))
+        assertEquals(474,ranked.first().dex)
+        assertFalse(SpeciesPhotoRanking.preservesTrustedSpecies(474,25))
     }
     @Test fun weakPhotoDoesNotLowerExistingEvidence() {
         val ranked = SpeciesPhotoRanking.rank(listOf(c(25,.9f), c(80,.6f)), listOf(c(25,.7f)))

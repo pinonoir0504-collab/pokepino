@@ -27,6 +27,15 @@ class CandidateFusionTest {
         val ranked = CandidateFusion.rank(listOf(c(25,.7f),c(80,.6f)), listOf(c(9999,1f)))
         assertEquals(25,ranked.first().dex)
     }
+    @Test fun classifierOnlySpeciesRemainsEligibleWhenReferencesAreMissing() {
+        val ranked = CandidateFusion.rank(listOf(c(25,.7f)), listOf(c(474,1f)))
+        assertTrue(ranked.any { it.dex == 474 })
+        assertTrue(ranked.all { it.score.isFinite() })
+    }
+    @Test fun classifierSpeciesOutsideMasterIsExcluded() {
+        val ranked = CandidateFusion.rank(listOf(c(25,.7f)), listOf(c(474,1f)), setOf(25))
+        assertEquals(25,ranked.single().dex)
+    }
     @Test fun largeLogitDifferencesRemainNumericallyStable() {
         val ranked = CandidateFusion.rank(listOf(c(25,1e20f),c(80,-1e20f)), listOf(c(25,1f)))
         assertEquals(25,ranked.first().dex)

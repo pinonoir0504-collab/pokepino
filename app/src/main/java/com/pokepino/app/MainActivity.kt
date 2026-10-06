@@ -247,7 +247,8 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
                 )
                 val fused=if(high!=null && ai!=null) CandidateFusion.rank(
                     high.allSpeciesCandidates.map { CandidateFusion.Candidate(it.dex,it.score) },
-                    ai.allCandidates.map { CandidateFusion.Candidate(it.dex,it.score) }
+                    ai.allCandidates.map { CandidateFusion.Candidate(it.dex,it.score) },
+                    master.map { it.dex }.toSet()
                 ) else emptyList()
                 fusedCandidates=fused
                 val chosenDex=fused.firstOrNull()?.dex ?: decision.dex

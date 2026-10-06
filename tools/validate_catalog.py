@@ -119,6 +119,7 @@ if recognizer_source.exists():
         "embedding_model_bytes":model_path.stat().st_size,
     },ensure_ascii=False,indent=2))
 
+supported_species={int(r[1]) for r in existing+catalog if 1<=int(r[1])<=1025}
 photo_path=ASSETS/"species_photo_refs_v1.json"
 if photo_path.exists():
     manifest=json.loads((ROOT/"species_photo_refs_manifest.json").read_text(encoding="utf-8"))
@@ -130,7 +131,7 @@ if photo_path.exists():
         fail("species photo prototype count does not match provenance")
     seen_photo_ids=set()
     for row in photos:
-        if len(row)!=5 or row[0] in seen_photo_ids or row[2]!="" or int(row[1]) not in embed_species:
+        if len(row)!=5 or row[0] in seen_photo_ids or row[2]!="" or int(row[1]) not in supported_species:
             fail("invalid species-only prototype identity or variant group")
         seen_photo_ids.add(row[0])
         source_id,augmentation=row[0].rsplit("-",1)
