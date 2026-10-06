@@ -1,0 +1,108 @@
+name: NemuPino manual emulator verify
+
+on:
+  push:
+    branches:
+      - nemupino-build-temp
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.13"
+      - name: Enable KVM
+        shell: bash
+        run: |
+          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; ls -l /dev/kvm; fi
+      - name: Prepare source
+        shell: bash
+        run: |
+          rm -rf nemupino-ci diag
+          mkdir nemupino-ci diag
+          unzip -q .nemupino-build/source.zip -d nemupino-ci
+          cp .nemupino-build/SoundCandidates.kt nemupino-ci/app/src/main/java/com/oyasumi/recorder/SoundCandidates.kt
+      - name: Build test APKs
+        working-directory: nemupino-ci
+        run: gradle :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
+      - name: Start Android emulator manually
+        shell: bash
+        run: |
+          set -eux
+          echo 'Emulator:'
+          $ANDROID_HOME/emulator/emulator -version || true
+          SDKMANAGER=$(find "$ANDROID_HOME" -type f -name sdkmanager | head -n 1)
+          AVDMANAGER=$(find "$ANDROID_HOME" -type f -name avdmanager | head -n 1)
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "system-images;android-35;google_apis;x86_64"
+          echo no | "$AVDMANAGER" create avd -n nemupino35 -k "system-images;android-35;google_apis;x86_64" -d pixel_3a --force
+          nohup $ANDROID_HOME/emulator/emulator @nemupino35 -no-window -no-snapshot -no-boot-anim -gpu swiftshader_indirect -camera-back none -camera-front none -accel on > diag/emulator.log 2>&1 &
+          adb wait-for-device
+          for i in $(seq 1 180); do
+            BOOT=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)
+            [ "$BOOT" = "1" ] && break
+            sleep 2
+          done
+          test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1"
+          adb shell input keyevent 82 || true
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          adb devices -l
+      - name: Install APKs
+        shell: bash
+        run: |
+          adb install -r nemupino-ci/app/build/outputs/apk/debug/app-debug.apk
+          adb install -r nemupino-ci/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+          adb shell pm grant com.oyasumi.recorder android.permission.RECORD_AUDIO || true
+          adb shell pm grant com.oyasumi.recorder android.permission.POST_NOTIFICATIONS || true
+      - name: Run UI smoke
+        shell: bash
+        run: |
+          set -o pipefail
+          adb logcat -c
+          timeout 240s adb shell am instrument -w -r -e class com.oyasumi.recorder.DesignSmokeTest com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee diag/design.txt
+          adb logcat -d > diag/design-logcat.txt || true
+      - name: Run playlist integration
+        shell: bash
+        run: |
+          set -o pipefail
+          adb logcat -c
+          timeout 240s adb shell am instrument -w -r -e class com.oyasumi.recorder.PlaylistIntegrationTest com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee diag/playlist.txt
+          adb logcat -d > diag/playlist-logcat.txt || true
+      - name: Run recording integration
+        shell: bash
+        run: |
+          set -o pipefail
+          adb logcat -c
+          timeout 420s adb shell am instrument -w -r -e class com.oyasumi.recorder.RecordingIntegrationTest com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee diag/recording.txt
+          adb logcat -d > diag/recording-logcat.txt || true
+      - name: Collect screenshots and diagnostics
+        if: always()
+        shell: bash
+        run: |
+          adb shell dumpsys activity activities > diag/activity.txt 2>&1 || true
+          adb shell dumpsys meminfo com.oyasumi.recorder > diag/meminfo.txt 2>&1 || true
+          adb exec-out screencap -p > diag/final-screen.png 2>/dev/null || true
+          for F in design-overview.png design-ranking.png actual-result.png; do
+            adb exec-out run-as com.oyasumi.recorder cat cache/$F > diag/$F 2>/dev/null || rm -f diag/$F
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nemupino-3.6.3-manual-emulator
+          path: diag/
+          if-no-files-found: warn
