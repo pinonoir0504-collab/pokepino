@@ -1,13 +1,9 @@
 name: NemuPino temporary build
-
 on:
   push:
-    branches:
-      - nemupino-build-temp
-
+    branches: [nemupino-build-temp]
 permissions:
   contents: read
-
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -18,43 +14,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "17"
+        with: {distribution: temurin, java-version: "17"}
       - name: Prepare Android SDK
         shell: bash
         run: |
           SDKMANAGER="$(find /usr/local/lib/android/sdk -type f -name sdkmanager | head -n 1)"
-          test -n "$SDKMANAGER"
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
       - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.13"
+        with: {gradle-version: "8.13"}
       - name: Unpack NemuPino
-        run: |
-          rm -rf nemupino-ci
-          mkdir nemupino-ci
-          unzip -q .nemupino-build/source.zip -d nemupino-ci
+        run: rm -rf nemupino-ci && mkdir nemupino-ci && unzip -q .nemupino-build/source.zip -d nemupino-ci
       - name: Verify image assets
-        shell: bash
         run: |
           test "$(stat -c%s nemupino-ci/app/src/main/res/drawable/pino_logo.png)" -gt 100000
           test "$(stat -c%s nemupino-ci/app/src/main/res/drawable/pino_icon_foreground.png)" -gt 100000
-      - name: Apply NemuPino classifier hotfix
-        shell: bash
+      - name: Apply classifier hotfix
         run: cp .nemupino-build/SoundCandidates.kt nemupino-ci/app/src/main/java/com/oyasumi/recorder/SoundCandidates.kt
-      - name: Apply thin detailed waveform fix
-        shell: bash
-        run: python3 .nemupino-build/patch-waveform.py
+      - name: Apply UI and playback fixes
+        run: |
+          python3 .nemupino-build/patch-waveform.py
+          python3 .nemupino-build/patch-ux.py
       - name: Unit tests (3 known classifier regressions allowed)
         working-directory: nemupino-ci
         shell: bash
         run: |
-          set +e
-          gradle clean testDebugUnitTest --stacktrace
-          rc=$?
-          set -e
+          set +e; gradle clean testDebugUnitTest --stacktrace; rc=$?; set -e
           if [ "$rc" -ne 0 ]; then echo "Known classifier regressions accepted; continuing."; fi
       - name: Lint
         working-directory: nemupino-ci
@@ -63,18 +48,15 @@ jobs:
         working-directory: nemupino-ci
         run: gradle assembleRelease --stacktrace
       - name: Collect outputs
-        shell: bash
         run: |
           mkdir -p build-artifact
-          ZIPALIGN="/usr/local/lib/android/sdk/build-tools/36.0.0/zipalign"
-          "$ZIPALIGN" -f -p 4 nemupino-ci/app/build/outputs/apk/release/app-release-unsigned.apk build-artifact/NemuPino_3.6.3_waveformfix_aligned_unsigned.apk
+          ZIPALIGN=/usr/local/lib/android/sdk/build-tools/36.0.0/zipalign
+          "$ZIPALIGN" -f -p 4 nemupino-ci/app/build/outputs/apk/release/app-release-unsigned.apk build-artifact/NemuPino_3.6.3_UXfix_aligned_unsigned.apk
           cp /usr/local/lib/android/sdk/build-tools/36.0.0/lib/apksigner.jar build-artifact/apksigner.jar
-          cp /usr/local/lib/android/sdk/build-tools/36.0.0/zipalign build-artifact/zipalign
-          chmod +x build-artifact/zipalign
           cp nemupino-ci/app/build/reports/lint-results-debug.html build-artifact/lint-results-debug.html || true
           cp -r nemupino-ci/app/build/test-results/testDebugUnitTest build-artifact/test-results || true
       - uses: actions/upload-artifact@v4
         with:
-          name: nemupino-3.6.3-waveformfix-build
+          name: nemupino-3.6.3-uxfix-build
           path: build-artifact/
           if-no-files-found: error
