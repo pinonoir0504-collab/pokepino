@@ -28,6 +28,7 @@ android {
     }
     buildTypes {
         getByName("debug") {
+            applicationIdSuffix = ".precision"
             ndk {
                 abiFilters += "x86_64"
             }
