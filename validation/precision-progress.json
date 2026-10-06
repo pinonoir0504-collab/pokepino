@@ -1,15 +1,17 @@
 {
   "status": "in_progress",
-  "updated_at": "2026-10-06T12:36:58.168090+00:00",
+  "updated_at": "2026-10-06T15:40:48.739170+00:00",
   "goal": "Exceed 80% species top-1 on a new independent 50-photo Mercari test; deliver verified signed APK",
   "completed": [
     "v1.2.2 fresh independent50:31/50=62%;19 errors now development only",
-    "126 verified development photos,91species; features cached"
+    "126 verified development photos,91species; features cached",
+    "126 photo prototypes and candidate omission fixes built successfully",
+    "New independent50:27/50=54%, baseline25/50;target NOT achieved"
   ],
   "next": [
-    "Fix missing species candidates, expand prototypes and tune on development only",
-    "Freeze model and randomly select50 new eligible photos before inference",
-    "Evaluate independently; improve further if <=80%, then build signed APK"
+    "Evaluate DINOv2 on development with independent new holdout after freezing",
+    "Do not deliver provisional APK as80% achieved",
+    "Build verified final APK after target validation"
   ],
   "repo": "pinonoir0504-collab/pokepino",
   "branch": "fix/recognition-confidence-20261006",
@@ -21,8 +23,8 @@
   "no_main_mutation": true,
   "automation_id": "6ac4d7873b0c819194cb34d9be369bce",
   "version": "1.2.3",
-  "source_commit": "0d3879888f58bb746cf24b1fb2fe29d2d69be803",
+  "source_commit": "3b53bb45398387342856e3cc1ac47dd57b7b12d3",
   "workflow_success": false,
   "workflow_run": 37457645734,
-  "stage": "126 development photos, 91 species; leave-one-listing-out tuning; new holdout collecting"
+  "stage": "New50 failed target:27/50=54% vs25/50 baseline; exploring stronger DINOv2 shape features; holdout now development"
 }
