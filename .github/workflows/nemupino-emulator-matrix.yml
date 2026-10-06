@@ -66,8 +66,9 @@ jobs:
             adb shell pm grant com.oyasumi.recorder android.permission.RECORD_AUDIO || true
             adb shell pm grant com.oyasumi.recorder android.permission.POST_NOTIFICATIONS || true
             set +e
-            timeout 420s adb shell am instrument -w -r -e class "${{ matrix.test_class }}" com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee ../diag/instrumentation.txt
-            STATUS=${PIPESTATUS[0]}
+            timeout 420s adb shell am instrument -w -r -e class "${{ matrix.test_class }}" com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner > ../diag/instrumentation.txt 2>&1
+            STATUS=$?
+            cat ../diag/instrumentation.txt
             adb logcat -d > ../diag/logcat.txt 2>&1 || true
             adb shell dumpsys meminfo com.oyasumi.recorder > ../diag/meminfo.txt 2>&1 || true
             for F in design-overview.png design-ranking.png actual-result.png; do
