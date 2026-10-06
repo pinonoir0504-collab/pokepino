@@ -11,7 +11,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 18
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -51,10 +51,11 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 26
-          arch: x86_64
+          arch: arm64-v8a
           profile: Nexus 5X
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -camera-back none -camera-front none -noaudio
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -camera-back none -camera-front none -noaudio -no-boot-anim
+          emulator-boot-timeout: 900
           script: |
             cd nemupino-ci
             gradle :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
