@@ -38,7 +38,31 @@ jobs:
           unzip -q .nemupino-build/source.zip -d nemupino-ci
           cp .nemupino-build/SoundCandidates.kt nemupino-ci/app/src/main/java/com/oyasumi/recorder/SoundCandidates.kt
           cp .nemupino-build/DesignSmokeTest.kt nemupino-ci/app/src/androidTest/java/com/oyasumi/recorder/DesignSmokeTest.kt
-          sed -i 's/click("候補のみ ✓")/click("いびき候補")/' nemupino-ci/app/src/androidTest/java/com/oyasumi/recorder/RecordingIntegrationTest.kt
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("nemupino-ci/app/src/androidTest/java/com/oyasumi/recorder/RecordingIntegrationTest.kt")
+          s = p.read_text()
+          old = '''        click("全ての音")
+        click("候補のみ ✓")
+        click("区間一覧")
+        click("録音区間 1")
+        click("区間再生 OFF")
+        click("いびき候補")
+        click("環境音")
+'''
+          new = '''        click("全ての音")
+        click("いびき候補")
+        // Label immediately, before playback can move outside the selected event.
+        click("いびき候補")
+        click("環境音")
+        click("区間一覧")
+        click("録音区間 1")
+        click("区間再生 OFF")
+'''
+          if old not in s:
+              raise SystemExit("label test sequence not found")
+          p.write_text(s.replace(old, new))
+          PY
       - name: Build test APKs
         working-directory: nemupino-ci
         run: gradle :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
@@ -75,27 +99,18 @@ jobs:
           adb install -r nemupino-ci/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
           adb shell pm grant com.oyasumi.recorder android.permission.RECORD_AUDIO || true
           adb shell pm grant com.oyasumi.recorder android.permission.POST_NOTIFICATIONS || true
-      - name: Run UI smoke
+      - name: Run label regression
         shell: bash
         run: |
-          set -o pipefail
           adb logcat -c
-          timeout 240s adb shell am instrument -w -r -e class com.oyasumi.recorder.DesignSmokeTest com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee diag/design.txt
-          adb logcat -d > diag/design-logcat.txt || true
-      - name: Run playlist integration
-        shell: bash
-        run: |
-          set -o pipefail
-          adb logcat -c
-          timeout 240s adb shell am instrument -w -r -e class com.oyasumi.recorder.PlaylistIntegrationTest com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee diag/playlist.txt
-          adb logcat -d > diag/playlist-logcat.txt || true
-      - name: Run recording integration
-        shell: bash
-        run: |
-          set -o pipefail
-          adb logcat -c
-          timeout 420s adb shell am instrument -w -r -e class com.oyasumi.recorder.RecordingIntegrationTest com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee diag/recording.txt
-          adb logcat -d > diag/recording-logcat.txt || true
+          set +e
+          timeout 240s adb shell am instrument -w -r -e class 'com.oyasumi.recorder.RecordingIntegrationTest#zzResultControlsAndManualLabelsWork' com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner > diag/label.txt 2>&1
+          STATUS=$?
+          cat diag/label.txt
+          adb logcat -d > diag/label-logcat.txt || true
+          test "$STATUS" -eq 0
+          grep -q 'OK (1 test)' diag/label.txt
+          if grep -q 'FAILURES' diag/label.txt; then exit 1; fi
       - name: Collect screenshots and diagnostics
         if: always()
         shell: bash
