@@ -240,24 +240,18 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
 
                 val highTop=high?.speciesCandidates?.firstOrNull()
                 val aiTop=ai?.candidates?.firstOrNull()
-                val chosenDex=when{
-                    aiTop!=null && aiTop.score>=0.20f -> aiTop.dex
-                    highTop!=null -> highTop.dex
-                    else -> null
-                }
+                val decision=RecognitionPolicy.decide(
+                    highTop?.let { RecognitionPolicy.Candidate(it.dex, high?.acceptedSpecies==true, high?.veryStrongSpecies==true) },
+                    aiTop?.let { RecognitionPolicy.Candidate(it.dex, ai?.accepted==true, ai?.accepted==true && it.score>=0.55f) }
+                )
+                val chosenDex=decision.dex
 
                 if(high!=null && chosenDex!=null){
                     val variants=withContext(Dispatchers.IO){embedding.rankVariants(high,chosenDex,master)}
                     highVariants=variants
                     val topVariant=variants.candidates.firstOrNull()
-                    val agreement=highTop?.dex!=null && highTop.dex==aiTop?.dex
-                    val highSupportsChosen=highTop?.dex==chosenDex
-                    val aiSupportsChosen=aiTop?.dex==chosenDex
-                    val speciesTrusted=agreement ||
-                        (highSupportsChosen && high.veryStrongSpecies) ||
-                        (aiSupportsChosen && ai?.accepted==true && (aiTop?.score?:0f)>=0.55f)
-                    val variantTrusted=variants.accepted &&
-                        (agreement || (highSupportsChosen && high.veryStrongSpecies))
+                    val speciesTrusted=decision.speciesTrusted
+                    val variantTrusted=variants.accepted && decision.variantEligible
 
                     if(variantTrusted && topVariant!=null && topVariant.recordIds.size==1){
                         val id=topVariant.recordIds.first()
