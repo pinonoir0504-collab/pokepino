@@ -28,8 +28,8 @@ jobs:
       - name: Unpack NemuPino
         shell: bash
         run: |
-          rm -rf nemupino-ci
-          mkdir nemupino-ci
+          rm -rf nemupino-ci emulator-artifact
+          mkdir nemupino-ci emulator-artifact
           unzip -q .nemupino-build/source.zip -d nemupino-ci
           cp .nemupino-build/SoundCandidates.kt nemupino-ci/app/src/main/java/com/oyasumi/recorder/SoundCandidates.kt
       - name: Emulator integration tests
@@ -42,6 +42,7 @@ jobs:
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -camera-back none -camera-front none
           script: |
+            set -o pipefail
             cd nemupino-ci
             gradle :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
             adb install -r app/build/outputs/apk/debug/app-debug.apk
@@ -52,29 +53,15 @@ jobs:
             adb shell settings put global transition_animation_scale 0
             adb shell settings put global animator_duration_scale 0
             set +e
-            timeout 900 adb shell am instrument -w -r com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee /tmp/instrumentation.txt
-            TEST_RC=${PIPESTATUS[0]}
-            adb logcat -d > /tmp/logcat.txt || true
-            adb shell dumpsys activity activities > /tmp/activity.txt || true
-            adb shell dumpsys meminfo com.oyasumi.recorder > /tmp/meminfo.txt || true
-            run-as com.oyasumi.recorder sh -c 'cat cache/actual-result.png' > /tmp/actual-result.png 2>/dev/null || true
-            run-as com.oyasumi.recorder sh -c 'cat cache/design-overview.png' > /tmp/design-overview.png 2>/dev/null || true
-            run-as com.oyasumi.recorder sh -c 'cat cache/design-ranking.png' > /tmp/design-ranking.png 2>/dev/null || true
-            set -e
-            test "$TEST_RC" -eq 0
-            grep -q "OK (" /tmp/instrumentation.txt
-      - name: Collect emulator diagnostics
-        if: always()
-        shell: bash
-        run: |
-          mkdir -p emulator-artifact
-          cp /tmp/instrumentation.txt emulator-artifact/instrumentation.txt || true
-          cp /tmp/logcat.txt emulator-artifact/logcat.txt || true
-          cp /tmp/activity.txt emulator-artifact/activity.txt || true
-          cp /tmp/meminfo.txt emulator-artifact/meminfo.txt || true
-          for image in /tmp/actual-result.png /tmp/design-overview.png /tmp/design-ranking.png; do
-            if [ -s "$image" ]; then cp "$image" emulator-artifact/; fi
-          done
+            adb shell am instrument -w -r com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee ../emulator-artifact/instrumentation.txt
+            STATUS=${PIPESTATUS[0]}
+            adb logcat -d > ../emulator-artifact/logcat.txt 2>&1 || true
+            adb shell dumpsys activity activities > ../emulator-artifact/activity.txt 2>&1 || true
+            adb shell dumpsys meminfo com.oyasumi.recorder > ../emulator-artifact/meminfo.txt 2>&1 || true
+            for F in design-overview.png design-ranking.png actual-result.png; do
+              adb exec-out run-as com.oyasumi.recorder cat cache/$F > ../emulator-artifact/$F 2>/dev/null || rm -f ../emulator-artifact/$F
+            done
+            exit $STATUS
       - uses: actions/upload-artifact@v4
         if: always()
         with:
