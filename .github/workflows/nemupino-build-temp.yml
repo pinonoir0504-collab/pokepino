@@ -41,10 +41,12 @@ jobs:
         run: |
           test "$(stat -c%s nemupino-ci/app/src/main/res/drawable/pino_logo.png)" -gt 100000
           test "$(stat -c%s nemupino-ci/app/src/main/res/drawable/pino_icon_foreground.png)" -gt 100000
-      - name: Apply NemuPino 3.6.3 hotfix
+      - name: Apply NemuPino classifier hotfix
         shell: bash
-        run: |
-          cp .nemupino-build/SoundCandidates.kt nemupino-ci/app/src/main/java/com/oyasumi/recorder/SoundCandidates.kt
+        run: cp .nemupino-build/SoundCandidates.kt nemupino-ci/app/src/main/java/com/oyasumi/recorder/SoundCandidates.kt
+      - name: Apply thin detailed waveform fix
+        shell: bash
+        run: python3 .nemupino-build/patch-waveform.py
       - name: Unit tests (3 known classifier regressions allowed)
         working-directory: nemupino-ci
         shell: bash
@@ -53,9 +55,7 @@ jobs:
           gradle clean testDebugUnitTest --stacktrace
           rc=$?
           set -e
-          if [ "$rc" -ne 0 ]; then
-            echo "Known classifier regressions are being accepted by user request; continuing to lint/build."
-          fi
+          if [ "$rc" -ne 0 ]; then echo "Known classifier regressions accepted; continuing."; fi
       - name: Lint
         working-directory: nemupino-ci
         run: gradle lintDebug --stacktrace
@@ -67,7 +67,7 @@ jobs:
         run: |
           mkdir -p build-artifact
           ZIPALIGN="/usr/local/lib/android/sdk/build-tools/36.0.0/zipalign"
-          "$ZIPALIGN" -f -p 4 nemupino-ci/app/build/outputs/apk/release/app-release-unsigned.apk build-artifact/NemuPino_3.6.3_aligned_unsigned.apk
+          "$ZIPALIGN" -f -p 4 nemupino-ci/app/build/outputs/apk/release/app-release-unsigned.apk build-artifact/NemuPino_3.6.3_waveformfix_aligned_unsigned.apk
           cp /usr/local/lib/android/sdk/build-tools/36.0.0/lib/apksigner.jar build-artifact/apksigner.jar
           cp /usr/local/lib/android/sdk/build-tools/36.0.0/zipalign build-artifact/zipalign
           chmod +x build-artifact/zipalign
@@ -75,6 +75,6 @@ jobs:
           cp -r nemupino-ci/app/build/test-results/testDebugUnitTest build-artifact/test-results || true
       - uses: actions/upload-artifact@v4
         with:
-          name: nemupino-3.6.3-build
+          name: nemupino-3.6.3-waveformfix-build
           path: build-artifact/
           if-no-files-found: error
