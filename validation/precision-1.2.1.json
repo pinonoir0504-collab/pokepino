@@ -1,0 +1,507 @@
+{
+  "version": "1.2.1",
+  "status": "validation passed; APK build pending",
+  "evaluation": "PC reproduction with unchanged ONNX models; Kotlin ranking parity checked; not Android device upload",
+  "training_sources": 36,
+  "training_vectors": 144,
+  "evaluation_images": 24,
+  "before_correct": 18,
+  "after_correct": 20,
+  "holdout_general": {
+    "count": 13,
+    "before": 12,
+    "after": 12
+  },
+  "holdout_targeted": {
+    "count": 11,
+    "before": 6,
+    "after": 8
+  },
+  "caveats": [
+    "small search-based sample, not uniform Mercari sample",
+    "development photographs and augmentations excluded from evaluation",
+    "no variant/year accuracy claim"
+  ],
+  "records": [
+    {
+      "item_id": "m78362892678",
+      "page_url": "https://jp.mercari.com/item/m78362892678",
+      "sha256": "03561aa5b8fa6b5e3d0d905f054b31927c0060d0e3f68a3deb74926fc914f19f",
+      "truth_dex": 546,
+      "truth_name": "モンメン",
+      "before": {
+        "dex": 546,
+        "name": "モンメン",
+        "score": 0.014980449369295096
+      },
+      "after": {
+        "dex": 546,
+        "name": "モンメン",
+        "score": 0.014891381456390455
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "general unused"
+    },
+    {
+      "item_id": "m62559369979",
+      "page_url": "https://jp.mercari.com/item/m62559369979",
+      "sha256": "742896eb8d8541986a0b41978a4ad731a5cc8f42c10596d8edf6ef0c86b421c8",
+      "truth_dex": 335,
+      "truth_name": "ザングース",
+      "before": {
+        "dex": 265,
+        "name": "ケムッソ",
+        "score": 0.013066657559670358
+      },
+      "after": {
+        "dex": 302,
+        "name": "ヤミラミ",
+        "score": 0.025416913056895314
+      },
+      "before_correct": false,
+      "after_correct": false,
+      "cohort": "general unused"
+    },
+    {
+      "item_id": "m37958998895",
+      "page_url": "https://jp.mercari.com/item/m37958998895",
+      "sha256": "3fc37eb65a80f209a7b9b0df6a6f8db87782aae2bfc99c7206d4d0b5ea0f6f00",
+      "truth_dex": 311,
+      "truth_name": "プラスル",
+      "before": {
+        "dex": 311,
+        "name": "プラスル",
+        "score": 0.025624196303303166
+      },
+      "after": {
+        "dex": 311,
+        "name": "プラスル",
+        "score": 0.02557804346741682
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "general unused"
+    },
+    {
+      "item_id": "m20641312602",
+      "page_url": "https://jp.mercari.com/item/m20641312602",
+      "sha256": "ec1541bacc6a32afc3f3b5a9a2654f2884bea96a4302a9ecdc1772d8fa328728",
+      "truth_dex": 68,
+      "truth_name": "カイリキー",
+      "before": {
+        "dex": 68,
+        "name": "カイリキー",
+        "score": 0.029672346147625886
+      },
+      "after": {
+        "dex": 68,
+        "name": "カイリキー",
+        "score": 0.029424377282541356
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "general unused"
+    },
+    {
+      "item_id": "m91917651807",
+      "page_url": "https://jp.mercari.com/item/m91917651807",
+      "sha256": "734ab363232f14a21e218add6f34933963262249a5cd54531b750a315a894c95",
+      "truth_dex": 183,
+      "truth_name": "マリル",
+      "before": {
+        "dex": 183,
+        "name": "マリル",
+        "score": 0.015641820921483106
+      },
+      "after": {
+        "dex": 183,
+        "name": "マリル",
+        "score": 0.018546360776705042
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "general unused"
+    },
+    {
+      "item_id": "m93353993439",
+      "page_url": "https://jp.mercari.com/item/m93353993439",
+      "sha256": "74e79b96bc10676c74b786a16f095f209a58a46b8a0e549e7650bd9c47b63a23",
+      "truth_dex": 416,
+      "truth_name": "ビークイン",
+      "before": {
+        "dex": 416,
+        "name": "ビークイン",
+        "score": 0.01798121210422053
+      },
+      "after": {
+        "dex": 416,
+        "name": "ビークイン",
+        "score": 0.017965198306004706
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "general unused"
+    },
+    {
+      "item_id": "m92709781407",
+      "page_url": "https://jp.mercari.com/item/m92709781407",
+      "sha256": "e78c1546ca4f4f1237be5487d6164d8d3b7eadabaa8bc6d274d7f860496b90d9",
+      "truth_dex": 209,
+      "truth_name": "ブルー",
+      "before": {
+        "dex": 209,
+        "name": "ブルー",
+        "score": 0.016539229770648103
+      },
+      "after": {
+        "dex": 209,
+        "name": "ブルー",
+        "score": 0.015827191486872675
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "general unused"
+    },
+    {
+      "item_id": "m43820055878",
+      "page_url": "https://jp.mercari.com/item/m43820055878",
+      "sha256": "0f3870d41acbf42d7833e1cccef706b320e7fc7f9b34a5e1a86c83526574ad03",
+      "truth_dex": 132,
+      "truth_name": "メタモン",
+      "before": {
+        "dex": 132,
+        "name": "メタモン",
+        "score": 0.027648849148780612
+      },
+      "after": {
+        "dex": 132,
+        "name": "メタモン",
+        "score": 0.026881746575100465
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "general unused"
+    },
+    {
+      "item_id": "m89705079642",
+      "page_url": "https://jp.mercari.com/item/m89705079642",
+      "sha256": "e0a11853b8b97b2e2a1af002b9906d64f7831b2adf53da91436d2693bc548cbc",
+      "truth_dex": 26,
+      "truth_name": "ライチュウ",
+      "before": {
+        "dex": 26,
+        "name": "ライチュウ",
+        "score": 0.03488049710627883
+      },
+      "after": {
+        "dex": 26,
+        "name": "ライチュウ",
+        "score": 0.03420377972673204
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "general unused"
+    },
+    {
+      "item_id": "m73418752844",
+      "page_url": "https://jp.mercari.com/item/m73418752844",
+      "sha256": "2e4a15e226d839bbe339387694069924a13bc1b2a55c4c19ac5a3a2b960423c0",
+      "truth_dex": 330,
+      "truth_name": "フライゴン",
+      "before": {
+        "dex": 330,
+        "name": "フライゴン",
+        "score": 0.01884783145707087
+      },
+      "after": {
+        "dex": 330,
+        "name": "フライゴン",
+        "score": 0.02998152955660973
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "general unused"
+    },
+    {
+      "item_id": "m92172456578",
+      "page_url": "https://jp.mercari.com/item/m92172456578",
+      "sha256": "33e7707065fae341969ea71e8dad105e15120efbefcdf59739637edc08f6e41f",
+      "truth_dex": 259,
+      "truth_name": "ヌマクロー",
+      "before": {
+        "dex": 259,
+        "name": "ヌマクロー",
+        "score": 0.015766360777116843
+      },
+      "after": {
+        "dex": 259,
+        "name": "ヌマクロー",
+        "score": 0.01566106817840831
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "general unused"
+    },
+    {
+      "item_id": "m93383880931",
+      "page_url": "https://jp.mercari.com/item/m93383880931",
+      "sha256": "7cc4dbac7a6a4dacf0bbaa1d37c5b96978d6e1e64bedb3e0fa3df672c1459d94",
+      "truth_dex": 255,
+      "truth_name": "アチャモ",
+      "before": {
+        "dex": 255,
+        "name": "アチャモ",
+        "score": 0.04198112236660685
+      },
+      "after": {
+        "dex": 255,
+        "name": "アチャモ",
+        "score": 0.04155308312308747
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "general unused"
+    },
+    {
+      "item_id": "m42137849974",
+      "page_url": "https://jp.mercari.com/item/m42137849974",
+      "sha256": "b405ec2f023648ae4ad41ad6eea30e57d41bb3648530d68d32eaa833c46fec90",
+      "truth_dex": 25,
+      "truth_name": "ピカチュウ",
+      "before": {
+        "dex": 25,
+        "name": "ピカチュウ",
+        "score": 0.043761811498626874
+      },
+      "after": {
+        "dex": 25,
+        "name": "ピカチュウ",
+        "score": 0.0432817265171203
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "general unused"
+    },
+    {
+      "item_id": "m84475932710",
+      "page_url": "https://jp.mercari.com/item/m84475932710",
+      "sha256": "2726b209ac18035b7447cef86b22c6bbd186b5172aa0f16cba82dcf2da1fba3f",
+      "truth_dex": 302,
+      "truth_name": "ヤミラミ",
+      "before": {
+        "dex": 91,
+        "name": "パルシェン",
+        "score": 0.013711307533824922
+      },
+      "after": {
+        "dex": 91,
+        "name": "パルシェン",
+        "score": 0.01371021916053835
+      },
+      "before_correct": false,
+      "after_correct": false,
+      "cohort": "targeted difficult species"
+    },
+    {
+      "item_id": "m96511189669",
+      "page_url": "https://jp.mercari.com/item/m96511189669",
+      "sha256": "abcc44371333ca7f02dd5a5d8bb4adcee3046867b82c3f5dc14743b93738628d",
+      "truth_dex": 252,
+      "truth_name": "キモリ",
+      "before": {
+        "dex": 254,
+        "name": "ジュカイン",
+        "score": 0.012415940403926786
+      },
+      "after": {
+        "dex": 252,
+        "name": "キモリ",
+        "score": 0.06406512636336525
+      },
+      "before_correct": false,
+      "after_correct": true,
+      "cohort": "targeted difficult species"
+    },
+    {
+      "item_id": "m19476581876",
+      "page_url": "https://jp.mercari.com/item/m19476581876",
+      "sha256": "4276920814046416ef48049a3089c3398ba008cf21ab831c6c390ca678a81bc9",
+      "truth_dex": 27,
+      "truth_name": "サンド",
+      "before": {
+        "dex": 58,
+        "name": "ガーディ",
+        "score": 0.007612187890022319
+      },
+      "after": {
+        "dex": 58,
+        "name": "ガーディ",
+        "score": 0.0075988010855015595
+      },
+      "before_correct": false,
+      "after_correct": false,
+      "cohort": "targeted difficult species"
+    },
+    {
+      "item_id": "m74927502313",
+      "page_url": "https://jp.mercari.com/item/m74927502313",
+      "sha256": "72678b31dda7a6b069f4908218c76cfe0e43f7fb65a0cdfa0a0e6d1add8cad3d",
+      "truth_dex": 158,
+      "truth_name": "ワニノコ",
+      "before": {
+        "dex": 656,
+        "name": "ケロマツ",
+        "score": 0.008412786817833934
+      },
+      "after": {
+        "dex": 158,
+        "name": "ワニノコ",
+        "score": 0.018762164660176398
+      },
+      "before_correct": false,
+      "after_correct": true,
+      "cohort": "targeted difficult species"
+    },
+    {
+      "item_id": "m72113473070",
+      "page_url": "https://jp.mercari.com/item/m72113473070",
+      "sha256": "0db4adc4e449b11f6e43bfc2fe288e604ddedfafc50f5cdb85dc7b34d1a53bdc",
+      "truth_dex": 89,
+      "truth_name": "ベトベトン",
+      "before": {
+        "dex": 89,
+        "name": "ベトベトン",
+        "score": 0.007948354723827721
+      },
+      "after": {
+        "dex": 89,
+        "name": "ベトベトン",
+        "score": 0.008511746098100811
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "targeted difficult species"
+    },
+    {
+      "item_id": "m83996231888",
+      "page_url": "https://jp.mercari.com/item/m83996231888",
+      "sha256": "57ed34b3710e663a79698e832ea2716cc0ac01b89dde8d470e2b534f009950c2",
+      "truth_dex": 158,
+      "truth_name": "ワニノコ",
+      "before": {
+        "dex": 158,
+        "name": "ワニノコ",
+        "score": 0.014765707701379164
+      },
+      "after": {
+        "dex": 158,
+        "name": "ワニノコ",
+        "score": 0.014340557869170401
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "targeted difficult species"
+    },
+    {
+      "item_id": "m43587124658",
+      "page_url": "https://jp.mercari.com/item/m43587124658",
+      "sha256": "e7b52ab2b054622058be3d63db9b078516250ba2f070dea833f7767219ffffa2",
+      "truth_dex": 88,
+      "truth_name": "ベトベター",
+      "before": {
+        "dex": 88,
+        "name": "ベトベター",
+        "score": 0.016173126850604916
+      },
+      "after": {
+        "dex": 88,
+        "name": "ベトベター",
+        "score": 0.01600266852329111
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "targeted difficult species"
+    },
+    {
+      "item_id": "m90721139261",
+      "page_url": "https://jp.mercari.com/item/m90721139261",
+      "sha256": "a909fa787eee49f3da3f471e3c53fa98efba8eca00bd1ce66e321f7015117309",
+      "truth_dex": 48,
+      "truth_name": "コンパン",
+      "before": {
+        "dex": 48,
+        "name": "コンパン",
+        "score": 0.010644255379237282
+      },
+      "after": {
+        "dex": 48,
+        "name": "コンパン",
+        "score": 0.02422194744765304
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "targeted difficult species"
+    },
+    {
+      "item_id": "m32855809567",
+      "page_url": "https://jp.mercari.com/item/m32855809567",
+      "sha256": "91b744f101e895244a7956fb635a420e0dc7d1ee8c694de11a86b48c8a91e352",
+      "truth_dex": 88,
+      "truth_name": "ベトベター",
+      "before": {
+        "dex": 88,
+        "name": "ベトベター",
+        "score": 0.013059869418257833
+      },
+      "after": {
+        "dex": 88,
+        "name": "ベトベター",
+        "score": 0.01293249772402931
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "targeted difficult species"
+    },
+    {
+      "item_id": "m55268408059",
+      "page_url": "https://jp.mercari.com/item/m55268408059",
+      "sha256": "f2d253418b8e8377b8e18d63882c9b84ef565d1dd7e6e0a5ed6fb34ac62cf748",
+      "truth_dex": 335,
+      "truth_name": "ザングース",
+      "before": {
+        "dex": 348,
+        "name": "アーマルド",
+        "score": 0.00797479506605241
+      },
+      "after": {
+        "dex": 348,
+        "name": "アーマルド",
+        "score": 0.007967504776989539
+      },
+      "before_correct": false,
+      "after_correct": false,
+      "cohort": "targeted difficult species"
+    },
+    {
+      "item_id": "m71242682471",
+      "page_url": "https://jp.mercari.com/item/m71242682471",
+      "sha256": "2429f2732d77780ca7fe9fef2add208e334c59b0db74f6617f9da8ebbf118060",
+      "truth_dex": 302,
+      "truth_name": "ヤミラミ",
+      "before": {
+        "dex": 302,
+        "name": "ヤミラミ",
+        "score": 0.03238275932927629
+      },
+      "after": {
+        "dex": 302,
+        "name": "ヤミラミ",
+        "score": 0.03225466555336505
+      },
+      "before_correct": true,
+      "after_correct": true,
+      "cohort": "targeted difficult species"
+    }
+  ]
+}

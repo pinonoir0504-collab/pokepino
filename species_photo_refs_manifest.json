@@ -1,0 +1,297 @@
+{
+  "version": 1,
+  "scope": "species ranking only; never variant identification or sole automatic-acceptance evidence",
+  "dimensions": 576,
+  "penalty": 0.05,
+  "training_source_count": 36,
+  "sources": [
+    {
+      "source": "https://jp.mercari.com/item/m44408073736",
+      "item_id": "m44408073736",
+      "dex": 27,
+      "name": "サンド",
+      "image_sha256": "d957f65de1f6b3d2ac70b2fe563bf09959280b90fffdd78a52997a958d66359a",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m48679702658",
+      "item_id": "m48679702658",
+      "dex": 80,
+      "name": "ヤドラン",
+      "image_sha256": "b3cc000ce5eab6b2a981e9b05982a4b99a4037bccd8ba5a85ea89c1c7d3484e3",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m94406886398",
+      "item_id": "m94406886398",
+      "dex": 194,
+      "name": "ウパー",
+      "image_sha256": "1c8cb3a65d2e8ce67e39cb2cdd57582c4eecc042abb7e8ca2cff0a78d332ab06",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m22149061151",
+      "item_id": "m22149061151",
+      "dex": 543,
+      "name": "フシデ",
+      "image_sha256": "912d4de0c0dcffb4f9a146ba85da50a8988817ad00f24f9a77ccba5a9a328f85",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m42157093469",
+      "item_id": "m42157093469",
+      "dex": 299,
+      "name": "ノズパス",
+      "image_sha256": "0ab4474c25aa4787fa35af221b8a9abe1a6df2691d6d84fbd49a5391f63e4ffe",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m73477370778",
+      "item_id": "m73477370778",
+      "dex": 302,
+      "name": "ヤミラミ",
+      "image_sha256": "369392fd0283cbb59c84621b5e83da8222d910db6e2e51da4ad41af8f7e5b6f1",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m33424284968",
+      "item_id": "m33424284968",
+      "dex": 92,
+      "name": "ゴース",
+      "image_sha256": "87db5455c8892713d45cb6a17146e63871e57628708d7cd80aff0805d29222a8",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m12916817206",
+      "item_id": "m12916817206",
+      "dex": 183,
+      "name": "マリル",
+      "image_sha256": "db91224a3de120655e273ecba3e11693a24fd840114c01f6be23bc494f50e80f",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m45415838000",
+      "item_id": "m45415838000",
+      "dex": 455,
+      "name": "マスキッパ",
+      "image_sha256": "a0c670d5a87f58a44da00184983fab1f5eca1f12719125a10d629c687bc9be00",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m20726880744",
+      "item_id": "m20726880744",
+      "dex": 137,
+      "name": "ポリゴン",
+      "image_sha256": "fbec013b0ed5a7a650368175cd67cc55f7e302444a8fb91f2451348a4828fef1",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m79918732370",
+      "item_id": "m79918732370",
+      "dex": 258,
+      "name": "ミズゴロウ",
+      "image_sha256": "e709cf265197956977d9422cb13446a0b71611cf48eedc5a8aa1e20961596094",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m91642785724",
+      "item_id": "m91642785724",
+      "dex": 54,
+      "name": "コダック",
+      "image_sha256": "7f128a4848487cb633ba99fa0a98c0e0a7c47c0df2071678d6d28bd5db9d8b62",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m58377320745",
+      "item_id": "m58377320745",
+      "dex": 499,
+      "name": "チャオブー",
+      "image_sha256": "31e6f98d8c014f6d08eee9516dd0649219ea8b534aceedf67dfd698e6a5310da",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m79654685291",
+      "item_id": "m79654685291",
+      "dex": 162,
+      "name": "オオタチ",
+      "image_sha256": "d1f9c9e449437f0b13adfc08c1f67d3a1039029f41aea39a6d7bb6d14822c8ab",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m91516045100",
+      "item_id": "m91516045100",
+      "dex": 122,
+      "name": "バリヤード",
+      "image_sha256": "4523e39d95647e5ce8ce62975fdd6277dcf8cd256a8bde55a12d1fa2ea563874",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m12095305199",
+      "item_id": "m12095305199",
+      "dex": 183,
+      "name": "マリル",
+      "image_sha256": "c31d4815e56b3dba8c2819d3a032f1bfc9e7201100979c029088cab204fdc9c3",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m95871582825",
+      "item_id": "m95871582825",
+      "dex": 330,
+      "name": "フライゴン",
+      "image_sha256": "b073b2ccc54b2744bd53d98ceaebb3e9ce16f93fae9852b126f902fcd1130c44",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m52215636905",
+      "item_id": "m52215636905",
+      "dex": 322,
+      "name": "ドンメル",
+      "image_sha256": "a8b40605fdea1a3d15e66ec60076c5116af6276ed26ebe6a5d8b184e45fa7693",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m20642903623",
+      "item_id": "m20642903623",
+      "dex": 597,
+      "name": "テッシード",
+      "image_sha256": "e964f2e8285d2d833e175dad373340017b1caf053706b204a363b7bcdeb960a2",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m10468574198",
+      "item_id": "m10468574198",
+      "dex": 103,
+      "name": "ナッシー",
+      "image_sha256": "6b6ddecae0ca02754f081a990b2529b839673a90f267cb66c541a2eb651b1106",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m31741443700",
+      "item_id": "m31741443700",
+      "dex": 252,
+      "name": "キモリ",
+      "image_sha256": "6a180e51640967803ed062d66de13d39aa104c67acfdd01822cb76dc9cc4186c",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m37987789176",
+      "item_id": "m37987789176",
+      "dex": 93,
+      "name": "ゴースト",
+      "image_sha256": "f4799523a5a196f438952809887f8c404655dd67efc735d241da905b221fa83d",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m22712286513",
+      "item_id": "m22712286513",
+      "dex": 48,
+      "name": "コンパン",
+      "image_sha256": "9d7d4189fac29fe29893d06228e610c2c56c62308ebd84c7e6a84976732d81ab",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m11179218020",
+      "item_id": "m11179218020",
+      "dex": 582,
+      "name": "バニプッチ",
+      "image_sha256": "84b0ef0e39fdc1d1762643808f5d0f0c27bbe734541ccb340b6560bdae27ec8f",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m38486427373",
+      "item_id": "m38486427373",
+      "dex": 353,
+      "name": "カゲボウズ",
+      "image_sha256": "29fce87d868b28aaadb5405aa3ab07b9a930a546a0c3ed10ef13210095472f52",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m63485701755",
+      "item_id": "m63485701755",
+      "dex": 262,
+      "name": "グラエナ",
+      "image_sha256": "6eb3b20f78e079a372d336f1096d11ca121aa50a78ed700e70144ef45a1afdaa",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m40144666845",
+      "item_id": "m40144666845",
+      "dex": 183,
+      "name": "マリル",
+      "image_sha256": "2747f6811edb1516daf2552b7b4628ffae1ae209870006e1caac32381c3b1c55",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m64937040811",
+      "item_id": "m64937040811",
+      "dex": 294,
+      "name": "ドゴーム",
+      "image_sha256": "5fbf5e1146e919bf48c3b7df8b73e0d0dece4b396ad3674a586bb0d52c5f6049",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m25773904450",
+      "item_id": "m25773904450",
+      "dex": 158,
+      "name": "ワニノコ",
+      "image_sha256": "00d6feb2e75e5e96b3e6a67ee0eea4c92bdff3eefe1a66da402f4bde78059546",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m59353393265",
+      "item_id": "m59353393265",
+      "dex": 161,
+      "name": "オタチ",
+      "image_sha256": "c16420222e725aca50e2911478e9755b1e35e3f6dbf27aedda890be4569eda46",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m74307867954",
+      "item_id": "m74307867954",
+      "dex": 275,
+      "name": "ダーテング",
+      "image_sha256": "df2bee592e7f2d1a3b80734e68e56a7baa2b3f89b71c27d5c20c225a779ca275",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m11369944291",
+      "item_id": "m11369944291",
+      "dex": 262,
+      "name": "グラエナ",
+      "image_sha256": "4aa4862019be004f0efe6047f6c82bcd01e9f415a226c873247e5015047bfe85",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m44089990572",
+      "item_id": "m44089990572",
+      "dex": 183,
+      "name": "マリル",
+      "image_sha256": "bfb5acd1fc828bbe1dceb3bc346c5cca498a83bf02c78addf99791b8970b2441",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m82904913881",
+      "item_id": "m82904913881",
+      "dex": 265,
+      "name": "ケムッソ",
+      "image_sha256": "cb474b4d1912f944e24f1addfdc081df746fce5979daccef810de8d8fd0d5059",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m47453312854",
+      "item_id": "m47453312854",
+      "dex": 89,
+      "name": "ベトベトン",
+      "image_sha256": "3c0e6faecbee2ecbf8d3d5411071aab7378064464466f5051fd15162df450ade",
+      "species_only": true
+    },
+    {
+      "source": "https://jp.mercari.com/item/m63474778268",
+      "item_id": "m63474778268",
+      "dex": 300,
+      "name": "エネコ",
+      "image_sha256": "30ce26483482114ef75bf322eb7f813b166fbe72b47599eaaa9a505010cb26e1",
+      "species_only": true
+    }
+  ]
+}

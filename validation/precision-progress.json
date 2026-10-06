@@ -1,15 +1,16 @@
 {
   "status": "in_progress",
-  "updated_at": "2026-10-06T11:10:44.895276+00:00",
+  "updated_at": "2026-10-06T11:16:35.947756+00:00",
   "goal": "improve real-photo species recognition; keep updating without routine confirmations",
   "completed": [
-    "v120 fixed baseline 30/36 development; 12/13 independent holdout",
-    "built 144 species-only prototypes from 36 labeled images; holdout remained12/13; no claimed gain yet"
+    "144 prototypes from36 training photos; species-only and no automatic acceptance expansion",
+    "independent24 images18/24->20/24; general13 unchanged12/13 and difficult11 improved6/11->8/11",
+    "17 unit tests passed; Kotlin ranking parity24/24; catalog and supplemental provenance validated"
   ],
   "next": [
-    "evaluate fresh difficult-species images using frozen prototype config",
-    "only ship changes with transparent before/after and independent evaluation",
-    "build APK on feature branch, keep previous app data safe"
+    "build APK via GitHub Actions",
+    "check signatures and package ID .precision121; do not require deleting older apps",
+    "save APK and report, mark checkpoint completed and disable resume automation"
   ],
   "repo": "pinonoir0504-collab/pokepino",
   "branch": "fix/recognition-confidence-20261006",
@@ -18,5 +19,7 @@
   "known_reports": [
     "Pokepino_20_Image_Test_20261006.md"
   ],
-  "no_main_mutation": true
+  "no_main_mutation": true,
+  "automation_id": "6ac4d7873b0c819194cb34d9be369bce",
+  "version": "1.2.1"
 }

@@ -48,6 +48,7 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
     private val env by lazy { OrtEnvironment.getEnvironment() }
     private var session: OrtSession? = null
     private val refs by lazy { loadRefs() }
+    private val photoRefs by lazy { loadRefs(PHOTO_REFS_ASSET, 1, speciesOnly = true) }
 
     fun isAvailable(): Boolean = runCatching {
         context.assets.open(MODEL_ASSET).close()
@@ -66,19 +67,27 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
             val old = bestByDex[r.dex]
             if (old == null || s > old) bestByDex[r.dex] = s
         }
-        val allRanked = bestByDex.entries
+        val baseRanked = bestByDex.entries
             .map { SpeciesCandidate(it.key, it.value) }
             .sortedByDescending { it.score }
 
+        val photoCandidates = photoRefs.map { SpeciesPhotoRanking.Candidate(it.dex, similarity(q, it)) }
+        val allRanked = SpeciesPhotoRanking.rank(
+            baseRanked.map { SpeciesPhotoRanking.Candidate(it.dex, it.score) }, photoCandidates
+        ).map { SpeciesCandidate(it.dex, it.score) }
+
         val ranked = allRanked.take(7)
 
-        val first = ranked.firstOrNull()
-        val second = ranked.getOrNull(1)
+        // Prototype-only evidence cannot increase automatic registration confidence.
+        // Variant matching below continues to use only the original variant references.
+        val first = baseRanked.firstOrNull()
+        val second = baseRanked.getOrNull(1)
         val margin = if (first != null && second != null) first.score - second.score else 1f
+        val preservesTrust = SpeciesPhotoRanking.preservesTrustedSpecies(ranked.firstOrNull()?.dex, first?.dex)
 
         // Conservative auto-accept thresholds. Ranking remains useful below these.
-        val accepted = first != null && first.score >= 0.66f && margin >= 0.035f
-        val veryStrong = first != null && first.score >= 0.76f && margin >= 0.060f
+        val accepted = preservesTrust && first != null && first.score >= 0.66f && margin >= 0.035f
+        val veryStrong = preservesTrust && first != null && first.score >= 0.76f && margin >= 0.060f
         return Result(ranked, accepted, veryStrong, q, allRanked)
     }
 
@@ -114,8 +123,8 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         return VariantResult(ranked, accepted, veryStrong)
     }
 
-    private fun loadRefs(): List<Ref> {
-        val text = context.assets.open(REFS_ASSET).bufferedReader(Charsets.UTF_8).use { it.readText() }
+    private fun loadRefs(assetName: String = REFS_ASSET, minimum: Int = 1000, speciesOnly: Boolean = false): List<Ref> {
+        val text = context.assets.open(assetName).bufferedReader(Charsets.UTF_8).use { it.readText() }
         val rows = JSONArray(text)
         val out = ArrayList<Ref>(rows.length())
         repeat(rows.length()) { i ->
@@ -131,7 +140,7 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
             }
             val n = sqrt(ss).coerceAtLeast(1e-6f)
             val prototype=row.optString(4,"base")
-            val penalty=when(prototype){
+            val penalty=if(speciesOnly) 0.05f else when(prototype){
                 "mirror" -> 0.012f
                 "dark","bright" -> 0.008f
                 else -> 0f
@@ -139,13 +148,13 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
             out += Ref(
                 id = row.optString(0),
                 dex = row.optInt(1),
-                group = row.optString(2),
+                group = if (speciesOnly) "" else row.optString(2),
                 vector = bytes,
                 norm = n,
                 penalty = penalty
             )
         }
-        if (out.size < 1000) error("高精度認識DBが不足しています: ${out.size}")
+        if (out.size < minimum) error("高精度認識DBが不足しています: $assetName (${out.size})")
         return out
     }
 
@@ -315,6 +324,7 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
     companion object {
         private const val MODEL_ASSET = "mobilenet_v3_small_features.onnx"
         private const val REFS_ASSET = "embedding_catalog_v3.json"
+        private const val PHOTO_REFS_ASSET = "species_photo_refs_v1.json"
         private const val EMBEDDING_SIZE = 576
     }
 }
