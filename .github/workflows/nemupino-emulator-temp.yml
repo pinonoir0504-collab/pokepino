@@ -51,17 +51,30 @@ jobs:
             adb shell settings put global window_animation_scale 0
             adb shell settings put global transition_animation_scale 0
             adb shell settings put global animator_duration_scale 0
-            adb shell am instrument -w -r com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee /tmp/instrumentation.txt
+            set +e
+            timeout 900 adb shell am instrument -w -r com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee /tmp/instrumentation.txt
+            TEST_RC=${PIPESTATUS[0]}
+            adb logcat -d > /tmp/logcat.txt || true
+            adb shell dumpsys activity activities > /tmp/activity.txt || true
+            adb shell dumpsys meminfo com.oyasumi.recorder > /tmp/meminfo.txt || true
+            run-as com.oyasumi.recorder sh -c 'cat cache/actual-result.png' > /tmp/actual-result.png 2>/dev/null || true
+            run-as com.oyasumi.recorder sh -c 'cat cache/design-overview.png' > /tmp/design-overview.png 2>/dev/null || true
+            run-as com.oyasumi.recorder sh -c 'cat cache/design-ranking.png' > /tmp/design-ranking.png 2>/dev/null || true
+            set -e
+            test "$TEST_RC" -eq 0
             grep -q "OK (" /tmp/instrumentation.txt
       - name: Collect emulator diagnostics
         if: always()
         shell: bash
         run: |
           mkdir -p emulator-artifact
-          adb logcat -d > emulator-artifact/logcat.txt || true
-          adb shell dumpsys activity activities > emulator-artifact/activity.txt || true
-          adb shell dumpsys meminfo com.oyasumi.recorder > emulator-artifact/meminfo.txt || true
           cp /tmp/instrumentation.txt emulator-artifact/instrumentation.txt || true
+          cp /tmp/logcat.txt emulator-artifact/logcat.txt || true
+          cp /tmp/activity.txt emulator-artifact/activity.txt || true
+          cp /tmp/meminfo.txt emulator-artifact/meminfo.txt || true
+          for image in /tmp/actual-result.png /tmp/design-overview.png /tmp/design-ranking.png; do
+            if [ -s "$image" ]; then cp "$image" emulator-artifact/; fi
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
