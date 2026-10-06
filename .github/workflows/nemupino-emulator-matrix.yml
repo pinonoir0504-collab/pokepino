@@ -51,7 +51,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 26
-          arch: x86
+          arch: x86_64
           profile: Nexus 5X
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -camera-back none -camera-front none -noaudio
