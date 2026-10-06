@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/build-pinowatch-v116.yml"
       - "pinowatch-build/v116-payload/**"
+      - "pinowatch-build/v116-overlay/**"
   workflow_dispatch:
 
 jobs:
@@ -29,6 +30,7 @@ jobs:
           unzip -t /tmp/PinoWatch_v1.16.0_source.zip
           mkdir -p /tmp/pinowatch
           unzip -q /tmp/PinoWatch_v1.16.0_source.zip -d /tmp/pinowatch
+          cp pinowatch-build/v116-overlay/DisclosureCatchUpWorker.java /tmp/pinowatch/app/src/main/java/com/tdwatch/stockwatchv4/DisclosureCatchUpWorker.java
 
       - uses: actions/setup-java@v5
         with:
@@ -59,6 +61,8 @@ jobs:
           grep -q 'versionName = "1.16.0"' app/build.gradle.kts
           grep -q 'androidx.work:work-runtime:2.10.0' app/build.gradle.kts
           grep -q 'DisclosureCatchUpWorker' app/src/main/java/com/tdwatch/stockwatchv4/NotificationReliability.java
+          grep -q 'favoritesOnly && !favorites.isEmpty()' app/src/main/java/com/tdwatch/stockwatchv4/DisclosureCatchUpWorker.java
+          grep -q 'i += 25' app/src/main/java/com/tdwatch/stockwatchv4/DisclosureCatchUpWorker.java
           grep -q 'onDeletedMessages' app/src/main/java/com/tdwatch/stockwatchv4/PinoFirebaseService.java
           grep -q 'setExactAndAllowWhileIdle' app/src/main/java/com/tdwatch/stockwatchv4/EarningsReminderReceiver.java
           grep -q '20, 10' app/src/main/java/com/tdwatch/stockwatchv4/EarningsReminderReceiver.java
