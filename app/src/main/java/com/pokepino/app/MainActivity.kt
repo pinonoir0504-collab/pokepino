@@ -212,6 +212,7 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
     var bitmap by remember{mutableStateOf<Bitmap?>(null)}
     var aiResult by remember{mutableStateOf<PokemonRecognizer.Result?>(null)}
     var highResult by remember{mutableStateOf<EmbeddingRecognizer.Result?>(null)}
+    var fusedCandidates by remember{mutableStateOf<List<CandidateFusion.Candidate>>(emptyList())}
     var highVariants by remember{mutableStateOf<EmbeddingRecognizer.VariantResult?>(null)}
     var fallbackResult by remember{mutableStateOf<VariantRecognizer.Result?>(null)}
     var busy by remember{mutableStateOf(false)}
@@ -221,7 +222,7 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
 
     fun analyze(u:Uri){
         if(busy)return
-        aiResult=null;highResult=null;highVariants=null;fallbackResult=null;msg="";busy=true
+        aiResult=null;highResult=null;highVariants=null;fusedCandidates=emptyList();fallbackResult=null;msg="";busy=true
         scope.launch{
             try{
                 val b=withContext(Dispatchers.IO){decodeBitmap(context,u,1280)}
@@ -244,14 +245,19 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
                     highTop?.let { RecognitionPolicy.Candidate(it.dex, high?.acceptedSpecies==true, high?.veryStrongSpecies==true) },
                     aiTop?.let { RecognitionPolicy.Candidate(it.dex, ai?.accepted==true, ai?.accepted==true && it.score>=0.55f) }
                 )
-                val chosenDex=decision.dex
+                val fused=if(high!=null && ai!=null) CandidateFusion.rank(
+                    high.allSpeciesCandidates.map { CandidateFusion.Candidate(it.dex,it.score) },
+                    ai.allCandidates.map { CandidateFusion.Candidate(it.dex,it.score) }
+                ) else emptyList()
+                fusedCandidates=fused
+                val chosenDex=fused.firstOrNull()?.dex ?: decision.dex
 
                 if(high!=null && chosenDex!=null){
                     val variants=withContext(Dispatchers.IO){embedding.rankVariants(high,chosenDex,master)}
                     highVariants=variants
                     val topVariant=variants.candidates.firstOrNull()
-                    val speciesTrusted=decision.speciesTrusted
-                    val variantTrusted=variants.accepted && decision.variantEligible
+                    val speciesTrusted=decision.dex==chosenDex && decision.speciesTrusted
+                    val variantTrusted=variants.accepted && decision.dex==chosenDex && decision.variantEligible
 
                     if(variantTrusted && topVariant!=null && topVariant.recordIds.size==1){
                         val id=topVariant.recordIds.first()
@@ -328,6 +334,16 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
             if(busy) LinearProgressIndicator(Modifier.fillMaxWidth())
             bitmap?.let{Image(it.asImageBitmap(),null,Modifier.fillMaxWidth().height(260.dp),contentScale=ContentScale.Fit)}
             if(msg.isNotBlank()) Text(msg,fontWeight=FontWeight.Bold)
+        }
+
+        if(fusedCandidates.isNotEmpty()) {
+            item{Text("総合判定の候補",fontWeight=FontWeight.Black)}
+            items(fusedCandidates){candidate->
+                val fig=master.firstOrNull{it.dex==candidate.dex}
+                Card(Modifier.fillMaxWidth().clickable(enabled=fig!=null){open(candidate.dex)}){
+                    Text(fig?.pokemon?:"No.${candidate.dex}",Modifier.padding(12.dp))
+                }
+            }
         }
 
         highResult?.let{r->

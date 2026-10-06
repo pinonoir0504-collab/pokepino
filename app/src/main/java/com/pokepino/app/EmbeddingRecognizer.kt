@@ -22,7 +22,8 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         val speciesCandidates: List<SpeciesCandidate>,
         val acceptedSpecies: Boolean,
         val veryStrongSpecies: Boolean,
-        internal val query: FloatArray
+        internal val query: FloatArray,
+        internal val allSpeciesCandidates: List<SpeciesCandidate> = speciesCandidates
     )
     data class VariantCandidate(
         val recordIds: List<String>,
@@ -65,10 +66,11 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
             val old = bestByDex[r.dex]
             if (old == null || s > old) bestByDex[r.dex] = s
         }
-        val ranked = bestByDex.entries
+        val allRanked = bestByDex.entries
             .map { SpeciesCandidate(it.key, it.value) }
             .sortedByDescending { it.score }
-            .take(7)
+
+        val ranked = allRanked.take(7)
 
         val first = ranked.firstOrNull()
         val second = ranked.getOrNull(1)
@@ -77,7 +79,7 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         // Conservative auto-accept thresholds. Ranking remains useful below these.
         val accepted = first != null && first.score >= 0.66f && margin >= 0.035f
         val veryStrong = first != null && first.score >= 0.76f && margin >= 0.060f
-        return Result(ranked, accepted, veryStrong, q)
+        return Result(ranked, accepted, veryStrong, q, allRanked)
     }
 
     fun rankVariants(result: Result, dex: Int, figures: List<Figure>): VariantResult {

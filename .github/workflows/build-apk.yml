@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [ "main", "feat/recognition-v3" ]
+    branches: [ "main", "feat/recognition-v3", "fix/recognition-confidence-20261006" ]
 
 concurrency:
   group: pokepino-android-apk-${{ github.ref }}
@@ -35,10 +35,19 @@ jobs:
           gradle-version: "8.9"
       - name: Validate figure database
         run: python3 tools/validate_catalog.py
+      - name: Bundle offline Pokemon classifier
+        run: |
+          BASE="https://huggingface.co/BiernyVR/pokemon-classifier-mobilenetv3/resolve/68c055b397ad1a9bc61bbba39be438c4a2ac3f28"
+          curl --fail --location --retry 3 "$BASE/pokemon_classifier.onnx?download=true" -o app/src/main/assets/pokemon_1025.onnx
+          curl --fail --location --retry 3 "$BASE/pokemon_labels.json?download=true" -o app/src/main/assets/pokemon_labels.json
+          echo "fc38207ce7600f3f31754993ac77f0ea9b3c9b234a9b33d79f85fa9b40ecc0a0  app/src/main/assets/pokemon_1025.onnx" | sha256sum --check
+          echo "f467bfaead94ec2e99a039c07b556a28da35837aa1e80addac4c8e43a71d2b1f  app/src/main/assets/pokemon_labels.json" | sha256sum --check
+      - name: Test candidate ranking
+        run: gradle :app:testDebugUnitTest --stacktrace
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: pokepino-v1.1.0-debug-apk
+          name: pokepino-v1.2.0-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error

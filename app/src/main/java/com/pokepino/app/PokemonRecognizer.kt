@@ -16,7 +16,7 @@ import kotlin.math.exp
 
 class PokemonRecognizer(private val context: Context):Closeable{
     data class Candidate(val dex:Int,val score:Float)
-    data class Result(val candidates:List<Candidate>,val accepted:Boolean,val engine:String)
+    data class Result(val candidates:List<Candidate>,val accepted:Boolean,val engine:String, val allCandidates:List<Candidate> = candidates)
     private val env by lazy{OrtEnvironment.getEnvironment()}
     private var session:OrtSession?=null
 
@@ -34,17 +34,18 @@ class PokemonRecognizer(private val context: Context):Closeable{
                     is FloatArray -> raw
                     else -> error("AI出力形式が不明です")
                 }
-                val ranked=logits.indices.sortedByDescending{logits[it]}.take(5)
+                val ranked=logits.indices.sortedByDescending{logits[it]}
                 val max=ranked.maxOf{logits[it]}
                 val denom=logits.sumOf{exp((it-max).toDouble())}.toFloat()
-                val cs=ranked.map{
+                val allCandidates=ranked.map{
                     Candidate(
                         labels.getOrElse(it){it+1},
                         exp((logits[it]-max).toDouble()).toFloat()/denom
                     )
                 }
+                val cs=allCandidates.take(5)
                 val margin=if(cs.size>1)cs[0].score-cs[1].score else 1f
-                return Result(cs,cs.firstOrNull()?.score?.let{it>=0.35f&&margin>=0.10f}==true,"全1025種AI")
+                return Result(cs,cs.firstOrNull()?.score?.let{it>=0.35f&&margin>=0.10f}==true,"全1025種AI",allCandidates)
             }
         }
     }
@@ -58,7 +59,7 @@ class PokemonRecognizer(private val context: Context):Closeable{
     }
 
     private fun preprocess(src:Bitmap):java.nio.FloatBuffer{
-        val b=Bitmap.createScaledBitmap(src,224,224,true)
+        val b=FigureCrop.classifierSquare(src)
         val bb=ByteBuffer.allocateDirect(3*224*224*4).order(ByteOrder.nativeOrder())
         val fb=bb.asFloatBuffer()
         val px=IntArray(224*224)
@@ -79,6 +80,13 @@ class PokemonRecognizer(private val context: Context):Closeable{
         val f=File(dir,name)
         if(f.exists()&&f.length()>=min)return f
         val tmp=File(dir,"$name.part")
+        // CI bundles these fixed-revision assets so recognition works offline on first launch.
+        runCatching {
+            context.assets.open(name).use { input -> tmp.outputStream().use { input.copyTo(it) } }
+            if (tmp.length() < min) error("同梱AIデータが不足しています")
+            tmp.copyTo(f, true); tmp.delete()
+        }.onSuccess { return f }
+
         if(tmp.exists())tmp.delete()
         val c=(URL(url).openConnection() as HttpURLConnection).apply{
             connectTimeout=20000
