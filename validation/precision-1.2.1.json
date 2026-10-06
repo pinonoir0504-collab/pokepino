@@ -1,6 +1,6 @@
 {
   "version": "1.2.1",
-  "status": "validation passed; APK build pending",
+  "status": "completed",
   "evaluation": "PC reproduction with unchanged ONNX models; Kotlin ranking parity checked; not Android device upload",
   "training_sources": 36,
   "training_vectors": 144,
@@ -503,5 +503,14 @@
       "after_correct": true,
       "cohort": "targeted difficult species"
     }
-  ]
+  ],
+  "build": {
+    "source_commit": "e1913d29a7e3b296bc02283d335ce3625b9cea73",
+    "workflow_run": 37455538033,
+    "success": true,
+    "apk_sha256": "af60d563f543da822574fc8a52866aae89419d4f5dfa1d9b5f5f06c4f2c59f35",
+    "package": "com.pokepino.app.precision121",
+    "signature_verified": true,
+    "device_upload_tested": false
+  }
 }
