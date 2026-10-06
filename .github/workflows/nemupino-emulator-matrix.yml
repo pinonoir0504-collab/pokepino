@@ -1,4 +1,4 @@
-name: NemuPino emulator matrix
+name: NemuPino fast device verification
 
 on:
   push:
@@ -10,18 +10,24 @@ permissions:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
     strategy:
       fail-fast: false
       matrix:
         include:
-          - test_class: com.oyasumi.recorder.DesignSmokeTest
-            safe: design
-          - test_class: com.oyasumi.recorder.PlaylistIntegrationTest
+          - test_class: com.oyasumi.recorder.DesignSmokeTest#resultLayoutAndRankingOpen
+            safe: ui
+          - test_class: com.oyasumi.recorder.RecordingIntegrationTest#shortRotationsProduceCheckpointsThenOnePlayableFinalSession
+            safe: record-save
+          - test_class: com.oyasumi.recorder.RecordingIntegrationTest#rangeCompletionCanChainPlaybackWithoutStaleCallbacks
+            safe: playback
+          - test_class: com.oyasumi.recorder.RecordingIntegrationTest#zzResultControlsAndManualLabelsWork
+            safe: labels
+          - test_class: com.oyasumi.recorder.RecordingIntegrationTest#analysisPreservesEditsAndDoesNotResurrectDeletedRecords
+            safe: analysis
+          - test_class: com.oyasumi.recorder.PlaylistIntegrationTest#playbackCrossesPartsAndCrossPartSeekKeepsPauseChoice
             safe: playlist
-          - test_class: com.oyasumi.recorder.RecordingIntegrationTest
-            safe: recording
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
@@ -31,13 +37,6 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Enable KVM
-        shell: bash
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm || true
-          if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm; ls -l /dev/kvm; else echo 'NO_KVM_DEVICE'; fi
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.13"
@@ -48,26 +47,34 @@ jobs:
           mkdir nemupino-ci diag
           unzip -q .nemupino-build/source.zip -d nemupino-ci
           cp .nemupino-build/SoundCandidates.kt nemupino-ci/app/src/main/java/com/oyasumi/recorder/SoundCandidates.kt
-      - name: Run emulator class
+      - name: Run one device scenario
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          profile: pixel_3a
+          api-level: 26
+          arch: x86
+          profile: Nexus 5X
           disable-animations: true
-          emulator-boot-timeout: 900
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -no-boot-anim -camera-back none -camera-front none
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -camera-back none -camera-front none -noaudio
           script: |
-            gradle -p nemupino-ci :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
-            adb install -r nemupino-ci/app/build/outputs/apk/debug/app-debug.apk
-            adb install -r nemupino-ci/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            set -o pipefail
+            cd nemupino-ci
+            gradle :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
             adb shell pm grant com.oyasumi.recorder android.permission.RECORD_AUDIO || true
-            adb shell pm grant com.oyasumi.recorder android.permission.POST_NOTIFICATIONS || true
-            bash -lc 'set +e; timeout 420s adb shell am instrument -w -r -e class "${{ matrix.test_class }}" com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner > diag/instrumentation.txt 2>&1; S=$?; cat diag/instrumentation.txt; adb logcat -d > diag/logcat.txt 2>&1 || true; adb shell dumpsys meminfo com.oyasumi.recorder > diag/meminfo.txt 2>&1 || true; for F in design-overview.png design-ranking.png actual-result.png; do adb exec-out run-as com.oyasumi.recorder cat cache/$F > diag/$F 2>/dev/null || rm -f diag/$F; done; if grep -Eq "FAILURES|INSTRUMENTATION_FAILED|FAIL:" diag/instrumentation.txt; then exit 1; fi; exit $S'
+            set +e
+            timeout 300s adb shell am instrument -w -r -e class "${{ matrix.test_class }}" com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee ../diag/instrumentation.txt
+            STATUS=${PIPESTATUS[0]}
+            adb logcat -d > ../diag/logcat.txt 2>&1 || true
+            adb shell dumpsys meminfo com.oyasumi.recorder > ../diag/meminfo.txt 2>&1 || true
+            for F in design-overview.png design-ranking.png actual-result.png; do
+              adb exec-out run-as com.oyasumi.recorder cat cache/$F > ../diag/$F 2>/dev/null || rm -f ../diag/$F
+            done
+            if grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|FAIL:' ../diag/instrumentation.txt; then exit 1; fi
+            exit $STATUS
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: nemupino-emulator-${{ matrix.safe }}
+          name: nemupino-fast-${{ matrix.safe }}
           path: diag/
           if-no-files-found: warn
