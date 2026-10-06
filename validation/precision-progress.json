@@ -1,20 +1,14 @@
 {
-  "status": "in_progress",
-  "updated_at": "2026-10-06T11:29:02.816414+00:00",
+  "status": "completed",
+  "updated_at": "2026-10-06T11:42:35.147860+00:00",
   "goal": "improve real-photo species recognition; keep updating without routine confirmations",
   "completed": [
-    "144 prototypes from36 training photos; species-only and no automatic acceptance expansion",
-    "independent24 images18/24->20/24; general13 unchanged12/13 and difficult11 improved6/11->8/11",
-    "17 unit tests passed; Kotlin ranking parity24/24; catalog and supplemental provenance validated",
-    "GitHub Actions passed catalog/provenance checks, unit tests and APK build",
-    "APK signature verified; both ONNX models, labels and refs match evaluation byte-for-byte",
-    "APK and report prepared for user"
+    "60 verified reference photos covering44 species;240 vectors",
+    "Independent16:13/16 before and after; no accuracy gain established",
+    "CI unit tests, provenance validation and Android build passed",
+    "APK signature and all packaged model/reference bytes verified"
   ],
-  "next": [
-    "visually label new photos and exclude previous IDs and image hashes",
-    "freeze .05 prototype penalty and .85/.15 fusion; compare1.2.1 vs1.2.2 on unseen images",
-    "build signed APK, validate packaged assets and save report"
-  ],
+  "next": [],
   "repo": "pinonoir0504-collab/pokepino",
   "branch": "fix/recognition-confidence-20261006",
   "base_commit": "ecb475b21c746a9c149db6540a10f1b252e17565",
@@ -25,19 +19,19 @@
   "no_main_mutation": true,
   "automation_id": "6ac4d7873b0c819194cb34d9be369bce",
   "version": "1.2.2",
-  "source_commit": "e1913d29a7e3b296bc02283d335ce3625b9cea73",
-  "apk_sha256": "af60d563f543da822574fc8a52866aae89419d4f5dfa1d9b5f5f06c4f2c59f35",
+  "source_commit": "0d3879888f58bb746cf24b1fb2fe29d2d69be803",
+  "apk_sha256": "a32fc0af996aeebb6b468a41dd79be3f4ce25d389df5ed2742b768847aa5b20a",
   "workflow_success": true,
-  "workflow_run": 37455538033,
+  "workflow_run": 37457645734,
   "deliverables": [
     {
-      "filename": "Pokepino-v1.2.1-precision.apk",
-      "library_file_id": "libfile_36ff1bc4d980819196a73a2475278bb8"
+      "filename": "Pokepino-v1.2.2-precision.apk",
+      "library_file_id": "libfile_9f47378b301c8191a1d57af0dfa554d6"
     },
     {
-      "filename": "Pokepino_v1.2.1_Validation.md",
-      "library_file_id": "libfile_163cf1457ce88191b53f73905c588592"
+      "filename": "Pokepino_v1.2.2_Validation.md",
+      "library_file_id": "libfile_ef0a65654fb8819199cc3ad7799d572a"
     }
   ],
-  "stage": "building references from60 verified photos; collecting new holdout"
+  "stage": "v1.2.2 signed APK and report complete"
 }

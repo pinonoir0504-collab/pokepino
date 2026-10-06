@@ -1,6 +1,6 @@
 {
   "version": "1.2.2",
-  "status": "validation completed, APK build pending",
+  "status": "completed",
   "reference_sources": 60,
   "reference_species": 44,
   "prototype_vectors": 240,
@@ -314,5 +314,10 @@
         "score": 0.007792458387759647
       }
     }
-  ]
+  ],
+  "source_commit": "0d3879888f58bb746cf24b1fb2fe29d2d69be803",
+  "workflow_run": 37457645734,
+  "apk_sha256": "a32fc0af996aeebb6b468a41dd79be3f4ce25d389df5ed2742b768847aa5b20a",
+  "signature_verified": true,
+  "packaged_assets_verified": true
 }
