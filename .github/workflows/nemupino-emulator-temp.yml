@@ -53,15 +53,25 @@ jobs:
             adb shell settings put global transition_animation_scale 0
             adb shell settings put global animator_duration_scale 0
             set +e
-            adb shell am instrument -w -r com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner | tee ../emulator-artifact/instrumentation.txt
-            STATUS=${PIPESTATUS[0]}
-            adb logcat -d > ../emulator-artifact/logcat.txt 2>&1 || true
+            FAIL=0
+            run_class() {
+              CLASS="$1"
+              SAFE="$2"
+              adb logcat -c
+              timeout 600s adb shell am instrument -w -r -e class "$CLASS" com.oyasumi.recorder.test/androidx.test.runner.AndroidJUnitRunner                 | tee "../emulator-artifact/${SAFE}.txt"
+              STATUS=${PIPESTATUS[0]}
+              adb logcat -d > "../emulator-artifact/${SAFE}-logcat.txt" 2>&1 || true
+              if [ "$STATUS" -ne 0 ] || grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|FAIL:' "../emulator-artifact/${SAFE}.txt"; then FAIL=1; fi
+            }
+            run_class com.oyasumi.recorder.DesignSmokeTest design
+            run_class com.oyasumi.recorder.PlaylistIntegrationTest playlist
+            run_class com.oyasumi.recorder.RecordingIntegrationTest recording
             adb shell dumpsys activity activities > ../emulator-artifact/activity.txt 2>&1 || true
             adb shell dumpsys meminfo com.oyasumi.recorder > ../emulator-artifact/meminfo.txt 2>&1 || true
             for F in design-overview.png design-ranking.png actual-result.png; do
               adb exec-out run-as com.oyasumi.recorder cat cache/$F > ../emulator-artifact/$F 2>/dev/null || rm -f ../emulator-artifact/$F
             done
-            exit $STATUS
+            exit $FAIL
       - uses: actions/upload-artifact@v4
         if: always()
         with:
