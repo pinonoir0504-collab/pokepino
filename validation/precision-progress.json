@@ -1,6 +1,6 @@
 {
-  "status": "completed",
-  "updated_at": "2026-10-06T11:22:33.291470+00:00",
+  "status": "in_progress",
+  "updated_at": "2026-10-06T11:29:02.816414+00:00",
   "goal": "improve real-photo species recognition; keep updating without routine confirmations",
   "completed": [
     "144 prototypes from36 training photos; species-only and no automatic acceptance expansion",
@@ -10,7 +10,11 @@
     "APK signature verified; both ONNX models, labels and refs match evaluation byte-for-byte",
     "APK and report prepared for user"
   ],
-  "next": [],
+  "next": [
+    "visually label new photos and exclude previous IDs and image hashes",
+    "freeze .05 prototype penalty and .85/.15 fusion; compare1.2.1 vs1.2.2 on unseen images",
+    "build signed APK, validate packaged assets and save report"
+  ],
   "repo": "pinonoir0504-collab/pokepino",
   "branch": "fix/recognition-confidence-20261006",
   "base_commit": "ecb475b21c746a9c149db6540a10f1b252e17565",
@@ -20,7 +24,7 @@
   ],
   "no_main_mutation": true,
   "automation_id": "6ac4d7873b0c819194cb34d9be369bce",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "source_commit": "e1913d29a7e3b296bc02283d335ce3625b9cea73",
   "apk_sha256": "af60d563f543da822574fc8a52866aae89419d4f5dfa1d9b5f5f06c4f2c59f35",
   "workflow_success": true,
@@ -34,5 +38,6 @@
       "filename": "Pokepino_v1.2.1_Validation.md",
       "library_file_id": "libfile_163cf1457ce88191b53f73905c588592"
     }
-  ]
+  ],
+  "stage": "building references from60 verified photos; collecting new holdout"
 }
