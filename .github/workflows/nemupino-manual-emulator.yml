@@ -15,6 +15,7 @@ jobs:
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      ANDROID_AVD_HOME: /home/runner/.android/avd
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v5
@@ -48,7 +49,9 @@ jobs:
           AVDMANAGER=$(find "$ANDROID_HOME" -type f -name avdmanager | head -n 1)
           yes | "$SDKMANAGER" --licenses >/dev/null || true
           "$SDKMANAGER" "platform-tools" "platforms;android-35" "system-images;android-35;google_apis;x86_64"
-          echo no | "$AVDMANAGER" create avd -n nemupino35 -k "system-images;android-35;google_apis;x86_64" -d pixel_3a --force
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo no | "$AVDMANAGER" create avd -n nemupino35 -k "system-images;android-35;google_apis;x86_64" -d pixel_3a -p "$ANDROID_AVD_HOME/nemupino35.avd" --force
+          ls -la "$ANDROID_AVD_HOME"
           nohup $ANDROID_HOME/emulator/emulator @nemupino35 -no-window -no-snapshot -no-boot-anim -gpu swiftshader_indirect -camera-back none -camera-front none -accel on > diag/emulator.log 2>&1 &
           adb wait-for-device
           for i in $(seq 1 180); do
