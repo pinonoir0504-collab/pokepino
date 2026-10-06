@@ -1,0 +1,22 @@
+{
+  "status": "in_progress",
+  "updated_at": "2026-10-06T11:10:44.895276+00:00",
+  "goal": "improve real-photo species recognition; keep updating without routine confirmations",
+  "completed": [
+    "v120 fixed baseline 30/36 development; 12/13 independent holdout",
+    "built 144 species-only prototypes from 36 labeled images; holdout remained12/13; no claimed gain yet"
+  ],
+  "next": [
+    "evaluate fresh difficult-species images using frozen prototype config",
+    "only ship changes with transparent before/after and independent evaluation",
+    "build APK on feature branch, keep previous app data safe"
+  ],
+  "repo": "pinonoir0504-collab/pokepino",
+  "branch": "fix/recognition-confidence-20261006",
+  "base_commit": "ecb475b21c746a9c149db6540a10f1b252e17565",
+  "workspace": "/workspace/scratch/0cdf1b722499",
+  "known_reports": [
+    "Pokepino_20_Image_Test_20261006.md"
+  ],
+  "no_main_mutation": true
+}
