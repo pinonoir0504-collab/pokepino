@@ -1,6 +1,6 @@
 {
   "status": "in_progress",
-  "updated_at": "2026-10-07T06:58:34.463Z",
+  "updated_at": "2026-10-07T07:14:42.356Z",
   "goal": "Exceed80% species top-1 on genuinely unused random100 auction photos; deliver tested signed APK",
   "completed": [
     "v1.2.2 fresh independent50:31/50=62%;19 errors now development only",
@@ -33,7 +33,7 @@
   "current_task": {
     "status": "in_progress",
     "request": "Improve recognition above80% on independent validation",
-    "stage": "Independent third100:71/100=71%, baseline43/100, top3=80. Not achieved; third100 now development.558 development photos; testing packaging crops using fivefold development only before another unused100.",
+    "stage": "Persisting complete v1.3.0 Android source and657-photo model; fifth independent10075% vs47% baseline, target not achieved.757 supported development photos retained. Further generalization work pending.",
     "development_accuracy_only": true,
     "shape_model_sha": "c179f8f7f592449c4c1bca4cd124a7538021428c5ffb89afde9503935b197efb",
     "workspace": "improve/",
@@ -89,9 +89,49 @@
       "baseline_correct": 43,
       "top3": 80
     },
-    "development_photos": 558,
-    "development_library_version": 1,
+    "development_photos": 757,
+    "development_library_version": 2,
     "independent100_library_file": "libfile_52907e5e2f948191ba0b8fca4d6943a5",
-    "next": "Improve bag/card crop robustness; freeze before fourth unused100; then Kotlin tests and APK Actions"
+    "next": "Improve bag/card crop robustness; freeze before fourth unused100; then Kotlin tests and APK Actions",
+    "independent_fifth": {
+      "correct": 75,
+      "total": 100,
+      "baseline_correct": 47,
+      "top3": 90
+    },
+    "recovery_blobs_v130": [
+      {
+        "path": ".github/workflows/build-apk.yml",
+        "sha": "640911009fe2d411ca657e9e1745cbfd59423775"
+      },
+      {
+        "path": ".gitignore",
+        "sha": "bf09a0fa7ae6b47dd09b8789c25453859edf3272"
+      },
+      {
+        "path": "app/build.gradle.kts",
+        "sha": "f5fc3fb050272683393d11f6365cfd26e4c6a0c1"
+      },
+      {
+        "path": "app/src/androidTest/java/com/pokepino/app/MainActivitySmokeTest.kt",
+        "sha": "12e882344afb479b1a9141e5fc6ec7ad986269ee"
+      },
+      {
+        "path": "app/src/androidTest/java/com/pokepino/app/ShapeRecognitionInstrumentedTest.kt",
+        "sha": "8860cc91c2ddc0d36b3f0694ea050c82c8fa08d3"
+      },
+      {
+        "path": "app/src/main/assets/shape_metric_v1.json",
+        "sha": "2eabc7e59452f5ba095e750b8b967ecfcf5b579a"
+      },
+      {
+        "path": "app/src/main/assets/shape_refs_00.json",
+        "sha": "2b4483a0d8ec06d8417a7b3f7f8a60753173ff38"
+      },
+      {
+        "path": "app/src/main/assets/shape_refs_01.json",
+        "sha": "6fef04663add57e27328cb3ca3e143caa86a9997"
+      }
+    ]
   }
 }
