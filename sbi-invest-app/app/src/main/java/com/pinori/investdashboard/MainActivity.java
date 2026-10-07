@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("*/*");
                 intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
-                        "text/csv", "text/plain", "application/csv", "application/vnd.ms-excel"
+                        "text/csv", "text/plain", "application/csv", "application/vnd.ms-excel", "application/json"
                 });
                 intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                 try {
@@ -122,7 +122,7 @@ public class MainActivity extends Activity {
                     if (out != null) {
                         out.write(pendingExportText.getBytes(StandardCharsets.UTF_8));
                         out.flush();
-                        Toast.makeText(this, "CSVを保存しました", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "ファイルを保存しました", Toast.LENGTH_SHORT).show();
                     }
                 } catch (Exception e) {
                     Toast.makeText(this, "保存に失敗しました: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -147,13 +147,29 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> {
                 Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("text/csv");
+                String lowerName = pendingExportName.toLowerCase();
+                intent.setType(lowerName.endsWith(".json") ? "application/json" : "text/csv");
                 intent.putExtra(Intent.EXTRA_TITLE, pendingExportName);
                 try {
                     startActivityForResult(intent, REQ_SAVE_FILE);
                 } catch (ActivityNotFoundException e) {
                     Toast.makeText(MainActivity.this, "保存画面を開けませんでした", Toast.LENGTH_LONG).show();
                 }
+            });
+        }
+
+        @JavascriptInterface
+        public void setDarkMode(boolean dark) {
+            runOnUiThread(() -> {
+                int bg = Color.parseColor(dark ? "#0F1217" : "#F5F6F8");
+                getWindow().setStatusBarColor(bg);
+                getWindow().setNavigationBarColor(bg);
+                int flags = dark ? 0 : View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && !dark) {
+                    flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+                }
+                getWindow().getDecorView().setSystemUiVisibility(flags);
+                if (webView != null) webView.setBackgroundColor(bg);
             });
         }
 
