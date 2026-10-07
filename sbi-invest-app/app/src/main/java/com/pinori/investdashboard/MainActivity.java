@@ -135,8 +135,37 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
+        if (webView == null) {
+            super.onBackPressed();
+            return;
+        }
+
+        webView.evaluateJavascript(
+                "(function(){try{return !!(window.handleAndroidBack&&window.handleAndroidBack());}catch(e){return false;}})()",
+                value -> {
+                    boolean handledByPage = "true".equals(value);
+                    if (handledByPage) return;
+
+                    runOnUiThread(() -> {
+                        if (webView != null && webView.canGoBack()) webView.goBack();
+                        else MainActivity.super.onBackPressed();
+                    });
+                }
+        );
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (webView != null) {
+            webView.stopLoading();
+            webView.removeJavascriptInterface("Android");
+            webView.setWebChromeClient(null);
+            webView.setWebViewClient(null);
+            webView.removeAllViews();
+            webView.destroy();
+            webView = null;
+        }
+        super.onDestroy();
     }
 
     public class AndroidBridge {
