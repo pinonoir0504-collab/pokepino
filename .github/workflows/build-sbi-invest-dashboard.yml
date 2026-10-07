@@ -31,38 +31,27 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Restore v2 base assets
+      - name: Restore v3 dashboard assets
         run: |
-          base64 -d app/src/main/assets/index.v2.gz.b64 > app/src/main/assets/index.html.gz
+          cat app/src/main/assets/v3_index.b64.* | base64 -d > app/src/main/assets/index.html.gz
           gunzip -f app/src/main/assets/index.html.gz
 
-          base64 -d app/src/main/assets/app.css.v2.gz.b64 > app/src/main/assets/app.css.gz
+          cat app/src/main/assets/v3_css.b64.* | base64 -d > app/src/main/assets/app.css.gz
           gunzip -f app/src/main/assets/app.css.gz
 
-          cat app/src/main/assets/app.v2.gz.b64.part1               app/src/main/assets/app.v2.gz.b64.part2               app/src/main/assets/app.v2.gz.b64.part3               app/src/main/assets/app.v2.gz.b64.part4             | base64 -d > app/src/main/assets/app.js.gz
+          cat app/src/main/assets/v3j.* | base64 -d > app/src/main/assets/app.js.gz
           gunzip -f app/src/main/assets/app.js.gz
 
-      - name: Apply v3 patches
+          test -s app/src/main/assets/index.html
+          test -s app/src/main/assets/app.css
+          test -s app/src/main/assets/app.js
+
+      - name: Validate v3 markers
         run: |
-          cat v3patch/app.patch.gz.b64.part0               v3patch/app.patch.gz.b64.part1               v3patch/app.patch.gz.b64.part2             | base64 -d > /tmp/app.patch.gz
-          gunzip -c /tmp/app.patch.gz > /tmp/app.patch
-
-          base64 -d v3patch/index.patch.gz.b64 > /tmp/index.patch.gz
-          gunzip -c /tmp/index.patch.gz > /tmp/index.patch
-
-          base64 -d v3patch/css.patch.gz.b64 > /tmp/css.patch.gz
-          gunzip -c /tmp/css.patch.gz > /tmp/css.patch
-
-          base64 -d v3patch/app-hotfix.patch.gz.b64 > /tmp/app-hotfix.patch.gz
-          gunzip -c /tmp/app-hotfix.patch.gz > /tmp/app-hotfix.patch
-
-          patch app/src/main/assets/app.js < /tmp/app.patch
-          patch app/src/main/assets/index.html < /tmp/index.patch
-          patch app/src/main/assets/app.css < /tmp/css.patch
-          patch app/src/main/assets/app.js < /tmp/app-hotfix.patch
-
-          grep -q "const VERSION = 3" app/src/main/assets/app.js
           grep -q "投資成績 v3.0.0" app/src/main/assets/index.html
+          grep -q "const VERSION = 3" app/src/main/assets/app.js
+          grep -q "runDiagnostics" app/src/main/assets/app.js
+          grep -q "crossCost" app/src/main/assets/app.js
           grep -q "versionName '3.0.0'" app/build.gradle
 
       - name: Validate JavaScript
