@@ -1,6 +1,6 @@
 {
   "status": "in_progress",
-  "updated_at": "2026-10-07T07:14:42.356Z",
+  "updated_at": "2026-10-07T07:17:34.579Z",
   "goal": "Exceed80% species top-1 on genuinely unused random100 auction photos; deliver tested signed APK",
   "completed": [
     "v1.2.2 fresh independent50:31/50=62%;19 errors now development only",
@@ -131,6 +131,38 @@
       {
         "path": "app/src/main/assets/shape_refs_01.json",
         "sha": "6fef04663add57e27328cb3ca3e143caa86a9997"
+      },
+      {
+        "path": "app/src/main/assets/shape_refs_02.json",
+        "sha": "ed5520e3bec3a9c7e65cc77443c86534fd6c28fe"
+      },
+      {
+        "path": "app/src/main/assets/shape_refs_03.json",
+        "sha": "b8c67021b31e4f12cfc13609fb198c103263dcd0"
+      },
+      {
+        "path": "app/src/main/assets/shape_refs_04.json",
+        "sha": "41ef7accaaff70a649da4d4a6d83a5799ab5ad13"
+      },
+      {
+        "path": "app/src/main/assets/shape_refs_05.json",
+        "sha": "539684ae02794b2fdef1c139139a99ff952ae163"
+      },
+      {
+        "path": "app/src/main/assets/shape_refs_06.json",
+        "sha": "bf9c57b3b109ba37b233b47e1b50fb26c82bfb4d"
+      },
+      {
+        "path": "app/src/main/assets/shape_refs_07.json",
+        "sha": "5199261d020215c3294976abd17883761b4f5d16"
+      },
+      {
+        "path": "app/src/main/assets/shape_refs_08.json",
+        "sha": "e0f9ebf46180ccfc97f1cc0ddc98466b6910adcd"
+      },
+      {
+        "path": "app/src/main/assets/shape_refs_09.json",
+        "sha": "345a39b4629702a27eaef80a6d2e5f49c5afaa7e"
       }
     ]
   }
