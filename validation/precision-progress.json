@@ -1,6 +1,6 @@
 {
   "status": "in_progress",
-  "updated_at": "2026-10-07T03:46:35.853Z",
+  "updated_at": "2026-10-07T03:56:34.240Z",
   "goal": "Exceed 80% species top-1 on a new independent 50-photo Mercari test; deliver verified signed APK",
   "completed": [
     "v1.2.2 fresh independent50:31/50=62%;19 errors now development only",
@@ -33,6 +33,8 @@
   "current_task": {
     "status": "in_progress",
     "request": "Improve recognition above80% on independent validation",
-    "stage": "Restore shape model; convert auction100 to development only; never reuse it as independent validation"
+    "stage": "DINOv2 shape model restored; multi-view Android implementation written; reference/photo feature extraction running",
+    "development_inputs": "prior auction100 and additional labeled images only; no independent validation yet",
+    "workspace": "improve/"
   }
 }
