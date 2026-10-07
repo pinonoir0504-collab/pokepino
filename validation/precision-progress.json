@@ -1,6 +1,6 @@
 {
   "status": "in_progress",
-  "updated_at": "2026-10-07T04:24:38.986Z",
+  "updated_at": "2026-10-07T06:39:49.187Z",
   "goal": "Exceed 80% species top-1 on a new independent 50-photo Mercari test; deliver verified signed APK",
   "completed": [
     "v1.2.2 fresh independent50:31/50=62%;19 errors now development only",
@@ -33,11 +33,53 @@
   "current_task": {
     "status": "in_progress",
     "request": "Improve recognition above80% on independent validation",
-    "stage": "Independent candidate100=67%;100 now development; 358 development photos and1231 catalog restored and Library checkpoint saved; testing foreground-weighted patch pooling; second unseen sample downloaded",
+    "stage": "Resuming after workspace maintenance; independent results67% then73% not target; second100 now development; supervised metric fivefold375/458=81.9% development only; restoring Library checkpoint and uploaded GitHub metric/source blobs",
     "development_accuracy_only": true,
     "shape_model_sha": "c179f8f7f592449c4c1bca4cd124a7538021428c5ffb89afde9503935b197efb",
     "workspace": "improve/",
     "holdout_seed": 202610071300,
-    "development_library_file": "libfile_22a5982a0bcc8191963d45322b5bfcbc"
+    "development_library_file": "libfile_22a5982a0bcc8191963d45322b5bfcbc",
+    "recovery_blobs": [
+      {
+        "path": ".github/workflows/build-apk.yml",
+        "sha": "0d89780f9132ca6f52dfca5870768638aea594ec"
+      },
+      {
+        "path": "app/build.gradle.kts",
+        "sha": "f5fc3fb050272683393d11f6365cfd26e4c6a0c1"
+      },
+      {
+        "path": "app/src/androidTest/java/com/pokepino/app/MainActivitySmokeTest.kt",
+        "sha": "12e882344afb479b1a9141e5fc6ec7ad986269ee"
+      },
+      {
+        "path": "app/src/main/assets/species_photo_refs_v1.json",
+        "sha": "e0dac2a08a88d5ac72de4fd56033bf1a06078daf"
+      },
+      {
+        "path": "app/src/main/java/com/pokepino/app/EmbeddingRecognizer.kt",
+        "sha": "55c608e9c30536f0b825e2e14a4b31672526677d"
+      },
+      {
+        "path": "app/src/main/java/com/pokepino/app/MainActivity.kt",
+        "sha": "dc637213f55a71982486bfa2b9f76f598fcc8e8f"
+      },
+      {
+        "path": "app/src/main/java/com/pokepino/app/PokemonRecognizer.kt",
+        "sha": "e64695dea267dc5d68ba44d6a256a690100e5051"
+      },
+      {
+        "path": ".gitignore",
+        "sha": "bf09a0fa7ae6b47dd09b8789c25453859edf3272"
+      },
+      {
+        "path": "app/src/androidTest/java/com/pokepino/app/ShapeRecognitionInstrumentedTest.kt",
+        "sha": "8860cc91c2ddc0d36b3f0694ea050c82c8fa08d3"
+      },
+      {
+        "path": "app/src/main/assets/shape_metric_v1.json",
+        "sha": "8c468ec1da6b1e55bad0718bb922ad44055bc09b"
+      }
+    ]
   }
 }
