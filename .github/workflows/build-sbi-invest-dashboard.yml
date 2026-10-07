@@ -1,9 +1,9 @@
-name: Build SBI Investment Dashboard APK
+name: Build SBI Investment Dashboard v2 APK
 
 on:
   push:
     branches:
-      - sbi-invest-dashboard-v1
+      - sbi-invest-dashboard-v2
   workflow_dispatch:
 
 permissions:
@@ -31,21 +31,33 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Restore dashboard asset
+      - name: Restore v2 dashboard assets
         run: |
-          base64 -d app/src/main/assets/index.html.gz.b64 > app/src/main/assets/index.html.gz
+          base64 -d app/src/main/assets/index.v2.gz.b64 > app/src/main/assets/index.html.gz
           gunzip -f app/src/main/assets/index.html.gz
+
+          base64 -d app/src/main/assets/app.css.v2.gz.b64 > app/src/main/assets/app.css.gz
+          gunzip -f app/src/main/assets/app.css.gz
+
+          cat app/src/main/assets/app.v2.gz.b64.part1               app/src/main/assets/app.v2.gz.b64.part2               app/src/main/assets/app.v2.gz.b64.part3               app/src/main/assets/app.v2.gz.b64.part4             | base64 -d > app/src/main/assets/app.js.gz
+          gunzip -f app/src/main/assets/app.js.gz
+
           test -s app/src/main/assets/index.html
+          test -s app/src/main/assets/app.css
+          test -s app/src/main/assets/app.js
+
+      - name: Validate JavaScript
+        run: node --check app/src/main/assets/app.js
 
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/SBI-Investment-Dashboard-v1.0.0.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/SBI-Investment-Dashboard-v2.0.0.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: SBI-Investment-Dashboard-APK
-          path: sbi-invest-app/app/build/outputs/apk/debug/SBI-Investment-Dashboard-v1.0.0.apk
+          name: SBI-Investment-Dashboard-v2-APK
+          path: sbi-invest-app/app/build/outputs/apk/debug/SBI-Investment-Dashboard-v2.0.0.apk
           if-no-files-found: error
