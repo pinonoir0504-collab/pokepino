@@ -1,7 +1,7 @@
 {
   "status": "in_progress",
-  "updated_at": "2026-10-07T06:42:37.249Z",
-  "goal": "Exceed 80% species top-1 on a new independent 50-photo Mercari test; deliver verified signed APK",
+  "updated_at": "2026-10-07T06:58:34.463Z",
+  "goal": "Exceed80% species top-1 on genuinely unused random100 auction photos; deliver tested signed APK",
   "completed": [
     "v1.2.2 fresh independent50:31/50=62%;19 errors now development only",
     "126 verified development photos,91species; features cached",
@@ -33,7 +33,7 @@
   "current_task": {
     "status": "in_progress",
     "request": "Improve recognition above80% on independent validation",
-    "stage": "Resuming after workspace maintenance; independent results67% then73% not target; second100 now development; supervised metric fivefold375/458=81.9% development only; restoring Library checkpoint and uploaded GitHub metric/source blobs",
+    "stage": "Independent third100:71/100=71%, baseline43/100, top3=80. Not achieved; third100 now development.558 development photos; testing packaging crops using fivefold development only before another unused100.",
     "development_accuracy_only": true,
     "shape_model_sha": "c179f8f7f592449c4c1bca4cd124a7538021428c5ffb89afde9503935b197efb",
     "workspace": "improve/",
@@ -82,6 +82,16 @@
       }
     ],
     "recovery_commit": "4802e5b9b5cd94ff71c3fa27aa226e5b6ce9aa3e",
-    "resume_enabled": true
+    "resume_enabled": true,
+    "independent_third": {
+      "correct": 71,
+      "total": 100,
+      "baseline_correct": 43,
+      "top3": 80
+    },
+    "development_photos": 558,
+    "development_library_version": 1,
+    "independent100_library_file": "libfile_52907e5e2f948191ba0b8fca4d6943a5",
+    "next": "Improve bag/card crop robustness; freeze before fourth unused100; then Kotlin tests and APK Actions"
   }
 }
