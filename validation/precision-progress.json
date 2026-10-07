@@ -1,6 +1,6 @@
 {
   "status": "in_progress",
-  "updated_at": "2026-10-07T07:17:34.579Z",
+  "updated_at": "2026-10-07T08:25:35.477Z",
   "goal": "Exceed80% species top-1 on genuinely unused random100 auction photos; deliver tested signed APK",
   "completed": [
     "v1.2.2 fresh independent50:31/50=62%;19 errors now development only",
@@ -33,7 +33,7 @@
   "current_task": {
     "status": "in_progress",
     "request": "Improve recognition above80% on independent validation",
-    "stage": "Persisting complete v1.3.0 Android source and657-photo model; fifth independent10075% vs47% baseline, target not achieved.757 supported development photos retained. Further generalization work pending.",
+    "stage": "Resumed: audit fifth independent100 errors, improve crop robustness using development only; no new independent claim.",
     "development_accuracy_only": true,
     "shape_model_sha": "c179f8f7f592449c4c1bca4cd124a7538021428c5ffb89afde9503935b197efb",
     "workspace": "improve/",
