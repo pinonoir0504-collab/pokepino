@@ -1,6 +1,6 @@
 {
   "status": "in_progress",
-  "updated_at": "2026-10-07T04:11:16.829Z",
+  "updated_at": "2026-10-07T04:24:38.986Z",
   "goal": "Exceed 80% species top-1 on a new independent 50-photo Mercari test; deliver verified signed APK",
   "completed": [
     "v1.2.2 fresh independent50:31/50=62%;19 errors now development only",
@@ -33,10 +33,11 @@
   "current_task": {
     "status": "in_progress",
     "request": "Improve recognition above80% on independent validation",
-    "stage": "Frozen v1.3 candidate independently tested100:67/100 vs45/100 baseline; target not achieved; those100 now development; improving background handling",
+    "stage": "Independent candidate100=67%;100 now development; 358 development photos and1231 catalog restored and Library checkpoint saved; testing foreground-weighted patch pooling; second unseen sample downloaded",
     "development_accuracy_only": true,
     "shape_model_sha": "c179f8f7f592449c4c1bca4cd124a7538021428c5ffb89afde9503935b197efb",
     "workspace": "improve/",
-    "holdout_seed": 202610071300
+    "holdout_seed": 202610071300,
+    "development_library_file": "libfile_22a5982a0bcc8191963d45322b5bfcbc"
   }
 }
