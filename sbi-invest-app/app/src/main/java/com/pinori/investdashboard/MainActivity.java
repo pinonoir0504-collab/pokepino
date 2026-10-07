@@ -36,9 +36,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setStatusBarColor(Color.WHITE);
-        getWindow().setNavigationBarColor(Color.WHITE);
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        getWindow().setStatusBarColor(Color.parseColor("#07111F"));
+        getWindow().setNavigationBarColor(Color.parseColor("#07111F"));
+        getWindow().getDecorView().setSystemUiVisibility(0);
 
         webView = new WebView(this);
         setContentView(webView);
@@ -191,7 +191,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void setDarkMode(boolean dark) {
             runOnUiThread(() -> {
-                int bg = Color.parseColor(dark ? "#0F1217" : "#F5F6F8");
+                int bg = Color.parseColor(dark ? "#07111F" : "#EEF4FB");
                 getWindow().setStatusBarColor(bg);
                 getWindow().setNavigationBarColor(bg);
                 int flags = dark ? 0 : View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
