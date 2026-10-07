@@ -1,9 +1,9 @@
-name: Build SBI Investment Dashboard v2 APK
+name: Build SBI Investment Dashboard v3 APK
 
 on:
   push:
     branches:
-      - sbi-invest-dashboard-v2
+      - sbi-invest-dashboard-v3
   workflow_dispatch:
 
 permissions:
@@ -31,7 +31,7 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Restore v2 dashboard assets
+      - name: Restore v2 base assets
         run: |
           base64 -d app/src/main/assets/index.v2.gz.b64 > app/src/main/assets/index.html.gz
           gunzip -f app/src/main/assets/index.html.gz
@@ -42,22 +42,61 @@ jobs:
           cat app/src/main/assets/app.v2.gz.b64.part1               app/src/main/assets/app.v2.gz.b64.part2               app/src/main/assets/app.v2.gz.b64.part3               app/src/main/assets/app.v2.gz.b64.part4             | base64 -d > app/src/main/assets/app.js.gz
           gunzip -f app/src/main/assets/app.js.gz
 
-          test -s app/src/main/assets/index.html
-          test -s app/src/main/assets/app.css
-          test -s app/src/main/assets/app.js
+      - name: Apply v3 patches
+        run: |
+          cat v3patch/app.patch.gz.b64.part0               v3patch/app.patch.gz.b64.part1               v3patch/app.patch.gz.b64.part2             | base64 -d > /tmp/app.patch.gz
+          gunzip -c /tmp/app.patch.gz > /tmp/app.patch
+
+          base64 -d v3patch/index.patch.gz.b64 > /tmp/index.patch.gz
+          gunzip -c /tmp/index.patch.gz > /tmp/index.patch
+
+          base64 -d v3patch/css.patch.gz.b64 > /tmp/css.patch.gz
+          gunzip -c /tmp/css.patch.gz > /tmp/css.patch
+
+          base64 -d v3patch/app-hotfix.patch.gz.b64 > /tmp/app-hotfix.patch.gz
+          gunzip -c /tmp/app-hotfix.patch.gz > /tmp/app-hotfix.patch
+
+          patch app/src/main/assets/app.js < /tmp/app.patch
+          patch app/src/main/assets/index.html < /tmp/index.patch
+          patch app/src/main/assets/app.css < /tmp/css.patch
+          patch app/src/main/assets/app.js < /tmp/app-hotfix.patch
+
+          grep -q "const VERSION = 3" app/src/main/assets/app.js
+          grep -q "投資成績 v3.0.0" app/src/main/assets/index.html
+          grep -q "versionName '3.0.0'" app/build.gradle
 
       - name: Validate JavaScript
         run: node --check app/src/main/assets/app.js
+
+      - name: Validate UI references
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          root=Path('app/src/main/assets')
+          js=(root/'app.js').read_text()
+          html=(root/'index.html').read_text()
+          ids=set(re.findall(r"\$\('#([^']+)'\)",js))
+          htmlids=set(re.findall(r'id="([^"]+)"',html))
+          missing=sorted(ids-htmlids)
+          if missing:
+              raise SystemExit(f'Missing HTML IDs: {missing}')
+          allids=re.findall(r'id="([^"]+)"',html)
+          dup=sorted({x for x in allids if allids.count(x)>1})
+          if dup:
+              raise SystemExit(f'Duplicate HTML IDs: {dup}')
+          print(f'UI references OK: {len(ids)} IDs')
+          PY
 
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/SBI-Investment-Dashboard-v2.0.0.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/SBI-Investment-Dashboard-v3.0.0.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: SBI-Investment-Dashboard-v2-APK
-          path: sbi-invest-app/app/build/outputs/apk/debug/SBI-Investment-Dashboard-v2.0.0.apk
+          name: SBI-Investment-Dashboard-v3-APK
+          path: sbi-invest-app/app/build/outputs/apk/debug/SBI-Investment-Dashboard-v3.0.0.apk
           if-no-files-found: error
