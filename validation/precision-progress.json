@@ -1,6 +1,6 @@
 {
   "status": "in_progress",
-  "updated_at": "2026-10-07T06:39:49.187Z",
+  "updated_at": "2026-10-07T06:42:37.249Z",
   "goal": "Exceed 80% species top-1 on a new independent 50-photo Mercari test; deliver verified signed APK",
   "completed": [
     "v1.2.2 fresh independent50:31/50=62%;19 errors now development only",
@@ -80,6 +80,8 @@
         "path": "app/src/main/assets/shape_metric_v1.json",
         "sha": "8c468ec1da6b1e55bad0718bb922ad44055bc09b"
       }
-    ]
+    ],
+    "recovery_commit": "4802e5b9b5cd94ff71c3fa27aa226e5b6ce9aa3e",
+    "resume_enabled": true
   }
 }
