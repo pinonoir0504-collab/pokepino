@@ -141,5 +141,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: SBI-Investment-Dashboard-v3.5-APK
-          path: sbi-invest-app/app/build/outputs/apk/debug/SBI-Investment-Dashboard-v3.4.0.apk
+          path: sbi-invest-app/app/build/outputs/apk/debug/SBI-Investment-Dashboard-v3.5.0.apk
           if-no-files-found: error
