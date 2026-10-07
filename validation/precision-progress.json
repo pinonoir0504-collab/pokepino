@@ -1,16 +1,19 @@
 {
   "status": "in_progress",
-  "updated_at": "2026-10-07T03:25:14.689Z",
+  "updated_at": "2026-10-07T03:33:31.035Z",
   "goal": "Exceed 80% species top-1 on a new independent 50-photo Mercari test; deliver verified signed APK",
   "completed": [
     "v1.2.2 fresh independent50:31/50=62%;19 errors now development only",
     "126 verified development photos,91species; features cached",
     "126 photo prototypes and candidate omission fixes built successfully",
-    "New independent50:27/50=54%, baseline25/50;target NOT achieved"
+    "New independent50:27/50=54%, baseline25/50;target NOT achieved",
+    "2026-10-07 new frozen auction100 shipped v1.2.2:46/100=46%, top3=59%; no tuning; report validation/auction100-20261007.md"
   ],
   "next": [
-    "Evaluate DINOv2 on development with independent new holdout after freezing",
-    "Do not deliver provisional APK as80% achieved",
+    "Use new auction100 only as development after this baseline is reported",
+    "Restore stronger shape model development from retained source and reports",
+    "Freeze improved model before another genuinely unused independent holdout",
+    "Do not report development accuracy as independent validation",
     "Build verified final APK after target validation"
   ],
   "repo": "pinonoir0504-collab/pokepino",
@@ -28,11 +31,18 @@
   "workflow_run": 37457645734,
   "stage": "New50 failed target:27/50=54% vs25/50 baseline; exploring stronger DINOv2 shape features; holdout now development",
   "current_task": {
-    "status": "in_progress",
+    "status": "completed",
     "request": "Independent random 100 auction images test",
     "version": "delivered v1.2.2",
     "seed": 20261007032249,
-    "method": "Yahoo Auctions broad query first10pages shuffled; visually eligible single figures; no tuning",
-    "stage": "restored exact APK assets; collecting new auction photographs"
+    "method": "PC recognition reproduction; frozen random Yahoo Auctions single-figure photos",
+    "correct": 46,
+    "total": 100,
+    "incorrect": 54,
+    "top3_correct": 59,
+    "errors": 0,
+    "report": "validation/auction100-20261007.md",
+    "source_commit": "0d3879888f58bb746cf24b1fb2fe29d2d69be803",
+    "goal80_achieved": false
   }
 }
