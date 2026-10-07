@@ -1,6 +1,6 @@
 {
   "status": "in_progress",
-  "updated_at": "2026-10-07T03:33:31.035Z",
+  "updated_at": "2026-10-07T03:46:35.853Z",
   "goal": "Exceed 80% species top-1 on a new independent 50-photo Mercari test; deliver verified signed APK",
   "completed": [
     "v1.2.2 fresh independent50:31/50=62%;19 errors now development only",
@@ -31,18 +31,8 @@
   "workflow_run": 37457645734,
   "stage": "New50 failed target:27/50=54% vs25/50 baseline; exploring stronger DINOv2 shape features; holdout now development",
   "current_task": {
-    "status": "completed",
-    "request": "Independent random 100 auction images test",
-    "version": "delivered v1.2.2",
-    "seed": 20261007032249,
-    "method": "PC recognition reproduction; frozen random Yahoo Auctions single-figure photos",
-    "correct": 46,
-    "total": 100,
-    "incorrect": 54,
-    "top3_correct": 59,
-    "errors": 0,
-    "report": "validation/auction100-20261007.md",
-    "source_commit": "0d3879888f58bb746cf24b1fb2fe29d2d69be803",
-    "goal80_achieved": false
+    "status": "in_progress",
+    "request": "Improve recognition above80% on independent validation",
+    "stage": "Restore shape model; convert auction100 to development only; never reuse it as independent validation"
   }
 }
