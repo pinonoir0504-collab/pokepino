@@ -1,6 +1,6 @@
 {
   "status": "in_progress",
-  "updated_at": "2026-10-07T04:05:02.473Z",
+  "updated_at": "2026-10-07T04:11:16.829Z",
   "goal": "Exceed 80% species top-1 on a new independent 50-photo Mercari test; deliver verified signed APK",
   "completed": [
     "v1.2.2 fresh independent50:31/50=62%;19 errors now development only",
@@ -33,7 +33,7 @@
   "current_task": {
     "status": "in_progress",
     "request": "Improve recognition above80% on independent validation",
-    "stage": "258 development real photos, >1100 shape catalog images; partial leave-one-photo-out 201/258; Android multi-view code written; untouched holdout downloaded but not evaluated",
+    "stage": "Frozen v1.3 candidate independently tested100:67/100 vs45/100 baseline; target not achieved; those100 now development; improving background handling",
     "development_accuracy_only": true,
     "shape_model_sha": "c179f8f7f592449c4c1bca4cd124a7538021428c5ffb89afde9503935b197efb",
     "workspace": "improve/",
