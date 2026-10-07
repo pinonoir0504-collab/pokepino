@@ -1,9 +1,9 @@
-name: Build SBI Investment Dashboard v3.2 APK
+name: Build SBI Investment Dashboard v3.3 APK
 
 on:
   push:
     branches:
-      - sbi-invest-dashboard-v32
+      - sbi-invest-dashboard-v33
   workflow_dispatch:
 
 permissions:
@@ -58,13 +58,29 @@ jobs:
           patch app/src/main/assets/app.css < /tmp/v32-css.patch
           patch app/src/main/assets/app.js < /tmp/v32-app.patch
 
-      - name: Validate v3.2 markers
+      - name: Apply v3.3 patches
         run: |
-          grep -q "投資成績 v3.2.0" app/src/main/assets/index.html
+          base64 -d v33patch/index.patch.gz.b64 > /tmp/v33-index.patch.gz
+          gunzip -c /tmp/v33-index.patch.gz > /tmp/v33-index.patch
+          base64 -d v33patch/css.patch.gz.b64 > /tmp/v33-css.patch.gz
+          gunzip -c /tmp/v33-css.patch.gz > /tmp/v33-css.patch
+          cat v33patch/app.patch.gz.b64.00 v33patch/app.patch.gz.b64.01 | base64 -d > /tmp/v33-app.patch.gz
+          gunzip -c /tmp/v33-app.patch.gz > /tmp/v33-app.patch
+          patch app/src/main/assets/index.html < /tmp/v33-index.patch
+          patch app/src/main/assets/app.css < /tmp/v33-css.patch
+          patch app/src/main/assets/app.js < /tmp/v33-app.patch
+
+      - name: Validate v3.3 markers
+        run: |
+          grep -q "投資成績 v3.3.0" app/src/main/assets/index.html
           grep -q "現物保有（通常取得）" app/src/main/assets/index.html
           grep -q "perkMethodStats" app/src/main/assets/app.js
           grep -q "profitBreakdownRows" app/src/main/assets/app.js
-          grep -q "versionName '3.2.0'" app/build.gradle
+          grep -q "renderVirtualTable" app/src/main/assets/app.js
+          grep -q "bindChartScrub" app/src/main/assets/app.js
+          grep -q "handleAndroidBack" app/src/main/assets/app.js
+          grep -q "bindStockSheetGesture" app/src/main/assets/app.js
+          grep -q "versionName '3.3.0'" app/build.gradle
 
       - name: Validate JavaScript
         run: node --check app/src/main/assets/app.js
@@ -93,11 +109,11 @@ jobs:
         run: gradle --no-daemon assembleDebug
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/SBI-Investment-Dashboard-v3.2.0.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/SBI-Investment-Dashboard-v3.3.0.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: SBI-Investment-Dashboard-v3.2-APK
-          path: sbi-invest-app/app/build/outputs/apk/debug/SBI-Investment-Dashboard-v3.2.0.apk
+          name: SBI-Investment-Dashboard-v3.3-APK
+          path: sbi-invest-app/app/build/outputs/apk/debug/SBI-Investment-Dashboard-v3.3.0.apk
           if-no-files-found: error
