@@ -1,6 +1,6 @@
 {
   "status": "in_progress",
-  "updated_at": "2026-10-06T15:40:48.739170+00:00",
+  "updated_at": "2026-10-07T03:25:14.689Z",
   "goal": "Exceed 80% species top-1 on a new independent 50-photo Mercari test; deliver verified signed APK",
   "completed": [
     "v1.2.2 fresh independent50:31/50=62%;19 errors now development only",
@@ -26,5 +26,13 @@
   "source_commit": "3b53bb45398387342856e3cc1ac47dd57b7b12d3",
   "workflow_success": false,
   "workflow_run": 37457645734,
-  "stage": "New50 failed target:27/50=54% vs25/50 baseline; exploring stronger DINOv2 shape features; holdout now development"
+  "stage": "New50 failed target:27/50=54% vs25/50 baseline; exploring stronger DINOv2 shape features; holdout now development",
+  "current_task": {
+    "status": "in_progress",
+    "request": "Independent random 100 auction images test",
+    "version": "delivered v1.2.2",
+    "seed": 20261007032249,
+    "method": "Yahoo Auctions broad query first10pages shuffled; visually eligible single figures; no tuning",
+    "stage": "restored exact APK assets; collecting new auction photographs"
+  }
 }
