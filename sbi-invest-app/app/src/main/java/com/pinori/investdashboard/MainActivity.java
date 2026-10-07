@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.view.HapticFeedbackConstants;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -199,6 +200,16 @@ public class MainActivity extends Activity {
                 }
                 getWindow().getDecorView().setSystemUiVisibility(flags);
                 if (webView != null) webView.setBackgroundColor(bg);
+            });
+        }
+
+        @JavascriptInterface
+        public void vibrate(String kind) {
+            runOnUiThread(() -> {
+                if (webView == null) return;
+                int constant = HapticFeedbackConstants.KEYBOARD_TAP;
+                if ("warning".equals(kind) || "medium".equals(kind)) constant = HapticFeedbackConstants.LONG_PRESS;
+                webView.performHapticFeedback(constant);
             });
         }
 
