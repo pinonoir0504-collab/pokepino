@@ -3,7 +3,7 @@ name: Build SBI Investment Dashboard v3.2 APK
 on:
   push:
     branches:
-      - sbi-invest-dashboard-v3
+      - sbi-invest-dashboard-v32
   workflow_dispatch:
 
 permissions:
