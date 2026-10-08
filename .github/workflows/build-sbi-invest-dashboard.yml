@@ -1,9 +1,9 @@
-name: Build いんかむぴのりん v3.9 APK
+name: Build いんかむぴのりん v3.9.1 APK
 
 on:
   push:
     branches:
-      - sbi-invest-dashboard-v39
+      - sbi-invest-dashboard-v391
   workflow_dispatch:
 
 permissions:
@@ -122,9 +122,26 @@ jobs:
           button,.nav-item {touch-action:manipulation}
           CSS
 
-      - name: Validate v3.9 markers
+      - name: Use header logo as Android launcher icon
         run: |
-          grep -q "いんかむぴのりん v3.9.0" app/src/main/assets/index.html
+          python3 - <<'PY'
+          import re,base64
+          from pathlib import Path
+          html=Path('app/src/main/assets/index.html').read_text()
+          image=re.search(r'<div class="brand-mark"[^>]*>\s*<img src="data:image/jpeg;base64,([^"]+)"',html)
+          if not image: raise SystemExit('Header brand logo not found')
+          data=base64.b64decode(image.group(1),validate=True)
+          if data[:3]!=bytes.fromhex('ffd8ff') or data[-2:]!=bytes.fromhex('ffd9'):
+              raise SystemExit('Invalid logo JPEG')
+          out=Path('app/src/main/res/drawable-nodpi/brand_logo.jpg')
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_bytes(data)
+          print('Header logo embedded in launcher resource:',len(data),'bytes')
+          PY
+
+      - name: Validate v3.9.1 markers
+        run: |
+          grep -q "いんかむぴのりん v3.9.1" app/src/main/assets/index.html
           grep -q "favoriteFilter" app/src/main/assets/index.html
           grep -q "function validateBackup" app/src/main/assets/app.js
           grep -q "function localToday" app/src/main/assets/app.js
@@ -145,6 +162,8 @@ jobs:
           grep -q "v3.6 polished dual-theme redesign" app/src/main/assets/app.css
           grep -q "いんかむぴのりん" app/src/main/AndroidManifest.xml
           test -s app/src/main/assets/app_icon.svg
+          test -s app/src/main/res/drawable-nodpi/brand_logo.jpg
+          grep -q '@drawable/brand_logo' app/src/main/AndroidManifest.xml
 
       - name: Validate JavaScript
         run: node --check app/src/main/assets/app.js
@@ -173,11 +192,11 @@ jobs:
         run: gradle --no-daemon assembleDebug
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Inkamupinorin-v3.9.0.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Inkamupinorin-v3.9.1.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Inkamupinorin-v3.9-APK
-          path: sbi-invest-app/app/build/outputs/apk/debug/Inkamupinorin-v3.9.0.apk
+          name: Inkamupinorin-v3.9.1-APK
+          path: sbi-invest-app/app/build/outputs/apk/debug/Inkamupinorin-v3.9.1.apk
           if-no-files-found: error
