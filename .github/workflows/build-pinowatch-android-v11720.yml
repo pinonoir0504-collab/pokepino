@@ -109,7 +109,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 pinowatch-android/remove_worker_prompt_v11728.py
+          python3 pinowatch-android/remove_worker_prompt_v11727.py
           ! grep -q 'showWorkerUrlDialog();' /tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java || { echo "startup prompt remains"; exit 1; }
       - name: Stabilize startup v1.17.28
         shell: bash
