@@ -159,6 +159,26 @@ jobs:
                 i=s.find(term)
                 if i>=0: print('CONTEXT',repr(s[max(0,i-400):i+700]))
           PY
+      - name: Verify logo double tap and prevent accidental Worker dialog
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          java=Path('/tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java')
+          s=java.read_text()
+          old='browser.setOnLongClickListener(v->{configure();return true;});'
+          assert s.count(old)==1, 'Worker long press handler changed'
+          s=s.replace(old,'browser.setOnLongClickListener(v->true);')
+          java.write_text(s)
+          js=Path('/tmp/pinowatch11720/app/src/main/assets/app.js')
+          code=js.read_text()
+          assert 'function showSecret()' in code, 'Secret menu missing'
+          assert 'window.__pinoLastLogoTap' in code, 'Double tap handler missing'
+          assert 'showSecret()' in code, 'Secret menu not called'
+          print('Verified logo double-tap secret menu code; disabled full-screen long-press Worker dialog')
+          PY
       - name: Remove unsafe startup handler
         shell: bash
         run: |
