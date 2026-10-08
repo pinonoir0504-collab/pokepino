@@ -26,6 +26,9 @@ jobs:
           unzip -t /tmp/pinowatch11720.zip
           mkdir -p /tmp/pinowatch11720
           unzip -q /tmp/pinowatch11720.zip -d /tmp/pinowatch11720
+          sed -i 's|@android:drawable/ic_menu_view|@drawable/ic_launcher|' /tmp/pinowatch11720/app/src/main/AndroidManifest.xml
+          mkdir -p /tmp/pinowatch11720/app/src/main/res/drawable
+          cp /tmp/pinowatch11720/app/src/main/assets/pinowatch-logo.webp /tmp/pinowatch11720/app/src/main/res/drawable/ic_launcher.webp
           node --check /tmp/pinowatch11720/app/src/main/assets/app.js
           node --check /tmp/pinowatch11720/app/src/main/assets/ios-adapter.js
           python3 -c 'import xml.etree.ElementTree as E; E.parse("/tmp/pinowatch11720/app/src/main/AndroidManifest.xml"); print("Android XML: OK")'
