@@ -124,6 +124,26 @@ jobs:
               i=s.find(term)
               if i>=0: print('CONTEXT',repr(s[max(0,i-400):i+600]))
           PY
+      - name: Remove confirmed blocking startup dialog
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java')
+          s=p.read_text()
+          start='    if(baseUrl().isEmpty())new AlertDialog.Builder(this).setTitle("市場データ接続")'
+          lines=s.splitlines(keepends=True)
+          found=[i for i,line in enumerate(lines) if line.startswith(start)]
+          assert len(found)==1, 'Expected exactly one blocking startup dialog'
+          assert lines[found[0]].rstrip().endswith('.show();'), 'Unexpected dialog format'
+          del lines[found[0]]
+          s=''.join(lines)
+          assert 'if(baseUrl().isEmpty())new AlertDialog.Builder' not in s
+          assert 'private void configure()' in s
+          p.write_text(s)
+          print('Removed startup modal; manual Worker configuration remains available')
+          PY
       - name: Remove unsafe startup handler
         shell: bash
         run: |
