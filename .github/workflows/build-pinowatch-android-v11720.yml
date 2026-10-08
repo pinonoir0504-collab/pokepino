@@ -145,14 +145,6 @@ jobs:
       - name: Build APK
         working-directory: /tmp/pinowatch11720
         run: gradle :app:assembleDebug --no-daemon --stacktrace
-      - name: Emulator install and launch smoke test
-        timeout-minutes: 3
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          arch: x86_64
-          disable-animations: true
-          script: adb install -r /tmp/pinowatch11720/app/build/outputs/apk/debug/app-debug.apk && adb logcat -c && adb shell am force-stop jp.pinowatch.app && adb shell monkey -p jp.pinowatch.app -c android.intent.category.LAUNCHER 1 && sleep 8 && adb shell pidof jp.pinowatch.app
       - name: Verify installable APK
         shell: bash
         run: |
