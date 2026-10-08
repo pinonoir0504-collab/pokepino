@@ -48,7 +48,7 @@ jobs:
           s=before+marker_start+after
           assert "addEventListener('click',showSecret);" in s
           s=s.replace("addEventListener('click',showSecret);", """addEventListener('click',()=>{const now=Date.now();if(now-window.__pinoLastLogoTap<500){window.__pinoLastLogoTap=0;showSecret()}else{window.__pinoLastLogoTap=now}});""",1)
-          s+='\\n})();\\n'
+          s+=chr(10)+'})();'+chr(10)
           assert s.count('function showSecret()')==1
           marker="function secretFavorites(){"
           guard="""function validateMarketRow(row){
