@@ -227,6 +227,15 @@ jobs:
           assert "window.__pinoLastLogoTap" in s
           print('Startup, refresh, and double tap static checks passed')
           PY
+      - name: Audit complete Android startup source
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java')
+          for n,line in enumerate(p.read_text().splitlines(),1):
+              print(f'ANDROID_SOURCE {n:03}: {line}')
+          PY
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
