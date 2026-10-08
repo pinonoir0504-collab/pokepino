@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#07111f">
+<title>いんかむぴのりん</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><img src="data:image/jpeg;base64,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" alt="" width="40" height="40"></div>
+      <div>
+        <h1>いんかむぴのりん</h1>
+        <p>PORTFOLIO PERFORMANCE</p>
+      </div>
+    </div>
+    <button class="icon-btn" id="themeQuick" aria-label="テーマ切替" title="テーマ切替">
+      <span id="themeQuickIcon">☾</span>
+    </button>
+  </header>
+
+  <main class="content">
+    <section class="screen active" id="screen-home">
+      <div class="section-head compact">
+        <div>
+          <div class="eyebrow">PORTFOLIO RESULT</div>
+          <h2>総合成績</h2>
+        </div>
+        <select class="select compact-select" id="homeYear"></select>
+      </div>
+
+      <div class="hero-card">
+        <div class="hero-row">
+          <div>
+            <div class="muted-label">総合損益</div>
+            <div class="hero-value" id="homeTotal">¥0</div>
+            <div class="hero-sub" id="homeTotalSub">売買益・配当・優待価値・その他収支</div>
+          </div>
+          <div class="hero-badge" id="homeYoYBadge">前年比 —</div>
+        </div>
+        <div class="metric-grid four">
+          <div class="mini-metric"><span>売買益</span><b id="homeProfit">¥0</b></div>
+          <div class="mini-metric"><span>配当</span><b id="homeDividend">¥0</b></div>
+          <div class="mini-metric"><span>優待価値</span><b id="homePerkNet">¥0</b></div>
+          <div class="mini-metric"><span>信用コスト</span><b id="homeCreditCost">¥0</b></div>
+        </div>
+      </div>
+
+      <div class="grid two-col">
+        <article class="card dividend-goal-card">
+          <div class="card-head">
+            <div><div class="eyebrow">DIVIDEND GOAL</div><h3>年間配当目標</h3></div>
+            <button class="text-btn" id="editDividendGoal">目標変更</button>
+          </div>
+          <div class="goal-main"><strong id="goalActual">¥0</strong><span>/ <span id="goalTarget">¥1,000,000</span></span></div>
+          <div class="progress-track"><div id="goalBar" class="progress-bar"></div></div>
+          <div class="goal-foot"><span id="goalRate">0.0%</span><span id="goalRemaining">あと ¥1,000,000</span></div>
+          <div class="goal-note" id="goalPace">税引後受取額ベース</div>
+        </article>
+
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">INCOME</div><h3>インカム収益</h3></div></div>
+          <div class="income-total" id="incomeTotal">¥0</div>
+          <div class="split-list">
+            <div><span>配当金</span><b id="incomeDividend">¥0</b></div>
+            <div><span>優待の価値</span><b id="incomePerkValue">¥0</b></div>
+            <div><span>優待取得コスト</span><b id="incomePerkCost">¥0</b></div>
+          </div>
+        </article>
+      </div>
+
+      <div class="grid two-col">
+        <article class="card">
+          <div class="card-head">
+            <div><div class="eyebrow">TREND</div><h3>月別損益</h3></div>
+            <div class="legend"><span><i class="legend-dot total"></i>総合</span><span><i class="legend-dot income"></i>インカム</span></div>
+          </div>
+          <div id="monthlyChart" class="svg-chart empty-chart">CSVを読み込むと推移を表示します</div>
+        </article>
+        <article class="card">
+          <div class="card-head">
+            <div><div class="eyebrow">CUMULATIVE</div><h3>累計損益</h3></div>
+            <div class="legend"><span><i class="legend-dot total"></i>累計</span></div>
+          </div>
+          <div id="cumulativeChart" class="svg-chart empty-chart">CSVを読み込むと推移を表示します</div>
+        </article>
+      </div>
+
+      <div class="grid two-col">
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">YEAR OVER YEAR</div><h3>前年対比</h3></div></div>
+          <div class="compare-list" id="yoyList"></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">HIGHLIGHTS</div><h3>ハイライト</h3></div></div>
+          <div class="highlight-grid" id="highlightGrid"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-stocks">
+      <div class="section-head">
+        <div><div class="eyebrow">BY STOCK</div><h2>銘柄別成績</h2></div>
+        <select class="select compact-select" id="stockYear"></select>
+      </div>
+      <article class="card filter-card">
+        <div class="filter-row">
+          <input class="input search" id="stockSearch" placeholder="銘柄名・コードで検索">
+          <button class="favorite-filter" id="favoriteFilter" type="button" aria-pressed="false" title="お気に入りだけ表示">☆ お気に入り</button>
+          <select class="select" id="stockSort"><option value="total">総合損益順</option><option value="profit">売買益順</option><option value="dividend">配当順</option><option value="perkNet">優待実質益順</option><option value="winrate">勝率順</option><option value="trades">取引回数順</option></select>
+        </div>
+      </article>
+
+      <div class="grid two-col">
+        <article class="card"><div class="card-head"><div><div class="eyebrow">BEST</div><h3>ベスト銘柄 TOP10</h3></div></div><div id="bestStocks" class="rank-list"></div></article>
+        <article class="card"><div class="card-head"><div><div class="eyebrow">WORST</div><h3>ワースト銘柄 TOP10</h3></div></div><div id="worstStocks" class="rank-list"></div></article>
+      </div>
+
+      <article class="card table-card">
+        <div class="table-title"><span>全銘柄</span><span id="stockCount" class="quiet"></span></div>
+        <div class="table-wrap" id="stockTableWrap">
+          <table>
+            <thead><tr><th>銘柄</th><th>総合</th><th>売買益</th><th>配当</th><th>優待価値</th><th>優待実質益</th><th>信用コスト</th><th>勝率</th><th>決済</th><th>約定</th></tr></thead>
+            <tbody id="stockTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section class="screen" id="screen-analysis">
+      <div class="section-head">
+        <div><div class="eyebrow">ANALYTICS</div><h2>分析</h2></div>
+        <select class="select compact-select" id="analysisYear"></select>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card"><span>売買勝率</span><strong id="aWinrate">—</strong><small id="aWinLoss">0勝 0敗</small></div>
+        <div class="kpi-card"><span>プロフィットファクター</span><strong id="aPF">—</strong><small>総利益 ÷ 総損失</small></div>
+        <div class="kpi-card"><span>最大利益</span><strong id="aMaxWin">¥0</strong><small id="aMaxWinName">—</small></div>
+        <div class="kpi-card"><span>最大損失</span><strong id="aMaxLoss">¥0</strong><small id="aMaxLossName">—</small></div>
+        <div class="kpi-card"><span>最大連勝</span><strong id="aWinStreak">0</strong><small>決済明細ベース</small></div>
+        <div class="kpi-card"><span>最大連敗</span><strong id="aLossStreak">0</strong><small>決済明細ベース</small></div>
+        <div class="kpi-card"><span>平均保有期間</span><strong id="aHoldDays">—</strong><small>約定履歴からFIFO推計</small></div>
+        <div class="kpi-card"><span>平均損益</span><strong id="aAvgTrade">¥0</strong><small>1勝敗単位あたり</small></div>
+        <div class="kpi-card"><span>最大ドローダウン</span><strong id="aMaxDrawdown">¥0</strong><small>累計売買益のピーク比</small></div>
+        <div class="kpi-card"><span>プラス月率</span><strong id="aPositiveMonths">—</strong><small>売買益がプラスの月</small></div>
+      </div>
+
+      <div class="grid two-col">
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">CASH / MARGIN</div><h3>現物・信用</h3></div></div>
+          <div id="tradeTypeBreakdown" class="stat-list"></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">ACCOUNT</div><h3>口座別</h3></div></div>
+          <div id="accountBreakdown" class="stat-list"></div>
+        </article>
+      </div>
+
+      <div class="grid two-col">
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">MARGIN DIRECTION</div><h3>信用買い・信用売り</h3></div></div>
+          <div id="creditDirection" class="stat-list"></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">MARGIN COST</div><h3>信用コスト内訳</h3></div></div>
+          <div id="creditCostBreakdown" class="stat-list"></div>
+        </article>
+      </div>
+
+      <div class="grid two-col">
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">TAKE PROFIT</div><h3>利確ランキング</h3></div></div>
+          <div id="takeProfitRank" class="rank-list"></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">STOP LOSS</div><h3>損切りランキング</h3></div></div>
+          <div id="stopLossRank" class="rank-list"></div>
+        </article>
+      </div>
+
+      <div class="grid two-col">
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">WEEKDAY</div><h3>曜日別成績</h3></div></div>
+          <div id="weekdayStats" class="stat-list"></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">CALENDAR</div><h3>月間勝敗カレンダー</h3></div><select class="select compact-select" id="calendarMonth"></select></div>
+          <div class="calendar-week"><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span><span>日</span></div>
+          <div id="tradeCalendar" class="calendar-grid"></div>
+        </article>
+      </div>
+
+      <div class="grid two-col">
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">DIVIDEND RANK</div><h3>配当ランキング</h3></div></div>
+          <div id="dividendRank" class="rank-list"></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">CONCENTRATION</div><h3>配当の集中度</h3></div></div>
+          <div id="dividendConcentration" class="stat-list"></div>
+        </article>
+      </div>
+
+      <article class="card">
+        <div class="card-head"><div><div class="eyebrow">TAX REFERENCE</div><h3>確定申告用 参考集計</h3></div><button class="text-btn" id="exportTax">CSV保存</button></div>
+        <div class="notice">SBI証券のCSVから作る参考値です。税額・源泉徴収額などがCSVに含まれない場合があるため、確定申告は年間取引報告書などの正式書類を使用してください。</div>
+        <div class="table-wrap compact-table"><table><thead><tr><th>区分</th><th>売買損益</th><th>配当（税引後）</th><th>決済件数</th></tr></thead><tbody id="taxTableBody"></tbody></table></div>
+      </article>
+    </section>
+
+    <section class="screen" id="screen-perks">
+      <div class="section-head">
+        <div><div class="eyebrow">SHAREHOLDER BENEFITS</div><h2>株主優待</h2></div>
+        <select class="select compact-select" id="perkYear"></select>
+      </div>
+
+      <div class="kpi-grid four-kpi">
+        <div class="kpi-card"><span>優待価値</span><strong id="pValue">¥0</strong><small>選択した評価基準</small></div>
+        <div class="kpi-card"><span>取得コスト</span><strong id="pCost">¥0</strong><small>手数料・貸株料等</small></div>
+        <div class="kpi-card"><span>実質お得額</span><strong id="pNet">¥0</strong><small>価値 − コスト</small></div>
+        <div class="kpi-card"><span>取得件数</span><strong id="pCount">0</strong><small id="pCrossCount">クロス 0件</small></div>
+        <div class="kpi-card"><span>クロス効率</span><strong id="pCrossROI">—</strong><small>実質お得額 ÷ コスト</small></div>
+        <div class="kpi-card"><span>平均お得額</span><strong id="pAvgNet">¥0</strong><small>1件あたり</small></div>
+      </div>
+
+      <article class="card perk-entry">
+        <div class="card-head"><div><div class="eyebrow">ADD BENEFIT</div><h3>優待を記録</h3></div><button class="text-btn" id="perkFormReset">入力クリア</button></div>
+        <div class="form-grid perk-form">
+          <label><span>取得日</span><input class="input" id="perkDate" type="date"></label>
+          <label><span>銘柄コード</span><input class="input" id="perkCode" inputmode="text" placeholder="例 3397"></label>
+          <label class="span-2"><span>銘柄名</span><input class="input" id="perkName" placeholder="例 トリドールHD"></label>
+          <label><span>取得方法</span><select class="select" id="perkMethod"><option value="holding">現物保有（通常取得）</option><option value="cross">優待クロス</option><option value="other">その他</option></select></label>
+          <label><span>株数</span><input class="input" id="perkShares" type="number" min="0" step="1" placeholder="100"></label>
+          <label class="span-2"><span>優待内容</span><input class="input" id="perkItem" placeholder="例 食事券 3,000円分"></label>
+          <label><span>券面・公称価値</span><input class="input money-input" id="perkFace" type="number" min="0" step="1" placeholder="3000"></label>
+          <label><span>自分にとっての価値</span><input class="input money-input" id="perkPersonal" type="number" min="0" step="1" placeholder="3000"></label>
+          <label><span>売却換算価値</span><input class="input money-input" id="perkResale" type="number" min="0" step="1" placeholder="2700"></label>
+          <label><span>集計に使う価値</span><select class="select" id="perkBasis"><option value="personal">自分にとっての価値</option><option value="face">券面・公称価値</option><option value="resale">売却換算価値</option></select></label>
+          <label><span>売買手数料</span><input class="input money-input" id="perkCommission" type="number" min="0" step="1" value="0"></label>
+          <label><span>貸株料</span><input class="input money-input" id="perkLending" type="number" min="0" step="1" value="0"></label>
+          <label><span>逆日歩</span><input class="input money-input" id="perkReverse" type="number" min="0" step="1" value="0"></label>
+          <label><span>その他費用</span><input class="input money-input" id="perkOtherCost" type="number" min="0" step="1" value="0"></label>
+          <label class="span-2"><span>メモ</span><input class="input" id="perkMemo" placeholder="一般信用、権利月など"></label>
+        </div>
+        <div class="preview-row">
+          <div><span>評価価値</span><b id="perkPreviewValue">¥0</b></div>
+          <div><span>コスト</span><b id="perkPreviewCost">¥0</b></div>
+          <div class="preview-net"><span>実質お得額</span><b id="perkPreviewNet">¥0</b></div>
+          <button class="primary-btn" id="addPerk">記録する</button>
+        </div>
+      </article>
+
+      <div class="grid two-col">
+        <article class="card"><div class="card-head"><div><div class="eyebrow">BY METHOD</div><h3>取得方法別</h3></div></div><div id="methodSummary" class="stat-list"></div></article>
+        <article class="card"><div class="card-head"><div><div class="eyebrow">CROSS SUMMARY</div><h3>優待クロス成績</h3></div></div><div id="crossSummary" class="stat-list"></div></article>
+      </div>
+      <article class="card"><div class="card-head"><div><div class="eyebrow">BEST VALUE</div><h3>お得額ランキング</h3></div></div><div id="perkRank" class="rank-list"></div></article>
+
+      <article class="card table-card">
+        <div class="table-title"><span>優待履歴</span><div class="table-actions"><select class="select compact-select" id="perkMethodFilter"><option value="all">すべて</option><option value="holding">現物保有</option><option value="cross">優待クロス</option><option value="other">その他</option></select><button class="text-btn" id="exportPerks">CSV保存</button><label class="text-btn file-label">CSV読込<input id="perkCsvInput" type="file" accept=".csv,text/csv"></label></div></div>
+        <div class="table-wrap" id="perkTableWrap"><table><thead><tr><th>取得日</th><th>銘柄</th><th>方法</th><th>優待内容</th><th>評価価値</th><th>コスト</th><th>実質お得額</th><th></th></tr></thead><tbody id="perkTableBody"></tbody></table></div>
+      </article>
+
+      <article class="card">
+        <div class="card-head"><div><div class="eyebrow">OTHER</div><h3>その他収支</h3></div></div>
+        <div class="inline-form">
+          <input class="input" id="adjDate" type="date">
+          <input class="input" id="adjMemo" placeholder="内容">
+          <select class="select" id="adjType"><option value="income">収入</option><option value="expense">費用</option></select>
+          <input class="input" id="adjAmount" type="number" min="0" placeholder="金額">
+          <button class="secondary-btn" id="addAdjustment">追加</button>
+        </div>
+        <div id="adjustmentList" class="simple-list"></div>
+      </article>
+    </section>
+
+    <section class="screen" id="screen-data">
+      <div class="section-head"><div><div class="eyebrow">DATA & SETTINGS</div><h2>データ</h2></div></div>
+
+      <article class="card import-card">
+        <div class="import-icon">CSV</div>
+        <h3>SBI証券のCSVを読み込む</h3>
+        <p>実現損益・配当金/分配金・約定履歴をまとめて選択できます。重複明細は自動で除外します。</p>
+        <button class="primary-btn wide" id="pickCsv">CSVを選択</button>
+        <input id="csvInput" type="file" accept=".csv,text/csv" multiple hidden>
+        <p id="csvImportStatus" class="csv-import-status" role="status" aria-live="polite">選択したCSVを読み込んだ後、集計画面へ自動反映します。</p>
+        <div id="fileHistory" class="file-history"></div>
+      </article>
+
+      <div class="grid two-col">
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">DATA HEALTH</div><h3>データ診断</h3></div><button class="text-btn" id="runDiagnostics">再診断</button></div>
+          <div id="diagnosticSummary" class="diagnostic-summary"></div>
+          <div id="diagnosticMeta" class="diagnostic-meta"></div>
+          <div id="diagnosticIssues" class="diagnostic-list"></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">SELF CHECK</div><h3>アプリ動作チェック</h3></div><button class="text-btn" id="runSelfCheck">実行</button></div>
+          <p class="card-copy">日付・金額・CSV・重複判定・集計・優待計算などを端末内でテストします。</p>
+          <div id="selfCheckResult" class="check-list"><div class="empty-state">未実行</div></div>
+        </article>
+      </div>
+
+      <div class="grid two-col">
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">BACKUP</div><h3>バックアップ・復元</h3></div></div>
+          <p class="card-copy">CSVから取り込んだ集計データ、優待、設定を1ファイルに保存します。</p>
+          <div class="button-stack">
+            <button class="secondary-btn" id="exportBackup">バックアップを保存</button>
+            <label class="secondary-btn file-label center">バックアップを復元<input id="backupInput" type="file" accept=".json,application/json"></label>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">EXPORT</div><h3>CSV書き出し</h3></div></div>
+          <div class="button-stack">
+            <button class="secondary-btn" id="exportMonthly">月別・年別集計</button>
+            <button class="secondary-btn" id="exportStocks">銘柄別成績</button>
+            <button class="secondary-btn" id="exportAllDetails">全明細</button>
+          </div>
+        </article>
+      </div>
+
+      <article class="card settings-card">
+        <div class="card-head"><div><div class="eyebrow">SETTINGS</div><h3>設定</h3></div></div>
+        <div class="settings-list">
+          <label class="setting-row"><div><b>ダークモード</b><span>暗い配色に切り替えます</span></div><input class="switch-input" id="darkMode" type="checkbox"><i class="switch"></i></label>
+          <label class="setting-row"><div><b>触覚フィードバック</b><span>タブ・保存・削除などを軽い振動で知らせます</span></div><input class="switch-input" id="haptics" type="checkbox"><i class="switch"></i></label>
+          <label class="setting-row"><div><b>配当は株式系のみ</b><span>投資信託・債券などを配当集計から除外</span></div><input class="switch-input" id="equityOnly" type="checkbox"><i class="switch"></i></label>
+          <label class="setting-row"><div><b>優待クロス費用を総合損益から控除</b><span>実現損益に費用が未反映のときだけON推奨</span></div><input class="switch-input" id="includeCrossCosts" type="checkbox"><i class="switch"></i></label>
+          <label class="setting-row input-setting"><div><b>勝率の計算単位</b><span>同一銘柄・同一日の分割決済をまとめることもできます</span></div><select class="select small-input" id="winRateMode"><option value="stockday">銘柄×日単位</option><option value="row">CSV明細単位</option></select></label>
+          <label class="setting-row input-setting"><div><b>年間配当目標</b><span>ホームの進捗メーターに使用</span></div><input class="input small-input" id="dividendGoalInput" type="number" min="0" step="10000"></label>
+        </div>
+      </article>
+
+      <article class="card danger-zone">
+        <div><h3>データをクリア</h3><p>CSV取込データ・優待・その他収支を端末から削除します。</p></div>
+        <button class="danger-btn" id="clearAll">すべて削除</button>
+      </article>
+
+      <div class="app-info">いんかむぴのりん v3.8.0<br>データは端末内で処理され、外部サーバーには送信しません。</div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="メインナビゲーション">
+    <button class="nav-item active" data-screen="home"><span class="nav-icon">⌂</span><span>ホーム</span></button>
+    <button class="nav-item" data-screen="stocks"><span class="nav-icon">▥</span><span>銘柄</span></button>
+    <button class="nav-item" data-screen="analysis"><span class="nav-icon">⌁</span><span>分析</span></button>
+    <button class="nav-item" data-screen="perks"><span class="nav-icon">♢</span><span>優待</span></button>
+    <button class="nav-item" data-screen="data"><span class="nav-icon">⚙</span><span>データ</span></button>
+  </nav>
+</div>
+
+<div class="modal-backdrop" id="stockModalBackdrop" hidden>
+  <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="stockModalTitle">
+    <div class="modal-handle"></div>
+    <div class="modal-head"><div><div class="eyebrow">STOCK DETAIL</div><h2 id="stockModalTitle">銘柄詳細</h2><p id="stockModalCode"></p></div><div class="modal-head-actions"><button class="icon-btn favorite-icon" id="stockFavoriteBtn" aria-label="お気に入り">☆</button><button class="icon-btn" id="closeStockModal">×</button></div></div>
+    <div class="modal-body" id="stockModalBody"></div>
+  </div>
+</div>
+
+<div class="pull-refresh" id="pullRefresh" aria-hidden="true"><span class="pull-refresh-icon">↻</span><span id="pullRefreshText">下へ引いて再集計</span></div>
+
+<div class="action-backdrop" id="actionSheetBackdrop" hidden>
+  <div class="action-sheet" role="dialog" aria-modal="true">
+    <div class="action-title" id="actionSheetTitle"></div>
+    <div class="action-list" id="actionSheetList"></div>
+    <button class="action-cancel" id="actionSheetCancel">キャンセル</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toastMsg"></span><button id="toastAction" hidden>元に戻す</button></div>
+<script src="app.js"></script>
+</body>
+</html>
