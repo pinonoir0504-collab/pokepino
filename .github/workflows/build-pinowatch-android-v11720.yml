@@ -268,6 +268,25 @@ jobs:
           mkdir -p /tmp/pinowatch-apk
           cp "$APK" /tmp/pinowatch-apk/PinoWatch_Android_v1.17.28.apk
           sha256sum /tmp/pinowatch-apk/PinoWatch_Android_v1.17.28.apk
+      - name: Boot Android emulator and launch APK
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-boot-timeout: 600
+          script: |
+            adb install -r /tmp/pinowatch11720/app/build/outputs/apk/debug/app-debug.apk
+            adb logcat -c
+            adb shell am start -n jp.pinowatch.app/.MainActivity
+            sleep 12
+            adb shell dumpsys activity activities | grep -E 'mResumedActivity|topResumedActivity|jp.pinowatch.app' || true
+            adb logcat -d -v brief > /tmp/pinowatch-launch-log.txt
+            grep -A 24 -B 5 -E 'FATAL EXCEPTION|Process: jp.pinowatch.app|AndroidRuntime:.*FATAL' /tmp/pinowatch-launch-log.txt && exit 1 || true
+            adb shell pidof jp.pinowatch.app || { echo 'APP PROCESS DEAD'; tail -100 /tmp/pinowatch-launch-log.txt; exit 1; }
+            adb shell uiautomator dump /sdcard/pino.xml >/dev/null
+            adb shell cat /sdcard/pino.xml | head -c 3000
       - uses: actions/upload-artifact@v4
         with:
           name: PinoWatch-Android-v1.17.28-APK
