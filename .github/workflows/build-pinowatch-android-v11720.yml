@@ -1,0 +1,68 @@
+name: Build PinoWatch Android v1.17.20
+
+on:
+  push:
+    branches: [pinowatch-android-v11720-ci]
+    paths:
+      - ".github/workflows/build-pinowatch-android-v11720.yml"
+      - "pinowatch-android/source_v11720.zip.b64"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reconstruct source and check hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d pinowatch-android/source_v11720.zip.b64 > /tmp/pinowatch11720.zip
+          echo 'b4f5049e6dc46692aa870196621f8ecdf74dff13f65a217f7a427cd4ccd4bdfc  /tmp/pinowatch11720.zip' | sha256sum -c -
+          unzip -t /tmp/pinowatch11720.zip
+          mkdir -p /tmp/pinowatch11720
+          unzip -q /tmp/pinowatch11720.zip -d /tmp/pinowatch11720
+          node --check /tmp/pinowatch11720/app/src/main/assets/app.js
+          node --check /tmp/pinowatch11720/app/src/main/assets/ios-adapter.js
+          python3 -c 'import xml.etree.ElementTree as E; E.parse("/tmp/pinowatch11720/app/src/main/AndroidManifest.xml"); print("Android XML: OK")'
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find /usr/local/lib/android/sdk -type f -name sdkmanager | head -n 1)"
+          test -n "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Build APK
+        working-directory: /tmp/pinowatch11720
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
+      - name: Verify installable APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=/tmp/pinowatch11720/app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          unzip -t "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/pinowatch-badging.txt
+          grep -q "package: name='jp.pinowatch.app'" /tmp/pinowatch-badging.txt
+          grep -q "versionName='1.17.20'" /tmp/pinowatch-badging.txt
+          mkdir -p /tmp/pinowatch-apk
+          cp "$APK" /tmp/pinowatch-apk/PinoWatch_Android_v1.17.20.apk
+          sha256sum /tmp/pinowatch-apk/PinoWatch_Android_v1.17.20.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PinoWatch-Android-v1.17.20-APK
+          path: /tmp/pinowatch-apk/PinoWatch_Android_v1.17.20.apk
+          if-no-files-found: error
