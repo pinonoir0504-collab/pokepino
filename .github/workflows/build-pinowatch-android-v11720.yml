@@ -1,4 +1,4 @@
-name: Build PinoWatch Android v1.17.21
+name: Build PinoWatch Android v1.17.22
 
 on:
   push:
@@ -40,6 +40,13 @@ jobs:
           from pathlib import Path
           app=Path('/tmp/pinowatch11720/app/src/main/assets/app.js')
           s=app.read_text()
+          split='})();\\n\\n// Logo-only market dashboard'
+          assert s.count(split)==1, 'secret module must be moved inside IIFE'
+          s=s.replace(split,'// Logo-only market dashboard',1)
+          assert "addEventListener('click',showSecret);" in s
+          s=s.replace("addEventListener('click',showSecret);", """addEventListener('click',()=>{const now=Date.now();if(now-window.__pinoLastLogoTap<500){window.__pinoLastLogoTap=0;showSecret()}else{window.__pinoLastLogoTap=now}});""",1)
+          s+='\\n})();\\n'
+          assert s.count('function showSecret()')==1
           marker="function secretFavorites(){"
           guard="""function validateMarketRow(row){
            const x={...row};
@@ -72,10 +79,11 @@ jobs:
           s=s.replace(old,"secretItems=Array.isArray(data.items)?data.items.map(validateMarketRow):[];",1)
           app.write_text(s)
           grad=Path('/tmp/pinowatch11720/app/build.gradle.kts')
-          txt=grad.read_text().replace('versionCode = 11720','versionCode = 11721').replace('versionName = "1.17.20"','versionName = "1.17.21"')
+          txt=grad.read_text().replace('versionCode = 11720','versionCode = 11722').replace('versionName = "1.17.20"','versionName = "1.17.22"')
           grad.write_text(txt)
           PY
           node --check /tmp/pinowatch11720/app/src/main/assets/app.js
+          grep -q "window.__pinoLastLogoTap" /tmp/pinowatch11720/app/src/main/assets/app.js
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -104,12 +112,12 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/pinowatch-badging.txt
           grep -q "package: name='jp.pinowatch.app'" /tmp/pinowatch-badging.txt
-          grep -q "versionName='1.17.21'" /tmp/pinowatch-badging.txt
+          grep -q "versionName='1.17.22'" /tmp/pinowatch-badging.txt
           mkdir -p /tmp/pinowatch-apk
-          cp "$APK" /tmp/pinowatch-apk/PinoWatch_Android_v1.17.21.apk
-          sha256sum /tmp/pinowatch-apk/PinoWatch_Android_v1.17.21.apk
+          cp "$APK" /tmp/pinowatch-apk/PinoWatch_Android_v1.17.22.apk
+          sha256sum /tmp/pinowatch-apk/PinoWatch_Android_v1.17.22.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: PinoWatch-Android-v1.17.21-APK
-          path: /tmp/pinowatch-apk/PinoWatch_Android_v1.17.21.apk
+          name: PinoWatch-Android-v1.17.22-APK
+          path: /tmp/pinowatch-apk/PinoWatch_Android_v1.17.22.apk
           if-no-files-found: error
