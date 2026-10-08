@@ -1,4 +1,4 @@
-name: Build PinoWatch Android v1.17.20
+name: Build PinoWatch Android v1.17.21
 
 on:
   push:
@@ -32,6 +32,50 @@ jobs:
           node --check /tmp/pinowatch11720/app/src/main/assets/app.js
           node --check /tmp/pinowatch11720/app/src/main/assets/ios-adapter.js
           python3 -c 'import xml.etree.ElementTree as E; E.parse("/tmp/pinowatch11720/app/src/main/AndroidManifest.xml"); print("Android XML: OK")'
+      - name: Add conservative market data validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          app=Path('/tmp/pinowatch11720/app/src/main/assets/app.js')
+          s=app.read_text()
+          marker="function secretFavorites(){"
+          guard="""function validateMarketRow(row){
+ const x={...row};
+ const good=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v));
+ const pos=v=>good(v)&&Number(v)>0;
+ if(!pos(x.close)){x.close=null;x.change=null;x.changePercent=null;x.forecastDividendYield=null;}
+ if(!pos(x.previousClose)||!pos(x.close)){x.change=null;x.changePercent=null;}
+ else {
+   const change=Number(x.close)-Number(x.previousClose);
+   const pct=100*change/Number(x.previousClose);
+   const tolerance=Math.max(.02,Number(x.close)*.0001);
+   if((good(x.change)&&Math.abs(Number(x.change)-change)>tolerance)||
+      (good(x.changePercent)&&Math.abs(Number(x.changePercent)-pct)>.08)){
+        x.change=null;x.changePercent=null;
+   }
+ }
+ if(x.forecastDividendYield!=null&&(!good(x.forecastDividendYield)||Number(x.forecastDividendYield)<0||Number(x.forecastDividendYield)>30))x.forecastDividendYield=null;
+ if(pos(x.annualDividend)&&pos(x.close)&&good(x.forecastDividendYield)&&
+    Math.abs(Number(x.annualDividend)/Number(x.close)*100-Number(x.forecastDividendYield))>.15)x.forecastDividendYield=null;
+ if(!pos(x.dayLow)||!pos(x.dayHigh)||Number(x.dayLow)>Number(x.dayHigh)){
+   x.dayLow=null;x.dayHigh=null;x.previousRecord=null;x.recordChangePercent=null;
+ }
+ return x;
+}
+"""
+          assert marker in s
+          s=s.replace(marker,guard+marker,1)
+          old="secretItems=Array.isArray(data.items)?data.items:[];"
+          assert old in s
+          s=s.replace(old,"secretItems=Array.isArray(data.items)?data.items.map(validateMarketRow):[];",1)
+          app.write_text(s)
+          grad=Path('/tmp/pinowatch11720/app/build.gradle.kts')
+          txt=grad.read_text().replace('versionCode = 11720','versionCode = 11721').replace('versionName = "1.17.20"','versionName = "1.17.21"')
+          grad.write_text(txt)
+          PY
+          node --check /tmp/pinowatch11720/app/src/main/assets/app.js
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -60,12 +104,12 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/pinowatch-badging.txt
           grep -q "package: name='jp.pinowatch.app'" /tmp/pinowatch-badging.txt
-          grep -q "versionName='1.17.20'" /tmp/pinowatch-badging.txt
+          grep -q "versionName='1.17.21'" /tmp/pinowatch-badging.txt
           mkdir -p /tmp/pinowatch-apk
-          cp "$APK" /tmp/pinowatch-apk/PinoWatch_Android_v1.17.20.apk
-          sha256sum /tmp/pinowatch-apk/PinoWatch_Android_v1.17.20.apk
+          cp "$APK" /tmp/pinowatch-apk/PinoWatch_Android_v1.17.21.apk
+          sha256sum /tmp/pinowatch-apk/PinoWatch_Android_v1.17.21.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: PinoWatch-Android-v1.17.20-APK
-          path: /tmp/pinowatch-apk/PinoWatch_Android_v1.17.20.apk
+          name: PinoWatch-Android-v1.17.21-APK
+          path: /tmp/pinowatch-apk/PinoWatch_Android_v1.17.21.apk
           if-no-files-found: error
