@@ -115,7 +115,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 pinowatch-android/stabilize_v11728.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java')
+          s=p.read_text()
+          start=s.find('Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {')
+          if start>=0:
+              end=s.find('});',start)
+              if end>=0: s=s[:start]+s[end+3:]
+          p.write_text(s)
+          PY
           ! grep -q 'Thread.setDefaultUncaughtExceptionHandler' /tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java
           ! grep -q 'showWorkerUrlDialog();' /tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java
       - uses: actions/setup-java@v5
