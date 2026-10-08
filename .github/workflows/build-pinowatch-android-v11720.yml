@@ -1,4 +1,4 @@
-name: Build PinoWatch Android v1.17.25 (final)
+name: Build PinoWatch Android v1.17.26 emulator-tested
 
 on:
   push:
@@ -82,7 +82,7 @@ jobs:
           s=s.replace(old,"secretItems=Array.isArray(data.items)?data.items.map(validateMarketRow):[];",1)
           app.write_text(s)
           grad=Path('/tmp/pinowatch11720/app/build.gradle.kts')
-          txt=grad.read_text().replace('versionCode = 11720','versionCode = 11722').replace('versionName = "1.17.20"','versionName = "1.17.25"')
+          txt=grad.read_text().replace('versionCode = 11720','versionCode = 11722').replace('versionName = "1.17.20"','versionName = "1.17.26"')
           grad.write_text(txt)
           PY
           node --check /tmp/pinowatch11720/app/src/main/assets/app.js
@@ -97,11 +97,12 @@ jobs:
           grep -q "scheduleByDay" /tmp/pinowatch11720/app/src/main/assets/app.js
           grep -q "AbortError" /tmp/pinowatch11720/app/src/main/assets/app.js
 
-      - name: Android startup crash fix v1.17.25
+      - name: Android startup crash fix v1.17.26
         shell: bash
         run: |
           set -euo pipefail
           python3 pinowatch-android/startup_fix_v11725.py
+          sed -i 's/versionCode = 11725/versionCode = 11726/; s/versionName = "1.17.25"/versionName = "1.17.26"/' /tmp/pinowatch11720/app/build.gradle.kts
           python3 -c 'import xml.etree.ElementTree as E; E.parse("/tmp/pinowatch11720/app/src/main/AndroidManifest.xml")'
           grep -q 'android:exported="true"' /tmp/pinowatch11720/app/src/main/AndroidManifest.xml
       - uses: actions/setup-java@v5
@@ -122,6 +123,31 @@ jobs:
       - name: Build APK
         working-directory: /tmp/pinowatch11720
         run: gradle :app:assembleDebug --no-daemon --stacktrace
+      - name: Emulator install and launch smoke test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            APK=/tmp/pinowatch11720/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r "$APK"
+            adb logcat -c
+            adb shell am force-stop jp.pinowatch.app
+            adb shell monkey -p jp.pinowatch.app -c android.intent.category.LAUNCHER 1
+            sleep 8
+            adb shell pidof jp.pinowatch.app
+            adb shell dumpsys activity activities | grep -q "jp.pinowatch.app"
+            if adb logcat -d | grep -E "FATAL EXCEPTION|Process: jp.pinowatch.app" ; then
+              echo "PinoWatch crashed during launch"
+              exit 1
+            fi
+            adb shell input keyevent KEYCODE_HOME
+            adb shell monkey -p jp.pinowatch.app -c android.intent.category.LAUNCHER 1
+            sleep 4
+            adb shell pidof jp.pinowatch.app
+            echo "EMULATOR_SMOKE_TEST_OK"
       - name: Verify installable APK
         shell: bash
         run: |
@@ -132,12 +158,12 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/pinowatch-badging.txt
           grep -q "package: name='jp.pinowatch.app'" /tmp/pinowatch-badging.txt
-          grep -q "versionName='1.17.25'" /tmp/pinowatch-badging.txt
+          grep -q "versionName='1.17.26'" /tmp/pinowatch-badging.txt
           mkdir -p /tmp/pinowatch-apk
-          cp "$APK" /tmp/pinowatch-apk/PinoWatch_Android_v1.17.25.apk
-          sha256sum /tmp/pinowatch-apk/PinoWatch_Android_v1.17.25.apk
+          cp "$APK" /tmp/pinowatch-apk/PinoWatch_Android_v1.17.26.apk
+          sha256sum /tmp/pinowatch-apk/PinoWatch_Android_v1.17.26.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: PinoWatch-Android-v1.17.25-APK
-          path: /tmp/pinowatch-apk/PinoWatch_Android_v1.17.25.apk
+          name: PinoWatch-Android-v1.17.26-APK
+          path: /tmp/pinowatch-apk/PinoWatch_Android_v1.17.26.apk
           if-no-files-found: error
