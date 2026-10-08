@@ -111,6 +111,19 @@ jobs:
           set -euo pipefail
           python3 pinowatch-android/remove_worker_prompt_v11727.py
           ! grep -q 'showWorkerUrlDialog();' /tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java || { echo "startup prompt remains"; exit 1; }
+      - name: Diagnose Worker startup dialog
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java')
+          s=p.read_text()
+          for term in ('Cloudflare Worker URL','baseUrl().isEmpty()','new AlertDialog.Builder'):
+              print('TERM',term,'COUNT',s.count(term))
+              i=s.find(term)
+              if i>=0: print('CONTEXT',repr(s[max(0,i-400):i+600]))
+          PY
       - name: Remove unsafe startup handler
         shell: bash
         run: |
