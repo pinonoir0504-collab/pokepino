@@ -144,6 +144,21 @@ jobs:
           p.write_text(s)
           print('Removed startup modal; manual Worker configuration remains available')
           PY
+      - name: Diagnose stuck loading state
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for filename,terms in [
+            ('/tmp/pinowatch11720/app/src/main/assets/app.js',['起動中','startup','DOMContentLoaded','loadInitial','bootstrap','initApp']),
+            ('/tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java',['proxy(','browser.loadUrl','baseUrl()'])]:
+              s=Path(filename).read_text()
+              print('FILE',filename,'LENGTH',len(s))
+              for term in terms:
+                print('SEARCH',repr(term),'COUNT',s.count(term))
+                i=s.find(term)
+                if i>=0: print('CONTEXT',repr(s[max(0,i-400):i+700]))
+          PY
       - name: Remove unsafe startup handler
         shell: bash
         run: |
