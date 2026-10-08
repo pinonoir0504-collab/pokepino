@@ -40,9 +40,12 @@ jobs:
           from pathlib import Path
           app=Path('/tmp/pinowatch11720/app/src/main/assets/app.js')
           s=app.read_text()
-          split='})();\\n\\n// Logo-only market dashboard'
-          assert s.count(split)==1, 'secret module must be moved inside IIFE'
-          s=s.replace(split,'// Logo-only market dashboard',1)
+          marker_start='// Logo-only market dashboard'
+          assert s.count(marker_start)==1
+          before,after=s.split(marker_start,1)
+          assert before.rstrip().endswith('})();')
+          before=before.rstrip()[:-4]
+          s=before+marker_start+after
           assert "addEventListener('click',showSecret);" in s
           s=s.replace("addEventListener('click',showSecret);", """addEventListener('click',()=>{const now=Date.now();if(now-window.__pinoLastLogoTap<500){window.__pinoLastLogoTap=0;showSecret()}else{window.__pinoLastLogoTap=now}});""",1)
           s+='\\n})();\\n'
