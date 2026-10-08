@@ -130,6 +130,7 @@ jobs:
         working-directory: /tmp/pinowatch11720
         run: gradle :app:assembleDebug --no-daemon --stacktrace
       - name: Emulator install and launch smoke test
+        timeout-minutes: 10
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
