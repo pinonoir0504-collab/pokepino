@@ -117,17 +117,14 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p=Path('/tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java')
           s=p.read_text()
-          start=s.find('Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {')
-          if start>=0:
-              end=s.find('});',start)
-              if end>=0: s=s[:start]+s[end+3:]
-          # Actual v1.17.20 startup dialog is an inline AlertDialog, not showWorkerUrlDialog().
-          import re
-          s,n=re.subn(r'(?m)^\\s*if\\(baseUrl\\(\\)\\.isEmpty\\(\\)\\)new AlertDialog\\.Builder\\(this\\).*?\\.show\\(\\);\\s*
-          ! grep -q 'Thread.setDefaultUncaughtExceptionHandler' /tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java
-          ! grep -q 'showWorkerUrlDialog();' /tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java
+          s=re.sub(r'Thread\\.setDefaultUncaughtExceptionHandler\\(\\(thread, error\\) -> \\{.*?\\}\\);', '', s, flags=re.S)
+          s=re.sub(r'(?m)^\\s*if\\s*\\(\\s*baseUrl\\(\\)\\.isEmpty\\(\\)\\s*\\)\\s*new AlertDialog\\.Builder\\(this\\).*?\\.show\\(\\);', '', s)
+          p.write_text(s)
+          assert 'Thread.setDefaultUncaughtExceptionHandler' not in s
+          PY
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
