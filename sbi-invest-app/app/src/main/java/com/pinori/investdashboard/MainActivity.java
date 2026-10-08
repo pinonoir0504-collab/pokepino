@@ -214,10 +214,23 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
-        public void saveState(String json) {
+        public boolean saveState(String json) {
             try {
-                Files.write(new File(getFilesDir(), STATE_FILE).toPath(), (json == null ? "{}" : json).getBytes(StandardCharsets.UTF_8));
-            } catch (Exception ignored) { }
+                java.io.File target = new File(getFilesDir(), STATE_FILE);
+                java.io.File temp = new File(getFilesDir(), STATE_FILE + ".tmp");
+                byte[] bytes = (json == null ? "{}" : json).getBytes(StandardCharsets.UTF_8);
+                try (java.io.FileOutputStream out = new java.io.FileOutputStream(temp)) {
+                    out.write(bytes);
+                    out.getFD().sync();
+                }
+                java.nio.file.Files.move(temp.toPath(), target.toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+                return true;
+            } catch (Exception e) {
+                android.util.Log.e("IncomePinorin", "State save failed", e);
+                return false;
+            }
         }
 
         @JavascriptInterface
