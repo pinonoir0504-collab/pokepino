@@ -183,6 +183,50 @@ jobs:
         shell: bash
         run: |
           python3 -c "from pathlib import Path; p=Path('/tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java'); s=p.read_text(); a=s.find('Thread.setDefaultUncaughtExceptionHandler'); b=s.find('});',a); p.write_text(s[:a]+s[b+3:] if a>=0 and b>=0 else s)"
+      - name: Repair startup isolation and offline error handling
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/pinowatch11720/app/src/main/assets/app.js')
+          s=p.read_text()
+          old='bind();bindExtras();bindPullRefresh();importNativeHistory();renderFavs();renderPrefs();renderHistory();feed=state.cachedFeed.slice();favoriteFeed=state.cachedFavoriteFeed.slice();reconcileEarningsFavorites();renderFeed();renderCalendar();renderUpcomingEarnings();syncEarningsNative();refresh();refreshEarnings(false);document.addEventListener'
+          new='''const bootErrors=[];
+          function bootStep(label,task){try{return task()}catch(e){bootErrors.push(label+': '+String(e?.message||e));console.error('PinoWatch boot '+label,e);}}
+          const bootStatus=$('#statusText');
+          if(bootStatus)bootStatus.textContent='接続を確認中…';
+          bootStep('bind',()=>bind());
+          bootStep('extras',()=>bindExtras());
+          bootStep('pull',()=>bindPullRefresh());
+          bootStep('historyImport',()=>importNativeHistory());
+          bootStep('favorites',()=>renderFavs());
+          bootStep('preferences',()=>renderPrefs());
+          bootStep('history',()=>renderHistory());
+          feed=state.cachedFeed.slice();favoriteFeed=state.cachedFavoriteFeed.slice();
+          bootStep('earningsFavorites',()=>reconcileEarningsFavorites());
+          bootStep('feed',()=>renderFeed());
+          bootStep('calendar',()=>renderCalendar());
+          bootStep('upcoming',()=>renderUpcomingEarnings());
+          bootStep('nativeSync',()=>syncEarningsNative());
+          bootStep('refresh',()=>refresh());
+          bootStep('earningsRefresh',()=>refreshEarnings(false));
+          if(bootErrors.length&&bootStatus&&bootStatus.textContent==='接続を確認中…')bootStatus.textContent='初期化の一部に失敗しました。再読み込みしてください';
+          document.addEventListener'''
+          assert s.count(old)==1, 'Startup sequence mismatch'
+          s=s.replace(old,new)
+          p.write_text(s)
+          print('Startup now isolates initialization errors and updates status')
+          PY
+          node --check /tmp/pinowatch11720/app/src/main/assets/app.js
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('/tmp/pinowatch11720/app/src/main/assets/app.js').read_text()
+          assert 'function bootStep(label,task)' in s
+          assert "bootStep('refresh',()=>refresh())" in s
+          assert "window.__pinoLastLogoTap" in s
+          print('Startup, refresh, and double tap static checks passed')
+          PY
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
