@@ -91,7 +91,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 pinowatch-android/optimize_v11724.py
+          python3 pinowatch-android/optimize_v11723.py
           node --check /tmp/pinowatch11720/app/src/main/assets/app.js
           grep -q "extremeCache" /tmp/pinowatch11720/app/src/main/assets/app.js
           grep -q "scheduleByDay" /tmp/pinowatch11720/app/src/main/assets/app.js
