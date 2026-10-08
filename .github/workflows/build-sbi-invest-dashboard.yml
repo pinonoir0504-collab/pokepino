@@ -155,7 +155,7 @@ jobs:
           grep -q "renderVirtualTable" app/src/main/assets/app.js
           grep -q "bindChartScrub" app/src/main/assets/app.js
           grep -q "handleAndroidBack" app/src/main/assets/app.js
-          grep -q "versionName '3.9.0'" app/build.gradle
+          grep -q "versionName '3.9.1'" app/build.gradle
           grep -q "public void vibrate" app/src/main/java/com/pinori/investdashboard/MainActivity.java
           grep -q "PORTFOLIO PERFORMANCE" app/src/main/assets/index.html
           grep -q "midnight glass redesign" app/src/main/assets/app.css
