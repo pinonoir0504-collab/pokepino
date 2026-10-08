@@ -1,4 +1,4 @@
-name: Build PinoWatch Android v1.17.23
+name: Build PinoWatch Android v1.17.23 (final)
 
 on:
   push:
