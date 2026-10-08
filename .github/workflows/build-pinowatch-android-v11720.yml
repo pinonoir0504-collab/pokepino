@@ -155,3 +155,5 @@ jobs:
           name: PinoWatch-Android-v1.17.27-APK
           path: /tmp/pinowatch-apk/PinoWatch_Android_v1.17.27.apk
           if-no-files-found: error
+
+# rerun v1.17.27 after prompt-removal patch was committed
