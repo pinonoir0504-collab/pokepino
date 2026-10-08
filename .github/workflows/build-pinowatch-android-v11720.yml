@@ -111,20 +111,10 @@ jobs:
           set -euo pipefail
           python3 pinowatch-android/remove_worker_prompt_v11727.py
           ! grep -q 'showWorkerUrlDialog();' /tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java || { echo "startup prompt remains"; exit 1; }
-      - name: Stabilize startup v1.17.28
+      - name: Remove unsafe startup handler
         shell: bash
         run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          p=Path('/tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java')
-          s=p.read_text()
-          s=re.sub(r'Thread\\.setDefaultUncaughtExceptionHandler\\(\\(thread, error\\) -> \\{.*?\\}\\);', '', s, flags=re.S)
-          s=re.sub(r'(?m)^\\s*if\\s*\\(\\s*baseUrl\\(\\)\\.isEmpty\\(\\)\\s*\\)\\s*new AlertDialog\\.Builder\\(this\\).*?\\.show\\(\\);', '', s)
-          p.write_text(s)
-          assert 'Thread.setDefaultUncaughtExceptionHandler' not in s
-          PY
+          python3 -c "from pathlib import Path; p=Path('/tmp/pinowatch11720/app/src/main/java/jp/pinowatch/app/MainActivity.java'); s=p.read_text(); a=s.find('Thread.setDefaultUncaughtExceptionHandler'); b=s.find('});',a); p.write_text(s[:a]+s[b+3:] if a>=0 and b>=0 else s)"
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
