@@ -1,4 +1,4 @@
-name: Build PinoWatch Android v1.17.23 (final)
+name: Build PinoWatch Android v1.17.24 (final)
 
 on:
   push:
@@ -82,7 +82,7 @@ jobs:
           s=s.replace(old,"secretItems=Array.isArray(data.items)?data.items.map(validateMarketRow):[];",1)
           app.write_text(s)
           grad=Path('/tmp/pinowatch11720/app/build.gradle.kts')
-          txt=grad.read_text().replace('versionCode = 11720','versionCode = 11722').replace('versionName = "1.17.20"','versionName = "1.17.23"')
+          txt=grad.read_text().replace('versionCode = 11720','versionCode = 11722').replace('versionName = "1.17.20"','versionName = "1.17.24"')
           grad.write_text(txt)
           PY
           node --check /tmp/pinowatch11720/app/src/main/assets/app.js
@@ -91,12 +91,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 pinowatch-android/optimize_v11723.py
+          python3 pinowatch-android/optimize_v11724.py
           node --check /tmp/pinowatch11720/app/src/main/assets/app.js
           grep -q "extremeCache" /tmp/pinowatch11720/app/src/main/assets/app.js
           grep -q "scheduleByDay" /tmp/pinowatch11720/app/src/main/assets/app.js
           grep -q "AbortError" /tmp/pinowatch11720/app/src/main/assets/app.js
 
+      - name: Harden market and UI v1.17.24
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 pinowatch-android/harden_v11724.py
+          node --check /tmp/pinowatch11720/app/src/main/assets/app.js
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -125,12 +131,12 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/pinowatch-badging.txt
           grep -q "package: name='jp.pinowatch.app'" /tmp/pinowatch-badging.txt
-          grep -q "versionName='1.17.23'" /tmp/pinowatch-badging.txt
+          grep -q "versionName='1.17.24'" /tmp/pinowatch-badging.txt
           mkdir -p /tmp/pinowatch-apk
-          cp "$APK" /tmp/pinowatch-apk/PinoWatch_Android_v1.17.23.apk
-          sha256sum /tmp/pinowatch-apk/PinoWatch_Android_v1.17.23.apk
+          cp "$APK" /tmp/pinowatch-apk/PinoWatch_Android_v1.17.24.apk
+          sha256sum /tmp/pinowatch-apk/PinoWatch_Android_v1.17.24.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: PinoWatch-Android-v1.17.23-APK
-          path: /tmp/pinowatch-apk/PinoWatch_Android_v1.17.23.apk
+          name: PinoWatch-Android-v1.17.24-APK
+          path: /tmp/pinowatch-apk/PinoWatch_Android_v1.17.24.apk
           if-no-files-found: error
