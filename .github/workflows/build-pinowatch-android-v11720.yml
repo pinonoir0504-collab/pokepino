@@ -44,7 +44,7 @@ jobs:
           assert s.count(marker_start)==1
           before,after=s.split(marker_start,1)
           assert before.rstrip().endswith('})();')
-          before=before.rstrip()[:-4]
+          before=before.rstrip()[:-5]
           s=before+marker_start+after
           assert "addEventListener('click',showSecret);" in s
           s=s.replace("addEventListener('click',showSecret);", """addEventListener('click',()=>{const now=Date.now();if(now-window.__pinoLastLogoTap<500){window.__pinoLastLogoTap=0;showSecret()}else{window.__pinoLastLogoTap=now}});""",1)
