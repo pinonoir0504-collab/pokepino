@@ -15,6 +15,12 @@ jobs:
         run: |
           cat validation-bundle/part*.bin > /tmp/pokepino-validation.zip
           unzip -o /tmp/pokepino-validation.zip
+          cp validation-overrides/MainActivity.kt app/src/main/java/com/pokepino/app/MainActivity.kt
+          cp validation-overrides/ImageViews.kt app/src/main/java/com/pokepino/app/ImageViews.kt
+          cp validation-overrides/CropOwnershipInstrumentedTest.kt app/src/androidTest/java/com/pokepino/app/CropOwnershipInstrumentedTest.kt
+          cp validation-overrides/ShapePrototypeTest.kt app/src/test/java/com/pokepino/app/ShapePrototypeTest.kt
+          cp validation-overrides/RuntimePhotoUiTest.kt app/src/androidTest/java/com/pokepino/app/RuntimePhotoUiTest.kt
+          echo 'dependencies { androidTestImplementation("androidx.test.espresso:espresso-intents:3.6.1") }' >> app/build.gradle.kts
       - name: Apply frozen random 200-photo evaluation set
         run: |
           cat validation200/parts/part*.bin > /tmp/pokepino-validation200.zip
@@ -55,13 +61,11 @@ jobs:
           script: |
             mkdir -p android-validation
             adb logcat -c
-            result=0
-            gradle :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.pokepino.app.MainActivitySmokeTest,com.pokepino.app.ShapeRecognitionInstrumentedTest,com.pokepino.app.CameraProviderInstrumentedTest --stacktrace || result=$?
+            gradle :app:connectedDebugAndroidTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true -Pandroid.testInstrumentationRunnerArguments.class=com.pokepino.app.MainActivitySmokeTest,com.pokepino.app.ShapeRecognitionInstrumentedTest,com.pokepino.app.CameraProviderInstrumentedTest,com.pokepino.app.RuntimePhotoUiTest,com.pokepino.app.CropOwnershipInstrumentedTest --stacktrace
             adb logcat -d > android-validation/logcat.txt
-            adb pull /sdcard/Android/data/com.pokepino.app.precision122/files/validation android-validation || true
+            adb pull /sdcard/Android/data/com.pokepino.app.precision122/files/validation android-validation
             adb shell screencap -p /sdcard/validation.png
             adb pull /sdcard/validation.png android-validation/screen.png
-            exit "$result"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -72,4 +76,3 @@ jobs:
             app/build/outputs/androidTest-results/
             app/build/outputs/apk/
           if-no-files-found: warn
-
