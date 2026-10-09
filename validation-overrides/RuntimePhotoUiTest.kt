@@ -53,7 +53,9 @@ class RuntimePhotoUiTest {
             rule.onNodeWithText("画像を選ぶ").performClick()
             rule.waitUntil(240000) { runCatching { rule.onNode(hasScrollAction()).performScrollToNode(hasText("総合判定の候補")); true }.getOrDefault(false) }
             rule.onNodeWithText("総合判定の候補").assertIsDisplayed()
+            rule.onNode(hasScrollAction()).performScrollToNode(hasText("画像を選ぶ"))
             rule.onNodeWithText("画像を選ぶ").assertIsEnabled()
+            rule.onNode(hasScrollAction()).performScrollToNode(hasText("総合判定の候補"))
             capture("05_recognition_result")
         } finally { Intents.release(); file.delete() }
     }
