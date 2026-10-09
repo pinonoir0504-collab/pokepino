@@ -34,6 +34,8 @@ jobs:
           curl --fail --location --connect-timeout 10 --max-time 60 --retry 1 "$BASE/pokemon_labels.json?download=true" -o app/src/main/assets/pokemon_labels.json
           echo "fc38207ce7600f3f31754993ac77f0ea9b3c9b234a9b33d79f85fa9b40ecc0a0  app/src/main/assets/pokemon_1025.onnx" | sha256sum --check
           echo "f467bfaead94ec2e99a039c07b556a28da35837aa1e80addac4c8e43a71d2b1f  app/src/main/assets/pokemon_labels.json" | sha256sum --check
+          curl --fail --location --connect-timeout 10 --max-time 180 --retry 1 "https://huggingface.co/onnx-community/dinov2-small/resolve/8b1f705a3a7f6f062f6bdd21986c1583d3ef105d/onnx/model_quantized.onnx" -o app/src/main/assets/dinov2_small.onnx
+          echo "c179f8f7f592449c4c1bca4cd124a7538021428c5ffb89afde9503935b197efb  app/src/main/assets/dinov2_small.onnx" | sha256sum --check
           python3 tools/validate_shape_assets.py
       - name: Unit tests and APK build
         run: gradle :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
