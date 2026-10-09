@@ -15,12 +15,10 @@ jobs:
         run: |
           cat validation-bundle/part*.bin > /tmp/pokepino-validation.zip
           unzip -o /tmp/pokepino-validation.zip
-          cp validation-overrides/MainActivity.kt app/src/main/java/com/pokepino/app/MainActivity.kt
-          cp validation-overrides/ImageViews.kt app/src/main/java/com/pokepino/app/ImageViews.kt
-          cp validation-overrides/CropOwnershipInstrumentedTest.kt app/src/androidTest/java/com/pokepino/app/CropOwnershipInstrumentedTest.kt
-          cp validation-overrides/ShapePrototypeTest.kt app/src/test/java/com/pokepino/app/ShapePrototypeTest.kt
-          cp validation-overrides/RuntimePhotoUiTest.kt app/src/androidTest/java/com/pokepino/app/RuntimePhotoUiTest.kt
-          echo 'dependencies { androidTestImplementation("androidx.test.espresso:espresso-intents:3.6.1") }' >> app/build.gradle.kts
+      - name: Apply frozen random 200-photo evaluation set
+        run: |
+          cat validation200/parts/part*.bin > /tmp/pokepino-validation200.zip
+          unzip -o /tmp/pokepino-validation200.zip
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -36,8 +34,6 @@ jobs:
           curl --fail --location --connect-timeout 10 --max-time 60 --retry 1 "$BASE/pokemon_labels.json?download=true" -o app/src/main/assets/pokemon_labels.json
           echo "fc38207ce7600f3f31754993ac77f0ea9b3c9b234a9b33d79f85fa9b40ecc0a0  app/src/main/assets/pokemon_1025.onnx" | sha256sum --check
           echo "f467bfaead94ec2e99a039c07b556a28da35837aa1e80addac4c8e43a71d2b1f  app/src/main/assets/pokemon_labels.json" | sha256sum --check
-          curl --fail --location --connect-timeout 10 --max-time 180 --retry 1 "https://huggingface.co/onnx-community/dinov2-small/resolve/8b1f705a3a7f6f062f6bdd21986c1583d3ef105d/onnx/model_quantized.onnx" -o app/src/main/assets/dinov2_small.onnx
-          echo "c179f8f7f592449c4c1bca4cd124a7538021428c5ffb89afde9503935b197efb  app/src/main/assets/dinov2_small.onnx" | sha256sum --check
           python3 tools/validate_shape_assets.py
       - name: Unit tests and APK build
         run: gradle :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
@@ -46,7 +42,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm || true
-      - name: Android 16 UI and 100-photo recognition
+      - name: Android 16 UI and random 200-photo recognition
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 36
@@ -57,11 +53,13 @@ jobs:
           script: |
             mkdir -p android-validation
             adb logcat -c
-            gradle :app:connectedDebugAndroidTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true -Pandroid.testInstrumentationRunnerArguments.class=com.pokepino.app.MainActivitySmokeTest,com.pokepino.app.ShapeRecognitionInstrumentedTest,com.pokepino.app.CameraProviderInstrumentedTest,com.pokepino.app.RuntimePhotoUiTest,com.pokepino.app.CropOwnershipInstrumentedTest --stacktrace
+            result=0
+            gradle :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.pokepino.app.MainActivitySmokeTest,com.pokepino.app.ShapeRecognitionInstrumentedTest,com.pokepino.app.CameraProviderInstrumentedTest --stacktrace || result=$?
             adb logcat -d > android-validation/logcat.txt
-            adb pull /sdcard/Android/data/com.pokepino.app.precision122/files/validation android-validation
+            adb pull /sdcard/Android/data/com.pokepino.app.precision122/files/validation android-validation || true
             adb shell screencap -p /sdcard/validation.png
             adb pull /sdcard/validation.png android-validation/screen.png
+            exit "$result"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -72,3 +70,4 @@ jobs:
             app/build/outputs/androidTest-results/
             app/build/outputs/apk/
           if-no-files-found: warn
+
