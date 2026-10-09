@@ -1,0 +1,68 @@
+name: Pokepino v1.3.9 Android 16 debug
+on:
+  push:
+    branches: [ "validation/pokepino-v139-debug-20261009" ]
+concurrency:
+  group: pokepino-v139-validation
+  cancel-in-progress: true
+jobs:
+  validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore exact v1.3.9 source and offline fixtures
+        run: |
+          cat validation-bundle/part*.bin > /tmp/pokepino-validation.zip
+          unzip -o /tmp/pokepino-validation.zip
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Restore and validate models
+        run: |
+          python3 tools/validate_catalog.py
+          BASE="https://huggingface.co/BiernyVR/pokemon-classifier-mobilenetv3/resolve/68c055b397ad1a9bc61bbba39be438c4a2ac3f28"
+          curl --fail --location --connect-timeout 10 --max-time 180 --retry 1 "$BASE/pokemon_classifier.onnx?download=true" -o app/src/main/assets/pokemon_1025.onnx
+          curl --fail --location --connect-timeout 10 --max-time 60 --retry 1 "$BASE/pokemon_labels.json?download=true" -o app/src/main/assets/pokemon_labels.json
+          echo "fc38207ce7600f3f31754993ac77f0ea9b3c9b234a9b33d79f85fa9b40ecc0a0  app/src/main/assets/pokemon_1025.onnx" | sha256sum --check
+          echo "f467bfaead94ec2e99a039c07b556a28da35837aa1e80addac4c8e43a71d2b1f  app/src/main/assets/pokemon_labels.json" | sha256sum --check
+          python3 tools/validate_shape_assets.py
+      - name: Unit tests and APK build
+        run: gradle :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest --stacktrace
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+      - name: Android 16 UI and 100-photo recognition
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-boot-timeout: 300
+          script: |
+            mkdir -p android-validation
+            adb logcat -c
+            result=0
+            gradle :app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.pokepino.app.MainActivitySmokeTest,com.pokepino.app.ShapeRecognitionInstrumentedTest,com.pokepino.app.CameraProviderInstrumentedTest --stacktrace || result=$?
+            adb logcat -d > android-validation/logcat.txt
+            adb pull /sdcard/Android/data/com.pokepino.app.precision122/files/validation android-validation || true
+            adb shell screencap -p /sdcard/validation.png
+            adb pull /sdcard/validation.png android-validation/screen.png
+            exit "$result"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pokepino-v139-debug-evidence
+          path: |
+            android-validation/
+            app/build/reports/
+            app/build/outputs/androidTest-results/
+            app/build/outputs/apk/
+          if-no-files-found: warn
