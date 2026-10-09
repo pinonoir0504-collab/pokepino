@@ -1,7 +1,7 @@
 name: Pokepino v1.3.9 Android 16 debug
 on:
   push:
-    branches: [ "validation/pokepino-v139-debug-20261009" ]
+    branches: [ "validation/pokepino-v139-debug-20261009", "validation/pokepino-pairwise-20261010" ]
 concurrency:
   group: pokepino-v139-validation
   cancel-in-progress: true
@@ -20,6 +20,14 @@ jobs:
           cp validation-overrides/CropOwnershipInstrumentedTest.kt app/src/androidTest/java/com/pokepino/app/CropOwnershipInstrumentedTest.kt
           cp validation-overrides/ShapePrototypeTest.kt app/src/test/java/com/pokepino/app/ShapePrototypeTest.kt
           cp validation-overrides/RuntimePhotoUiTest.kt app/src/androidTest/java/com/pokepino/app/RuntimePhotoUiTest.kt
+          cp validation-overrides/app/src/main/java/com/pokepino/app/AppearanceRecognizer.kt app/src/main/java/com/pokepino/app/AppearanceRecognizer.kt
+          cp validation-overrides/app/src/main/java/com/pokepino/app/PairwiseCandidateRanking.kt app/src/main/java/com/pokepino/app/PairwiseCandidateRanking.kt
+          cp validation-overrides/app/src/main/assets/appearance_model.json app/src/main/assets/appearance_model.json
+          cp validation-overrides/app/src/main/assets/freeze.json app/src/main/assets/freeze.json
+          cp validation-overrides/app/src/test/java/com/pokepino/app/PairwiseCandidateRankingTest.kt app/src/test/java/com/pokepino/app/PairwiseCandidateRankingTest.kt
+          cp validation-overrides/tools/validate_shape_assets.py tools/validate_shape_assets.py
+          cp validation-overrides/app-build.gradle.kts app/build.gradle.kts
+          cp validation/pairwise_ranker_cv_20261010.json validation/pairwise_ranker_cv_20261010.json
           echo 'dependencies { androidTestImplementation("androidx.test.espresso:espresso-intents:3.6.1") }' >> app/build.gradle.kts
       - name: Apply frozen random 200-photo evaluation set
         run: |

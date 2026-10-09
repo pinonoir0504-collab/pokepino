@@ -1,0 +1,37 @@
+{
+  "method": "Linear pairwise ranker over shape, classifier, DINO reference and HSV/foreground candidate features",
+  "training_data": "source-grouped OOF features from development photos only; protected random200 images and labels not loaded",
+  "candidate_pool": "top 15 from each of base, current and prototype model, deduplicated",
+  "hyperparameters": {
+    "C": 1.0
+  },
+  "development_nested_cv": {
+    "folds": 5,
+    "baseline_top1": 1055,
+    "pairwise_top1": 1062,
+    "total": 1162,
+    "baseline_top3": 1115,
+    "pairwise_top3": 1115,
+    "fixed_without_regression": 7,
+    "regressions": 0
+  },
+  "fixed_configuration_cv_selected_on_development": {
+    "top1": 1066,
+    "top3": 1116,
+    "total": 1162,
+    "interpretation": "Development-only; selected from multiple configurations, so not an independent estimate."
+  },
+  "existing_android200_reference": {
+    "top1": "185/200",
+    "top3": "199/200",
+    "used_for_training_or_tuning": false
+  },
+  "training_database": {
+    "records": 3698,
+    "species": 859,
+    "raw_appearance_reference_records": 1616,
+    "appearance_reference_species": 615
+  },
+  "independent_android200_retest_required": true,
+  "goal_98_percent_claimed": false
+}

@@ -1,0 +1,35 @@
+{
+  "selected": "shape_color_pairwise_top15_C1_development",
+  "selection_report_sha256": "7fe14b78366df83de986c218cdf049f0c5ec0e673e1ca8a097d9c5314fa8ce4a",
+  "train_manifest_sha256": "10f325a1dcea6445d93d38cea681d3739f6795fc9be658cf4b2951d70496d4f8",
+  "test_manifest_sha256": "cd44562d909e89079e1829ad53dfebbb1732535eb20e3168c0e011eea03438f2",
+  "training_images": 3698,
+  "training_species": 859,
+  "raw_appearance_references": 1616,
+  "final_test_predictions_seen": false,
+  "files": {
+    "shape_kernel_vectors.f32": "e3087251bfae10b67ed450a03920d110701d66f53cd4c42d3677c3c2ce3d8191",
+    "appearance_patch_spatial.f32": "2b48b3939946a6cd1867b56e9b50871d445caa5685d732516b5fd5500ec6b427",
+    "shape_prototypes_vectors.f32": "9ec290a8807f092a56622af76d45ee32d88d9dfa4687f84a9fc9ba827d1b403e",
+    "appearance_patch_global.f32": "7e179933c511425722b1735f15c4bc0522e539af2101d72cdbc1d5f819d84d39",
+    "shape_kernel_coefficients.f32": "3b51721f6df7ee95a419f0ea5543f25015596724e5ec92b88cfababbf8c2d0ce",
+    "appearance_silhouette.f32": "f5a75435a1277a061c29b971d696bfaf0607367b359bedaa776c96e09ee98f99",
+    "appearance_model.json": "638b274cfb2a58cad039fcc98652f00214915e0e66c621126d9261f290e30c35",
+    "appearance_spatial.f32": "462c485854a0a391e36ab874a0f00b6602b8a1440e56d4a2ba6928ae3a1f4077",
+    "shape_prototypes_manifest.json": "2ae7f9c7bfe0b28d7326c33ac26b38f7595c3120c9c74e249709cc3b90f8f73d",
+    "shape.pkl": "d8cd635087a47afbc2d70e5ca3daf1042cf250424cbc6f10435cd01da561ee12",
+    "reranker.pkl": "8acce4f18789996702e818349782234d4abeff9794c83354511c6b26224ce459",
+    "shape_kernel_manifest.json": "eac5c6016a604a6a411f3c19ce7d632cd8fe67f5e944b1789471c4b316363103",
+    "appearance_global.f32": "d62ec8bfb6883a7618cec92ced35a66377a975716ce71ccb04518b165bb93395",
+    "gallery.npz": "e6dc6f7759df3f4c2328a3b84bc0b74bed9fc9636c734370aeeb048d9921a161",
+    "shape_learned_metric.json": "f14443a2c9245d54d4e69b2fe1b200a7b851d315c3cef42aed38d826336b82a4"
+  },
+  "pairwise_ranker": {
+    "method": "linear pairwise candidate ranking",
+    "candidate_top_k": 15,
+    "feature_count": 34,
+    "training": "source-grouped development OOF candidates; protected random200 excluded",
+    "nested_cv_top1": "1062/1162 vs baseline 1055/1162",
+    "nested_cv_top3": "1115/1162 vs baseline 1115/1162"
+  }
+}
