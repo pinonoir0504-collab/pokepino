@@ -262,7 +262,7 @@ def main():
                 "policy_correct": policy_correct,
                 "knn_correct": knn_correct,
                 "centroid_correct": {
-                    key: int(max(scores, key=scores.get) == target_dex)
+                    f"pool{key[0]}_{key[1]}": int(max(scores, key=scores.get) == target_dex)
                     for key, scores in strategies.items()
                 },
             })
