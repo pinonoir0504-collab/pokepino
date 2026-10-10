@@ -162,7 +162,7 @@ def main():
                 for mode, q in enumerate(queries):
                     values[mode] = max(values[mode], float(np.dot(q, vec) / max(norm, 1e-6) - penalty))
             by_dex = {}
-            by_pool = {1: {}, 3: {}, 5: {}}
+            by_pool = {k: {} for k in (1, 2, 3, 4, 5, 8, 12)}
             for dex, group_scores in grouped.items():
                 matrix = np.stack(list(group_scores.values()))
                 by_dex[dex] = np.max(matrix, axis=0)
