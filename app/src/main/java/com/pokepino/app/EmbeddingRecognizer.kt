@@ -5,7 +5,10 @@ import ai.onnxruntime.OrtEnvironment
 import ai.onnxruntime.OrtSession
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.RectF
 import android.util.Base64
 import org.json.JSONArray
 import java.io.Closeable
@@ -22,7 +25,7 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         val speciesCandidates: List<SpeciesCandidate>,
         val acceptedSpecies: Boolean,
         val veryStrongSpecies: Boolean,
-        internal val query: FloatArray
+        internal val queryViews: List<FloatArray>
     )
     data class VariantCandidate(
         val recordIds: List<String>,
@@ -57,14 +60,21 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
     @Synchronized
     fun recognize(bitmap: Bitmap): Result {
         if (!isAvailable()) error("高精度認識データが未生成です")
-        val q = embed(bitmap)
-        val bestByDex = HashMap<Int, Float>()
+        // Keep the original crop for database compatibility, then add two independent framings.
+        val queries = listOf(embed(bitmap, 0), embed(bitmap, 1), embed(bitmap, 2))
+        val byDexAndView = HashMap<Int, FloatArray>()
         for (r in refs) {
             if (r.dex <= 0) continue
-            val s = similarity(q, r)
-            val old = bestByDex[r.dex]
-            if (old == null || s > old) bestByDex[r.dex] = s
+            val scores = byDexAndView.getOrPut(r.dex) { FloatArray(queries.size) { Float.NEGATIVE_INFINITY } }
+            for (view in queries.indices) {
+                scores[view] = max(scores[view], similarity(queries[view], r))
+            }
         }
+        val bestByDex = byDexAndView.mapValues { (_, scores) -> fusedScore(scores) }
+        val winnersByView = queries.indices.map { view ->
+            byDexAndView.maxByOrNull { it.value[view] }?.key
+        }
+        val votes = winnersByView.groupingBy { it }.eachCount()
         val ranked = bestByDex.entries
             .map { SpeciesCandidate(it.key, it.value) }
             .sortedByDescending { it.score }
@@ -73,11 +83,12 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         val first = ranked.firstOrNull()
         val second = ranked.getOrNull(1)
         val margin = if (first != null && second != null) first.score - second.score else 1f
+        val agrees = first != null && (votes[first.dex] ?: 0) >= 2
 
-        // Conservative auto-accept thresholds. Ranking remains useful below these.
-        val accepted = first != null && first.score >= 0.66f && margin >= 0.035f
-        val veryStrong = first != null && first.score >= 0.76f && margin >= 0.060f
-        return Result(ranked, accepted, veryStrong, q)
+        // Auto-registration requires both a strong score and agreement across framings.
+        val accepted = agrees && first != null && first.score >= 0.66f && margin >= 0.035f
+        val veryStrong = agrees && first != null && first.score >= 0.76f && margin >= 0.060f
+        return Result(ranked, accepted, veryStrong, queries)
     }
 
     fun rankVariants(result: Result, dex: Int, figures: List<Figure>): VariantResult {
@@ -88,13 +99,21 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
             .groupBy { it.visualGroupId }
             .mapValues { (_, rows) -> rows.map { it.id }.distinct() }
 
-        val bestByGroup = HashMap<String, Float>()
+        val byGroupAndView = HashMap<String, FloatArray>()
         for (r in refs) {
             if (r.dex != dex || r.group.isBlank()) continue
-            val s = similarity(result.query, r)
-            val old = bestByGroup[r.group]
-            if (old == null || s > old) bestByGroup[r.group] = s
+            val scores = byGroupAndView.getOrPut(r.group) {
+                FloatArray(result.queryViews.size) { Float.NEGATIVE_INFINITY }
+            }
+            for (view in result.queryViews.indices) {
+                scores[view] = max(scores[view], similarity(result.queryViews[view], r))
+            }
         }
+        val bestByGroup = byGroupAndView.mapValues { (_, scores) -> fusedScore(scores) }
+        val winnersByView = result.queryViews.indices.map { view ->
+            byGroupAndView.maxByOrNull { it.value[view] }?.key
+        }
+        val votes = winnersByView.groupingBy { it }.eachCount()
 
         val ranked = bestByGroup.entries
             .mapNotNull { (group, score) ->
@@ -107,9 +126,19 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         val first = ranked.firstOrNull()
         val second = ranked.getOrNull(1)
         val margin = if (first != null && second != null) first.score - second.score else 1f
-        val accepted = first != null && first.score >= 0.70f && margin >= 0.035f
-        val veryStrong = first != null && first.score >= 0.80f && margin >= 0.060f
+        val agrees = first != null && (votes[first.visualGroupId] ?: 0) >= 2
+        val accepted = agrees && first != null && first.score >= 0.70f && margin >= 0.035f
+        val veryStrong = agrees && first != null && first.score >= 0.80f && margin >= 0.060f
         return VariantResult(ranked, accepted, veryStrong)
+    }
+
+    private fun fusedScore(scores: FloatArray): Float {
+        val valid = scores.filter { it.isFinite() }.sortedDescending()
+        if (valid.isEmpty()) return 0f
+        // The legacy crop remains a floor; two agreeing views can improve it.
+        val legacy = scores.firstOrNull()?.takeIf { it.isFinite() } ?: 0f
+        val consensus = if (valid.size >= 2) (valid[0] + valid[1]) / 2f else valid[0]
+        return max(legacy, consensus)
     }
 
     private fun loadRefs(): List<Ref> {
@@ -147,10 +176,10 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         return out
     }
 
-    private fun embed(src: Bitmap): FloatArray {
+    private fun embed(src: Bitmap, frameMode: Int): FloatArray {
         val model = ensureAssetModel()
         val s = session ?: env.createSession(model.absolutePath, OrtSession.SessionOptions()).also { session = it }
-        val input = preprocess(src)
+        val input = preprocess(src, frameMode)
         val name = s.inputNames.first()
         OnnxTensor.createTensor(env, input, longArrayOf(1, 3, 224, 224)).use { tensor ->
             s.run(mapOf(name to tensor)).use { output ->
@@ -171,16 +200,38 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         }
     }
 
-    private fun preprocess(src: Bitmap): java.nio.FloatBuffer {
-        val crop = foregroundCrop(src)
-        val shortSide = minOf(crop.width, crop.height).coerceAtLeast(1)
-        val scale = 256f / shortSide
-        val rw = max(224, (crop.width * scale).roundToInt())
-        val rh = max(224, (crop.height * scale).roundToInt())
-        val resized = Bitmap.createScaledBitmap(crop, rw, rh, true)
-        val x = ((rw - 224) / 2).coerceAtLeast(0)
-        val y = ((rh - 224) / 2).coerceAtLeast(0)
-        val square = Bitmap.createBitmap(resized, x, y, 224, 224)
+    private fun preprocess(src: Bitmap, frameMode: Int): java.nio.FloatBuffer {
+        val crop: Bitmap
+        val resized: Bitmap
+        val square: Bitmap
+        when (frameMode) {
+            1 -> {
+                // Preserve the complete photo; padding prevents cutting off wide/tall figures.
+                crop = src
+                resized = src
+                square = letterbox(src)
+            }
+            2 -> {
+                // Compare a center crop without relying on the background detector.
+                val side = minOf(src.width, src.height).coerceAtLeast(1)
+                val x = (src.width - side) / 2
+                val y = (src.height - side) / 2
+                crop = Bitmap.createBitmap(src, x, y, side, side)
+                resized = crop
+                square = Bitmap.createScaledBitmap(crop, 224, 224, true)
+            }
+            else -> {
+                crop = foregroundCrop(src)
+                val shortSide = minOf(crop.width, crop.height).coerceAtLeast(1)
+                val scale = 256f / shortSide
+                val rw = max(224, (crop.width * scale).roundToInt())
+                val rh = max(224, (crop.height * scale).roundToInt())
+                resized = Bitmap.createScaledBitmap(crop, rw, rh, true)
+                val x = ((rw - 224) / 2).coerceAtLeast(0)
+                val y = ((rh - 224) / 2).coerceAtLeast(0)
+                square = Bitmap.createBitmap(resized, x, y, 224, 224)
+            }
+        }
 
         val px = IntArray(224 * 224)
         square.getPixels(px, 0, 224, 0, 0, 224, 224)
@@ -200,10 +251,27 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         }
         fb.rewind()
 
-        square.recycle()
-        if (resized !== crop) resized.recycle()
+        if (square !== src && square !== crop && square !== resized) square.recycle()
+        if (resized !== crop && resized !== src) resized.recycle()
         if (crop !== src) crop.recycle()
         return fb
+    }
+
+    private fun letterbox(src: Bitmap): Bitmap {
+        val out = Bitmap.createBitmap(224, 224, Bitmap.Config.ARGB_8888)
+        out.eraseColor(Color.rgb(245, 245, 245))
+        val scale = minOf(224f / src.width.coerceAtLeast(1), 224f / src.height.coerceAtLeast(1))
+        val width = src.width * scale
+        val height = src.height * scale
+        val left = (224f - width) / 2f
+        val top = (224f - height) / 2f
+        Canvas(out).drawBitmap(
+            src,
+            null,
+            RectF(left, top, left + width, top + height),
+            Paint(Paint.FILTER_BITMAP_FLAG)
+        )
+        return out
     }
 
     private fun foregroundCrop(src: Bitmap): Bitmap {
