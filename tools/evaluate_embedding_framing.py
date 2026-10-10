@@ -89,7 +89,7 @@ def load_reference_vectors():
         try:
             dex, group = int(row[1]), str(row[2])
             raw = base64.b64decode(row[3])
-            if dex <= 0 or not group or len(raw) != 1280:
+            if dex <= 0 or not group or len(raw) != 576:
                 continue
             vec = np.frombuffer(raw, dtype=np.int8).astype(np.float32) / 127.0
             proto = str(row[4]) if len(row) > 4 else "base"
