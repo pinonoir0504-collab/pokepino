@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CATALOG = ROOT / "app/src/main/assets/catalog_v2.json"
 EMBEDDINGS = ROOT / "app/src/main/assets/embedding_catalog_v3.json"
 MODEL = ROOT / "app/src/main/assets/mobilenet_v3_small_features.onnx"
-SEED = 20261010
+SEED = int(sys.argv[1]) if len(sys.argv) > 1 else 20261010
 SAMPLE = 100
 UA = "PokepinoFramingHoldout/1.0"
 
@@ -156,18 +156,36 @@ def main():
             image = fetch_image(url)
             queries = [embed(session, input_name, image, mode) for mode in range(4)]
             usable = [r for r in refs if r[1] not in excluded_groups]
-            by_dex = {}
+            grouped = {}
             for dex, group, vec, norm, penalty in usable:
-                values = by_dex.setdefault(dex, np.full(4, -np.inf, dtype=np.float32))
+                values = grouped.setdefault(dex, {}).setdefault(group, np.full(4, -np.inf, dtype=np.float32))
                 for mode, q in enumerate(queries):
                     values[mode] = max(values[mode], float(np.dot(q, vec) / max(norm, 1e-6) - penalty))
+            by_dex = {}
+            by_pool = {1: {}, 3: {}, 5: {}}
+            for dex, group_scores in grouped.items():
+                matrix = np.stack(list(group_scores.values()))
+                by_dex[dex] = np.max(matrix, axis=0)
+                for pool_size in by_pool:
+                    top_groups = np.sort(matrix, axis=0)[-min(pool_size, len(matrix)):]
+                    by_pool[pool_size][dex] = np.mean(top_groups, axis=0)
             fused = {}
+            strategies = {}
             for dex, values in by_dex.items():
                 valid = sorted((float(v) for v in values if np.isfinite(v)), reverse=True)
                 if not valid:
                     continue
                 fused[dex] = max(float(values[0]) if np.isfinite(values[0]) else 0.0,
                                  sum(valid[:2]) / min(2, len(valid)))
+            for pool_size, scores in by_pool.items():
+                for policy in ("legacy_top2", "mean4", "top2_mean"):
+                    strategies[(pool_size, policy)] = {}
+                for dex, values in scores.items():
+                    valid = sorted((float(v) for v in values if np.isfinite(v)), reverse=True)
+                    legacy = float(values[0]) if np.isfinite(values[0]) else 0.0
+                    strategies[(pool_size, "legacy_top2")][dex] = max(legacy, sum(valid[:2]) / min(2, len(valid)))
+                    strategies[(pool_size, "mean4")][dex] = float(np.mean(valid))
+                    strategies[(pool_size, "top2_mean")][dex] = sum(valid[:2]) / min(2, len(valid))
             if not fused:
                 failures += 1
                 continue
@@ -176,6 +194,10 @@ def main():
             order = sorted(fused, key=fused.get, reverse=True)
             winners = [max(by_dex, key=lambda d: by_dex[d][m]) for m in range(4)]
             top = order[0]
+            policy_correct = {}
+            for key, scores in strategies.items():
+                policy_correct[f"pool{key[0]}_{key[1]}"] = int(max(scores, key=scores.get) == target_dex)
+            view_correct = [int(winner == target_dex) for winner in winners]
             second = fused[order[1]] if len(order) > 1 else 0.0
             margin = fused[top] - second
             accepted = winners.count(top) >= 2 and fused[top] >= .66 and margin >= .035
@@ -186,6 +208,8 @@ def main():
                 "ensemble_top3_correct": int(target_dex in order[:3]),
                 "accepted": int(accepted),
                 "accepted_correct": int(accepted and top == target_dex),
+                "view_correct": view_correct,
+                "policy_correct": policy_correct,
             })
             if len(results) >= SAMPLE:
                 break
@@ -205,6 +229,11 @@ def main():
         "baseline_top1_percent": 100 * sum(x["baseline_top1_correct"] for x in results) / len(results),
         "four_frame_top1_percent": 100 * sum(x["ensemble_top1_correct"] for x in results) / len(results),
         "four_frame_top3_percent": 100 * sum(x["ensemble_top3_correct"] for x in results) / len(results),
+        "view_top1_percent": [100 * sum(x["view_correct"][i] for x in results) / len(results) for i in range(4)],
+        "pooling_and_fusion_top1_percent": {
+            key: 100 * sum(x["policy_correct"][key] for x in results) / len(results)
+            for key in results[0]["policy_correct"]
+        },
         "auto_accept_coverage_percent": 100 * accepted / len(results),
         "auto_accept_precision_percent": 100 * sum(x["accepted_correct"] for x in results) / max(1, accepted),
         "records": results,
