@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Held-out evaluation of the Android embedding recognizer's three scan framings."""
+"""Held-out evaluation of the Android embedding recognizer's four scan framings."""
 import base64
 import io
 import json
@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 import onnxruntime as ort
 import requests
-from PIL import Image, ImageOps, ImageEnhance
+from PIL import Image, ImageOps
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG = ROOT / "app/src/main/assets/catalog_v2.json"
@@ -65,9 +65,11 @@ def framing(image, mode):
         return resized.crop((x, y, x + 224, y + 224))
     if mode == 1:
         return ImageOps.pad(image, (224, 224), method=Image.Resampling.BILINEAR, color=(245, 245, 245), centering=(.5, .5))
-    side = min(image.size)
-    x, y = (image.width - side) // 2, (image.height - side) // 2
-    return image.crop((x, y, x + side, y + side)).resize((224, 224), Image.Resampling.BILINEAR)
+    if mode == 2:
+        side = min(image.size)
+        x, y = (image.width - side) // 2, (image.height - side) // 2
+        return image.crop((x, y, x + side, y + side)).resize((224, 224), Image.Resampling.BILINEAR)
+    return ImageOps.pad(foreground_crop(image), (224, 224), method=Image.Resampling.BILINEAR, color=(245, 245, 245), centering=(.5, .5))
 
 
 def embed(session, input_name, image, mode):
@@ -152,11 +154,11 @@ def main():
     for row, url, excluded_groups in targets:
         try:
             image = fetch_image(url)
-            queries = [embed(session, input_name, image, mode) for mode in range(3)]
+            queries = [embed(session, input_name, image, mode) for mode in range(4)]
             usable = [r for r in refs if r[1] not in excluded_groups]
             by_dex = {}
             for dex, group, vec, norm, penalty in usable:
-                values = by_dex.setdefault(dex, np.full(3, -np.inf, dtype=np.float32))
+                values = by_dex.setdefault(dex, np.full(4, -np.inf, dtype=np.float32))
                 for mode, q in enumerate(queries):
                     values[mode] = max(values[mode], float(np.dot(q, vec) / max(norm, 1e-6) - penalty))
             fused = {}
@@ -172,7 +174,7 @@ def main():
             target_dex = int(row[1])
             base_top = max(by_dex, key=lambda d: by_dex[d][0])
             order = sorted(fused, key=fused.get, reverse=True)
-            winners = [max(by_dex, key=lambda d: by_dex[d][m]) for m in range(3)]
+            winners = [max(by_dex, key=lambda d: by_dex[d][m]) for m in range(4)]
             top = order[0]
             second = fused[order[1]] if len(order) > 1 else 0.0
             margin = fused[top] - second
@@ -201,8 +203,8 @@ def main():
         "source": "catalog reference photos; held out by visualGroupId and shared source URL",
         "fetch_or_scan_failures_before_fill": failures,
         "baseline_top1_percent": 100 * sum(x["baseline_top1_correct"] for x in results) / len(results),
-        "three_frame_top1_percent": 100 * sum(x["ensemble_top1_correct"] for x in results) / len(results),
-        "three_frame_top3_percent": 100 * sum(x["ensemble_top3_correct"] for x in results) / len(results),
+        "four_frame_top1_percent": 100 * sum(x["ensemble_top1_correct"] for x in results) / len(results),
+        "four_frame_top3_percent": 100 * sum(x["ensemble_top3_correct"] for x in results) / len(results),
         "auto_accept_coverage_percent": 100 * accepted / len(results),
         "auto_accept_precision_percent": 100 * sum(x["accepted_correct"] for x in results) / max(1, accepted),
         "records": results,
