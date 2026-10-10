@@ -3,6 +3,8 @@ name: Validate Pokepino Runtime
 on:
   push:
     branches: [ "main", "test/runtime-validation-20261005" ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -18,10 +20,14 @@ jobs:
         run: python -m pip install --disable-pip-version-check requests pillow numpy onnxruntime
       - name: Evaluate recognition on held-out transforms
         run: python tools/evaluate_recognition.py --sample 180 --model-sample 120
+      - name: Evaluate four-frame grouped-reference scan on a fresh 100-photo holdout
+        run: python tools/evaluate_embedding_framing.py 20261016
       - uses: actions/upload-artifact@v4
         with:
           name: pokepino-recognition-eval
-          path: recognition_eval.json
+          path: |
+            recognition_eval.json
+            embedding_framing_eval.json
           if-no-files-found: error
 
   emulator-smoke:
