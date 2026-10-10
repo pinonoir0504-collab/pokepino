@@ -72,8 +72,8 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
                 groupScores[view] = max(groupScores[view], similarity(queries[view], r))
             }
         }
-        val byDexAndView = byDexAndGroup.mapValues { (_, groups) -> pooledViewScores(groups.values.toList(), queries.size) }
-        val bestByDex = byDexAndView.mapValues { (_, scores) -> fusedScore(scores) }
+        val byDexAndView = byDexAndGroup.mapValues { (_, groups) -> pooledViewScores(groups.values.toList(), queries.size, 1) }
+        val bestByDex = byDexAndView.mapValues { (_, scores) -> legacyWeightedScore(scores) }
         val winnersByView = queries.indices.map { view ->
             byDexAndView.maxByOrNull { it.value[view] }?.key
         }
@@ -135,14 +135,21 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         return VariantResult(ranked, accepted, veryStrong)
     }
 
-    private fun pooledViewScores(groupScores: List<FloatArray>, viewCount: Int): FloatArray =
+    private fun pooledViewScores(groupScores: List<FloatArray>, viewCount: Int, topN: Int): FloatArray =
         FloatArray(viewCount) { view ->
             val top = groupScores.map { it[view] }
                 .filter { it.isFinite() }
                 .sortedDescending()
-                .take(3)
+                .take(topN)
             if (top.isEmpty()) Float.NEGATIVE_INFINITY else top.average().toFloat()
         }
+
+    private fun legacyWeightedScore(scores: FloatArray): Float {
+        if (scores.isEmpty() || !scores[0].isFinite()) return 0f
+        val others = scores.drop(1).filter { it.isFinite() }
+        if (others.isEmpty()) return scores[0]
+        return .75f * scores[0] + .25f * others.average().toFloat()
+    }
 
     private fun fusedScore(scores: FloatArray): Float {
         val valid = scores.filter { it.isFinite() }.sortedDescending()
