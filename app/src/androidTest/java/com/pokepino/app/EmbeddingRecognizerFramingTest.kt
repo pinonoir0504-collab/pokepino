@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class EmbeddingRecognizerFramingTest {
     @Test
-    fun scanComparesThreeFramingsAndReturnsFiniteCandidates() {
+    fun scanComparesFourFramingsAndReturnsFiniteCandidates() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val bitmap = Bitmap.createBitmap(640, 480, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -28,7 +28,7 @@ class EmbeddingRecognizerFramingTest {
         val recognizer = EmbeddingRecognizer(context)
         try {
             val result = recognizer.recognize(bitmap)
-            assertEquals("legacy crop + full-frame + center crop", 3, result.queryViews.size)
+            assertEquals("legacy crop + full-frame + center crop + foreground letterbox", 4, result.queryViews.size)
             assertFalse(result.speciesCandidates.isEmpty())
             assertTrue(result.speciesCandidates.all { it.score.isFinite() })
         } finally {
