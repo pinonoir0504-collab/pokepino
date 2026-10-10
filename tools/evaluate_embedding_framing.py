@@ -197,6 +197,26 @@ def main():
             base_top = max(by_dex, key=lambda d: by_dex[d][0])
             order = sorted(fused, key=fused.get, reverse=True)
             winners = [max(by_pool[1], key=lambda d: by_pool[1][d][m]) for m in range(4)]
+            neighbors_by_view = []
+            for view in range(4):
+                neighbors = [(float(scores[view]), dex) for dex, groups in grouped.items()
+                             for scores in groups.values() if np.isfinite(scores[view])]
+                neighbors_by_view.append(sorted(neighbors, reverse=True))
+            knn_correct = {}
+            for k in (1, 3, 5, 9, 15, 25):
+                combined_votes = {}
+                mode_votes = {}
+                for neighbors in neighbors_by_view:
+                    counts = {}
+                    for score, dex in neighbors[:k]:
+                        counts[dex] = counts.get(dex, 0) + 1
+                        combined_votes[dex] = combined_votes.get(dex, 0) + 1
+                    mode_winner = max(counts, key=counts.get)
+                    mode_votes[mode_winner] = mode_votes.get(mode_winner, 0) + 1
+                combined_winner = max(combined_votes, key=combined_votes.get)
+                mode_winner = max(mode_votes, key=mode_votes.get)
+                knn_correct[f"all_view_k{k}"] = int(combined_winner == target_dex)
+                knn_correct[f"view_majority_k{k}"] = int(mode_winner == target_dex)
             top = order[0]
             policy_correct = {}
             for key, scores in strategies.items():
@@ -214,6 +234,7 @@ def main():
                 "accepted_correct": int(accepted and top == target_dex),
                 "view_correct": view_correct,
                 "policy_correct": policy_correct,
+                "knn_correct": knn_correct,
             })
             if len(results) >= SAMPLE:
                 break
@@ -237,6 +258,10 @@ def main():
         "pooling_and_fusion_top1_percent": {
             key: 100 * sum(x["policy_correct"][key] for x in results) / len(results)
             for key in results[0]["policy_correct"]
+        },
+        "knn_top1_percent": {
+            key: 100 * sum(x["knn_correct"][key] for x in results) / len(results)
+            for key in results[0]["knn_correct"]
         },
         "auto_accept_coverage_percent": 100 * accepted / len(results),
         "auto_accept_precision_percent": 100 * sum(x["accepted_correct"] for x in results) / max(1, accepted),
