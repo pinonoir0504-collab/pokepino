@@ -61,7 +61,7 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
     fun recognize(bitmap: Bitmap): Result {
         if (!isAvailable()) error("高精度認識データが未生成です")
         // Keep the original crop for database compatibility, then add two independent framings.
-        val queries = listOf(embed(bitmap, 0), embed(bitmap, 1), embed(bitmap, 2))
+        val queries = (0..3).map { frame -> embed(bitmap, frame) }
         val byDexAndView = HashMap<Int, FloatArray>()
         for (r in refs) {
             if (r.dex <= 0) continue
@@ -219,6 +219,12 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
                 crop = Bitmap.createBitmap(src, x, y, side, side)
                 resized = crop
                 square = Bitmap.createScaledBitmap(crop, 224, 224, true)
+            }
+            3 -> {
+                // Keep the detected figure's full silhouette while preserving its aspect ratio.
+                crop = foregroundCrop(src)
+                resized = crop
+                square = letterbox(crop)
             }
             else -> {
                 crop = foregroundCrop(src)
