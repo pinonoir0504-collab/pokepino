@@ -157,8 +157,10 @@ def main():
             queries = [embed(session, input_name, image, mode) for mode in range(4)]
             usable = [r for r in refs if r[1] not in excluded_groups]
             grouped = {}
+            group_vectors = {}
             for dex, group, vec, norm, penalty in usable:
                 values = grouped.setdefault(dex, {}).setdefault(group, np.full(4, -np.inf, dtype=np.float32))
+                group_vectors.setdefault(dex, {}).setdefault(group, []).append(vec / max(norm, 1e-6))
                 for mode, q in enumerate(queries):
                     values[mode] = max(values[mode], float(np.dot(q, vec) / max(norm, 1e-6) - penalty))
             by_dex = {}
@@ -169,6 +171,21 @@ def main():
                 for pool_size in by_pool:
                     top_groups = np.sort(matrix, axis=0)[-min(pool_size, len(matrix)):]
                     by_pool[pool_size][dex] = np.mean(top_groups, axis=0)
+            centroids = {}
+            for dex, groups in group_vectors.items():
+                means = []
+                for vectors in groups.values():
+                    mean = np.mean(vectors, axis=0)
+                    norm = np.linalg.norm(mean)
+                    if norm > 1e-6:
+                        means.append(mean / norm)
+                if means:
+                    center = np.mean(means, axis=0)
+                    centroids[dex] = center / max(float(np.linalg.norm(center)), 1e-6)
+            centroid_scores = {
+                dex: np.array([float(np.dot(q, center)) for q in queries], dtype=np.float32)
+                for dex, center in centroids.items()
+            }
             fused = {}
             strategies = {}
             production_scores = by_pool[1]
@@ -176,6 +193,15 @@ def main():
                 if not np.all(np.isfinite(values)):
                     continue
                 fused[dex] = 0.75 * float(values[0]) + 0.25 * float(np.mean(values[1:]))
+            for dex, values in centroid_scores.items():
+                centroid_values = sorted((float(v) for v in values), reverse=True)
+                strategies.setdefault((0, "centroid_mean"), {})[dex] = float(np.mean(centroid_values))
+                strategies.setdefault((0, "centroid_top2"), {})[dex] = float(np.mean(centroid_values[:2]))
+                if dex in fused:
+                    for weight in (.25, .50, .75):
+                        strategies.setdefault((0, f"centroid_blend{int(weight*100)}"), {})[dex] = (
+                            weight * fused[dex] + (1 - weight) * float(np.mean(centroid_values))
+                        )
             for pool_size, scores in by_pool.items():
                 for policy in ("legacy_top2", "mean4", "top2_mean", "legacy_mix25", "legacy_mix50", "legacy_mix75"):
                     strategies[(pool_size, policy)] = {}
@@ -235,6 +261,10 @@ def main():
                 "view_correct": view_correct,
                 "policy_correct": policy_correct,
                 "knn_correct": knn_correct,
+                "centroid_correct": {
+                    key: int(max(scores, key=scores.get) == target_dex)
+                    for key, scores in strategies.items()
+                },
             })
             if len(results) >= SAMPLE:
                 break
@@ -262,6 +292,10 @@ def main():
         "knn_top1_percent": {
             key: 100 * sum(x["knn_correct"][key] for x in results) / len(results)
             for key in results[0]["knn_correct"]
+        },
+        "centroid_and_fusion_top1_percent": {
+            key: 100 * sum(x["centroid_correct"][key] for x in results) / len(results)
+            for key in results[0]["centroid_correct"]
         },
         "auto_accept_coverage_percent": 100 * accepted / len(results),
         "auto_accept_precision_percent": 100 * sum(x["accepted_correct"] for x in results) / max(1, accepted),
