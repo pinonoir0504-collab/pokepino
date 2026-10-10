@@ -21,7 +21,7 @@ jobs:
       - name: Evaluate recognition on held-out transforms
         run: python tools/evaluate_recognition.py --sample 180 --model-sample 120
       - name: Evaluate four-frame grouped-reference scan on a fresh 100-photo holdout
-        run: python tools/evaluate_embedding_framing.py 20261011
+        run: python tools/evaluate_embedding_framing.py 20261012
       - uses: actions/upload-artifact@v4
         with:
           name: pokepino-recognition-eval
