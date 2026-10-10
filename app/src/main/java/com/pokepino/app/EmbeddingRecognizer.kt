@@ -62,14 +62,17 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         if (!isAvailable()) error("高精度認識データが未生成です")
         // Keep the original crop for database compatibility, then add two independent framings.
         val queries = (0..3).map { frame -> embed(bitmap, frame) }
-        val byDexAndView = HashMap<Int, FloatArray>()
+        val byDexAndGroup = HashMap<Int, MutableMap<String, FloatArray>>()
         for (r in refs) {
-            if (r.dex <= 0) continue
-            val scores = byDexAndView.getOrPut(r.dex) { FloatArray(queries.size) { Float.NEGATIVE_INFINITY } }
+            if (r.dex <= 0 || r.group.isBlank()) continue
+            val groupScores = byDexAndGroup
+                .getOrPut(r.dex) { HashMap() }
+                .getOrPut(r.group) { FloatArray(queries.size) { Float.NEGATIVE_INFINITY } }
             for (view in queries.indices) {
-                scores[view] = max(scores[view], similarity(queries[view], r))
+                groupScores[view] = max(groupScores[view], similarity(queries[view], r))
             }
         }
+        val byDexAndView = byDexAndGroup.mapValues { (_, groups) -> pooledViewScores(groups.values.toList(), queries.size) }
         val bestByDex = byDexAndView.mapValues { (_, scores) -> fusedScore(scores) }
         val winnersByView = queries.indices.map { view ->
             byDexAndView.maxByOrNull { it.value[view] }?.key
@@ -131,6 +134,15 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         val veryStrong = agrees && first != null && first.score >= 0.80f && margin >= 0.060f
         return VariantResult(ranked, accepted, veryStrong)
     }
+
+    private fun pooledViewScores(groupScores: List<FloatArray>, viewCount: Int): FloatArray =
+        FloatArray(viewCount) { view ->
+            val top = groupScores.map { it[view] }
+                .filter { it.isFinite() }
+                .sortedDescending()
+                .take(3)
+            if (top.isEmpty()) Float.NEGATIVE_INFINITY else top.average().toFloat()
+        }
 
     private fun fusedScore(scores: FloatArray): Float {
         val valid = scores.filter { it.isFinite() }.sortedDescending()
