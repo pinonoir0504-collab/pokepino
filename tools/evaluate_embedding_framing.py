@@ -179,14 +179,19 @@ def main():
                 fused[dex] = max(float(values[0]) if np.isfinite(values[0]) else 0.0,
                                  sum(valid[:2]) / min(2, len(valid)))
             for pool_size, scores in by_pool.items():
-                for policy in ("legacy_top2", "mean4", "top2_mean"):
+                for policy in ("legacy_top2", "mean4", "top2_mean", "legacy_mix25", "legacy_mix50", "legacy_mix75"):
                     strategies[(pool_size, policy)] = {}
                 for dex, values in scores.items():
                     valid = sorted((float(v) for v in values if np.isfinite(v)), reverse=True)
                     legacy = float(values[0]) if np.isfinite(values[0]) else 0.0
+                    others = [float(v) for v in values[1:] if np.isfinite(v)]
                     strategies[(pool_size, "legacy_top2")][dex] = max(legacy, sum(valid[:2]) / min(2, len(valid)))
                     strategies[(pool_size, "mean4")][dex] = float(np.mean(valid))
                     strategies[(pool_size, "top2_mean")][dex] = sum(valid[:2]) / min(2, len(valid))
+                    other_mean = float(np.mean(others)) if others else legacy
+                    strategies[(pool_size, "legacy_mix25")][dex] = .25 * legacy + .75 * other_mean
+                    strategies[(pool_size, "legacy_mix50")][dex] = .50 * legacy + .50 * other_mean
+                    strategies[(pool_size, "legacy_mix75")][dex] = .75 * legacy + .25 * other_mean
             if not fused:
                 failures += 1
                 continue
