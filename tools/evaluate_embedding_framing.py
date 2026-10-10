@@ -171,7 +171,8 @@ def main():
                     by_pool[pool_size][dex] = np.mean(top_groups, axis=0)
             fused = {}
             strategies = {}
-            for dex, values in by_dex.items():
+            production_scores = by_pool[3]
+            for dex, values in production_scores.items():
                 valid = sorted((float(v) for v in values if np.isfinite(v)), reverse=True)
                 if not valid:
                     continue
@@ -192,7 +193,7 @@ def main():
             target_dex = int(row[1])
             base_top = max(by_dex, key=lambda d: by_dex[d][0])
             order = sorted(fused, key=fused.get, reverse=True)
-            winners = [max(by_dex, key=lambda d: by_dex[d][m]) for m in range(4)]
+            winners = [max(production_scores, key=lambda d: production_scores[d][m]) for m in range(4)]
             top = order[0]
             policy_correct = {}
             for key, scores in strategies.items():
