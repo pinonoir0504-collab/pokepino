@@ -227,6 +227,70 @@ def parse_page(url, html, species_names):
             })
     return soup, records
 
+def scrape_pokefig_munchcollector(species_names, workers=8):
+    # PokéFig species pages give each image a Pokémon label and identify
+    # Munchcollector/Tim as the photographer. Store image URLs and attribution,
+    # not copied source photos, in the personal reference catalog.
+    urls=[f"https://pokefig.com/ja/catalogo/{dex}" for dex in range(1,152)]
+    records=[]
+    def scrape(url):
+        try:
+            response=get(url,timeout=30)
+            soup=BeautifulSoup(response.text,"html.parser")
+            title=page_title(soup,url)
+            dex,pokemon=resolve_species(title,species_names)
+            path_parts=[p for p in urlparse(url).path.split("/") if p]
+            if dex<=0 and path_parts and path_parts[-1].isdigit():
+                dex=int(path_parts[-1])
+                pokemon=next((pair[1] for pair in species_names.values() if pair[0]==dex),"")
+            if dex<=0 or not pokemon:
+                return []
+            found=[]
+            seen=set()
+            for img in soup.find_all("img"):
+                src=img.get("src") or img.get("data-src") or img.get("data-original")
+                if not src:
+                    continue
+                img_url=urljoin(url,src)
+                if img_url in seen:
+                    continue
+                context=""
+                card=None
+                for node in img.parents:
+                    if getattr(node,"name",None) in {"body","html"}:
+                        break
+                    candidate=node.get_text(" ",strip=True)
+                    if "munchcollector" in candidate.lower() and len(candidate)<=1600:
+                        context=candidate
+                        card=node
+                        break
+                if not card:
+                    continue
+                credit_link=next((a.get("href","") for a in card.find_all("a",href=True)
+                                  if "munchcollector.weebly.com" in a["href"].lower()),"")
+                alt=" ".join(filter(None,[img.get("alt",""),img.get("title","")])).strip()
+                variant=re.sub(r"\\s+"," ",alt or context).strip()
+                rid="MC-" + hashlib.sha1((url+"|"+img_url).encode()).hexdigest()[:14]
+                found.append({
+                    "id":rid,"dex":dex,"pokemon":pokemon,"variant":variant[:180],
+                    "series":"Pokémon Kids (Munchcollector reference)",
+                    "year":"","visualGroupId":f"MC-{dex:04d}-{hashlib.sha1((variant or img_url).encode()).hexdigest()[:8]}",
+                    "status":"reference_pending","refs":[img_url],"kidsNo":0,
+                    "source":url,"feature":"",
+                    "photoCredit":"Munchcollector · Tim (PokéFig credits this photo with permission)",
+                    "photoSource":credit_link or "https://munchcollector.weebly.com/kanto.html",
+                })
+                seen.add(img_url)
+            return found
+        except Exception as e:
+            print(f"PokéFig collector scrape failed {url}: {e}",file=sys.stderr)
+            return []
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        futs=[ex.submit(scrape,url) for url in urls]
+        for future in as_completed(futs):
+            records.extend(future.result())
+    return records
+
 def crawl(species_names, max_pages=1200, workers=8):
     queue = list(dict.fromkeys(START_URLS))
     seen = set()
@@ -352,7 +416,7 @@ def attach_features(records, max_images=2500, workers=8):
     return records
 
 def compact(r):
-    meta={"kidsNo":r.get("kidsNo",0),"source":r.get("source",""),"feature":r.get("feature","")}
+    meta={"kidsNo":r.get("kidsNo",0),"source":r.get("source",""),"feature":r.get("feature",""),"photoCredit":r.get("photoCredit",""),"photoSource":r.get("photoSource","")}
     return [r["id"],r["dex"],r["pokemon"],r["variant"],r["series"],r["year"],r["visualGroupId"],r["status"],r["refs"],meta]
 
 def scrape_bandai_lineups(species_names):
@@ -410,6 +474,8 @@ def main():
     existing=load_existing()
     names=load_species_names()
     scraped,pages=crawl(names,args.max_pages)
+    collector_records=scrape_pokefig_munchcollector(names)
+    scraped.extend(collector_records)
     dedup={}
     for r in scraped:
         key=(r["source"],r["refs"][0],r["variant"])
@@ -434,6 +500,7 @@ def main():
         "pages_attempted":len(pages),
         "pages_with_records":sum(1 for v in pages.values() if v>0),
         "pages_failed":sum(1 for v in pages.values() if v<0),
+        "munchcollector_records":sum(1 for r in scraped if r.get("photoCredit","").startswith("Munchcollector")),
         "scraped_records":len(scraped),
         "scraped_with_features":sum(1 for r in scraped if r["feature"]),
         "scraped_species":len({r["dex"] for r in scraped if r["dex"]>0}),
