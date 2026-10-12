@@ -49,7 +49,8 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
 
     private val env by lazy { OrtEnvironment.getEnvironment() }
     private var session: OrtSession? = null
-    private val refs by lazy { loadRefs() }
+    private val userRefs by lazy { loadUserRefs().toMutableList() }
+    private val refs by lazy { (loadRefs() + userRefs).toMutableList() }
 
     fun isAvailable(): Boolean = runCatching {
         context.assets.open(MODEL_ASSET).close()
@@ -92,6 +93,45 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         val accepted = agrees && first != null && first.score >= 0.66f && margin >= 0.035f
         val veryStrong = agrees && first != null && first.score >= 0.76f && margin >= 0.060f
         return Result(ranked, accepted, veryStrong, queries)
+    }
+
+    /**
+     * Add a manually confirmed real figure photo to this device's private reference index.
+     * Only embeddings are retained; the source photo itself is not copied or uploaded.
+     */
+    @Synchronized
+    fun rememberConfirmed(bitmap: Bitmap, figure: Figure): Boolean {
+        if (figure.dex <= 0) return false
+        val group = figure.visualGroupId.ifBlank { "USER-${figure.id}" }
+        val queries = (0..3).map { view -> embed(bitmap, view) }
+        if (refs.any { ref ->
+                ref.dex == figure.dex && ref.group == group &&
+                    queries.any { query -> similarity(query, ref) >= 0.997f }
+            }) return false
+
+        val now = System.currentTimeMillis()
+        val added = queries.mapIndexed { view, vector ->
+            val encoded = ByteArray(vector.size) { i ->
+                (vector[i] * 127f).roundToInt().coerceIn(-127, 127).toByte()
+            }
+            val norm = sqrt(encoded.sumOf { b ->
+                val v = b.toInt() / 127f
+                (v * v).toDouble()
+            }.toFloat()).coerceAtLeast(1e-6f)
+            Ref(
+                id = "USER-${figure.id}-${now}-$view",
+                dex = figure.dex,
+                group = group,
+                vector = encoded,
+                norm = norm,
+                penalty = 0f
+            )
+        }
+        val updated = userRefs + added
+        persistUserRefs(updated)
+        userRefs.addAll(added)
+        refs.addAll(added)
+        return true
     }
 
     fun rankVariants(result: Result, dex: Int, figures: List<Figure>): VariantResult {
@@ -193,6 +233,56 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
         }
         if (out.size < 1000) error("高精度認識DBが不足しています: ${out.size}")
         return out
+    }
+
+    private fun loadUserRefs(): List<Ref> {
+        val file = File(context.filesDir, USER_REFS_FILE)
+        if (!file.exists()) return emptyList()
+        return runCatching {
+            val rows = JSONArray(file.readText(Charsets.UTF_8))
+            buildList {
+                repeat(rows.length()) { i ->
+                    val row = rows.optJSONArray(i) ?: return@repeat
+                    val bytes = runCatching {
+                        Base64.decode(row.optString(3), Base64.DEFAULT)
+                    }.getOrNull() ?: return@repeat
+                    if (bytes.size != EMBEDDING_SIZE) return@repeat
+                    var ss = 0f
+                    for (b in bytes) {
+                        val v = b.toInt() / 127f
+                        ss += v * v
+                    }
+                    add(Ref(
+                        id = row.optString(0),
+                        dex = row.optInt(1),
+                        group = row.optString(2),
+                        vector = bytes,
+                        norm = sqrt(ss).coerceAtLeast(1e-6f),
+                        penalty = 0f
+                    ))
+                }
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    private fun persistUserRefs(rows: List<Ref>) {
+        val output = JSONArray()
+        rows.forEach { ref ->
+            output.put(JSONArray().apply {
+                put(ref.id)
+                put(ref.dex)
+                put(ref.group)
+                put(Base64.encodeToString(ref.vector, Base64.NO_WRAP))
+                put("user")
+            })
+        }
+        val file = File(context.filesDir, USER_REFS_FILE)
+        val temp = File(context.filesDir, "$USER_REFS_FILE.part")
+        temp.writeText(output.toString(), Charsets.UTF_8)
+        if (!temp.renameTo(file)) {
+            temp.copyTo(file, overwrite = true)
+            temp.delete()
+        }
     }
 
     private fun embed(src: Bitmap, frameMode: Int): FloatArray {
@@ -406,6 +496,7 @@ class EmbeddingRecognizer(private val context: Context) : Closeable {
     companion object {
         private const val MODEL_ASSET = "mobilenet_v3_small_features.onnx"
         private const val REFS_ASSET = "embedding_catalog_v3.json"
+        private const val USER_REFS_FILE = "user_embedding_refs_v1.json"
         private const val EMBEDDING_SIZE = 576
     }
 }
