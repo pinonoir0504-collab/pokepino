@@ -1,13 +1,17 @@
 {
-  "catalog_records": 1583,
-  "reference_images_requested": 1533,
-  "reference_images_downloaded": 1519,
+  "catalog_records": 2047,
+  "reference_images_requested": 1997,
+  "reference_images_downloaded": 1961,
   "download_failures": 0,
-  "embedding_prototypes": 6132,
+  "munchcollector_catalog_records": 475,
+  "munchcollector_reference_images_requested": 453,
+  "munchcollector_reference_images_downloaded": 453,
+  "munchcollector_embedding_prototypes": 1900,
+  "embedding_prototypes": 7988,
   "embedding_species": 889,
-  "embedding_groups": 1530,
+  "embedding_groups": 1979,
   "prototypes_per_reference_target": 4,
   "model_bytes": 3717006,
-  "database_bytes": 5076017,
+  "database_bytes": 6609465,
   "sample_failures": []
 }
