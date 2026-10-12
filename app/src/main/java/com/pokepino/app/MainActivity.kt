@@ -219,6 +219,28 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
     var cameraFile by remember{mutableStateOf<File?>(null)}
     val visualReferences=remember(master){master.filter{it.dex>0&&it.feature.isNotBlank()}}
 
+    fun registerConfirmed(figure: Figure) {
+        val photo = bitmap ?: return
+        scope.launch {
+            busy = true
+            try {
+                val learned = withContext(Dispatchers.IO) {
+                    embedding.rememberConfirmed(photo, figure)
+                }
+                setOwned(figure.id, maxOf(1, owned[figure.id] ?: 0))
+                msg = if (learned) {
+                    "✓ ${figure.pokemon}を登録し、この写真を端末内DBに追加しました"
+                } else {
+                    "✓ ${figure.pokemon}を登録しました（同じ写真はDBに追加済みです）"
+                }
+            } catch (e: Exception) {
+                msg = "登録エラー: ${e.message ?: e.javaClass.simpleName}"
+            } finally {
+                busy = false
+            }
+        }
+    }
+
     fun analyze(u:Uri){
         if(busy)return
         aiResult=null;highResult=null;highVariants=null;fallbackResult=null;msg="";busy=true
@@ -322,6 +344,7 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
         item{
             Text("写真で判定",fontWeight=FontWeight.Black)
             Text("1体だけ大きく写すと精度が上がります。背景はできるだけ単色がおすすめです。",style=MaterialTheme.typography.bodySmall)
+            Text("正しい候補を「これで登録」すると、写真の特徴をこの端末のDBに追加します。",style=MaterialTheme.typography.bodySmall)
             Row{
                 Button({pick.launch("image/*")},enabled=!busy){Text("画像を選ぶ")}
                 Spacer(Modifier.width(8.dp))
@@ -392,10 +415,7 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
                                     style=MaterialTheme.typography.labelSmall
                                 )
                             }
-                            Button({
-                                setOwned(fig.id,maxOf(1,owned[fig.id]?:0))
-                                msg="✓ ${fig.variant} を登録しました"
-                            }){Text("これで登録")}
+                            Button({ registerConfirmed(fig) }, enabled = !busy) { Text("これで登録") }
                         }
                     }
                 }
@@ -407,10 +427,13 @@ fun PokepinoApp(master:List<Figure>, brand:Bitmap?) {
                 item{Text("従来DB候補",fontWeight=FontWeight.Black)}
                 items(x.candidates){candidate->
                     val fig=candidate.recordIds.asSequence().mapNotNull{id->master.firstOrNull{it.id==id}}.firstOrNull()
-                    if(fig!=null) Card(Modifier.fillMaxWidth().clickable{open(fig.dex)}){
-                        Row(Modifier.padding(12.dp)){
-                            Text("${fig.pokemon} ${fig.variant}",Modifier.weight(1f))
-                            Text("${(candidate.score*100).toInt()}%")
+                    if(fig!=null) Card(Modifier.fillMaxWidth()){
+                        Row(Modifier.padding(12.dp), verticalAlignment=Alignment.CenterVertically){
+                            Column(Modifier.weight(1f)){
+                                Text("${fig.pokemon} ${fig.variant}",fontWeight=FontWeight.Bold)
+                                Text("類似 ${(candidate.score*100).toInt()}%",style=MaterialTheme.typography.labelSmall)
+                            }
+                            Button({ registerConfirmed(fig) }, enabled = !busy) { Text("これで登録") }
                         }
                     }
                 }
