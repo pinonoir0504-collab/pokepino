@@ -9,11 +9,6 @@ on:
     paths:
       - "tools/build_catalog.py"
       - ".github/workflows/build-catalog.yml"
-  pull_request:
-    branches: [ "codex/scan-ensemble-20261010" ]
-    paths:
-      - "tools/build_catalog.py"
-      - ".github/workflows/build-catalog.yml"
   workflow_dispatch:
 
 jobs:
