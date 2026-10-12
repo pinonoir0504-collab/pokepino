@@ -96,7 +96,7 @@ def load_reference_vectors():
             vec = np.frombuffer(raw, dtype=np.int8).astype(np.float32) / 127.0
             proto = str(row[4]) if len(row) > 4 else "base"
             penalty = .012 if proto == "mirror" else (.008 if proto in ("dark", "bright") else 0)
-            refs.append((dex, group, vec, float(np.linalg.norm(vec)), penalty))
+            refs.append((dex, group, vec, float(np.linalg.norm(vec)), penalty, proto))
         except Exception:
             continue
     if len(refs) < 1000:
@@ -149,6 +149,18 @@ def main():
     session = ort.InferenceSession(str(MODEL), providers=["CPUExecutionProvider"])
     input_name = session.get_inputs()[0].name
     targets = make_candidates(catalog, refs)
+    holdout_groups = {g for _, _, excluded in targets[:SAMPLE + 20] for g in excluded}
+    train_refs = [r for r in refs if r[1] not in holdout_groups and r[5] == "base"]
+    classes = sorted({r[0] for r in train_refs})
+    class_index = {dex: i for i, dex in enumerate(classes)}
+    train_x = np.stack([r[2] / max(r[3], 1e-6) for r in train_refs])
+    train_x = np.concatenate([train_x, np.ones((len(train_x), 1), dtype=np.float32)], axis=1)
+    train_y = np.zeros((len(train_refs), len(classes)), dtype=np.float32)
+    train_y[np.arange(len(train_refs)), [class_index[r[0]] for r in train_refs]] = 1.0
+    gram = train_x.T @ train_x
+    rhs = train_x.T @ train_y
+    ridge_weights = {alpha: np.linalg.solve(gram + alpha * np.eye(gram.shape[0], dtype=np.float32), rhs)
+                     for alpha in (0.1, 1.0, 10.0, 100.0)}
     results = []
     failures = 0
     for row, url, excluded_groups in targets:
@@ -158,7 +170,7 @@ def main():
             usable = [r for r in refs if r[1] not in excluded_groups]
             grouped = {}
             group_vectors = {}
-            for dex, group, vec, norm, penalty in usable:
+            for dex, group, vec, norm, penalty, proto in usable:
                 values = grouped.setdefault(dex, {}).setdefault(group, np.full(4, -np.inf, dtype=np.float32))
                 group_vectors.setdefault(dex, {}).setdefault(group, []).append(vec / max(norm, 1e-6))
                 for mode, q in enumerate(queries):
@@ -220,6 +232,14 @@ def main():
                 failures += 1
                 continue
             target_dex = int(row[1])
+            ridge_correct = {}
+            for alpha, weights in ridge_weights.items():
+                mode_logits = []
+                for q in queries:
+                    q_bias = np.concatenate([q, np.ones(1, dtype=np.float32)])
+                    mode_logits.append(q_bias @ weights)
+                pred = classes[int(np.argmax(np.mean(mode_logits, axis=0)))]
+                ridge_correct[f"alpha{alpha:g}_mean4"] = int(pred == target_dex)
             base_top = max(by_dex, key=lambda d: by_dex[d][0])
             order = sorted(fused, key=fused.get, reverse=True)
             winners = [max(by_pool[1], key=lambda d: by_pool[1][d][m]) for m in range(4)]
@@ -261,6 +281,7 @@ def main():
                 "view_correct": view_correct,
                 "policy_correct": policy_correct,
                 "knn_correct": knn_correct,
+                "ridge_correct": ridge_correct,
                 "centroid_correct": {
                     f"pool{key[0]}_{key[1]}": int(max(scores, key=scores.get) == target_dex)
                     for key, scores in strategies.items()
@@ -292,6 +313,10 @@ def main():
         "knn_top1_percent": {
             key: 100 * sum(x["knn_correct"][key] for x in results) / len(results)
             for key in results[0]["knn_correct"]
+        },
+        "linear_ridge_top1_percent": {
+            key: 100 * sum(x["ridge_correct"][key] for x in results) / len(results)
+            for key in results[0]["ridge_correct"]
         },
         "centroid_and_fusion_top1_percent": {
             key: 100 * sum(x["centroid_correct"][key] for x in results) / len(results)
