@@ -5,7 +5,7 @@ permissions:
 
 on:
   push:
-    branches: [ "feat/full-figure-catalog", "feat/recognition-v3" ]
+    branches: [ "feat/full-figure-catalog", "feat/recognition-v3", "codex/scan-ensemble-20261010" ]
     paths:
       - "tools/build_catalog.py"
       - ".github/workflows/build-catalog.yml"
