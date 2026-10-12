@@ -269,7 +269,7 @@ def scrape_pokefig_munchcollector(species_names, workers=8):
                 credit_link=next((a.get("href","") for a in card.find_all("a",href=True)
                                   if "munchcollector.weebly.com" in a["href"].lower()),"")
                 alt=" ".join(filter(None,[img.get("alt",""),img.get("title","")])).strip()
-                variant=re.sub(r"\\s+"," ",alt or context).strip()
+                variant=re.sub(r"\s+"," ",alt or context).strip()
                 rid="MC-" + hashlib.sha1((url+"|"+img_url).encode()).hexdigest()[:14]
                 found.append({
                     "id":rid,"dex":dex,"pokemon":pokemon,"variant":variant[:180],
