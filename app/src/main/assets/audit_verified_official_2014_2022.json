@@ -1,0 +1,333 @@
+{
+  "snapshot": "2026-10-14",
+  "cutoff": "2026-10-01",
+  "sourceNotes": "Official physical release figures; shape/photo still unverified",
+  "series": [
+    {
+      "series": "ポケモンキッズＸＹ　登場！ゲンシグラードン編",
+      "releaseDate": "2014-12-02",
+      "source": "https://www.bandai.co.jp/candy/products/2014/4543112911964000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 12,
+      "items": [
+        "ゲンシグラードン",
+        "ジガルデ",
+        "メガリザードンY",
+        "メガゲンガー",
+        "ニャオニクス（オスのすがた）",
+        "ニャオニクス（メスのすがた）",
+        "ペロリーム",
+        "オンバット",
+        "ゴローン",
+        "ルクシオ",
+        "ダークライ",
+        "ピカチュウ"
+      ]
+    },
+    {
+      "series": "ポケモンキッズＸＹ　登場！ゲンシカイオーガ編",
+      "releaseDate": "2015-01-13",
+      "source": "https://www.bandai.co.jp/candy/products/2015/4543112912602000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 12,
+      "items": [
+        "ゲンシカイオーガ",
+        "メガバンギラス",
+        "メガジュカイン",
+        "メガメタグロス",
+        "メガラグラージ",
+        "カメテテ",
+        "ギルガルド",
+        "カエンジシ",
+        "ヌメラ",
+        "アチャモ",
+        "レントラー",
+        "バニプッチ"
+      ]
+    },
+    {
+      "series": "ポケモンキッズＸＹ 圧倒！メガレックウザ編",
+      "releaseDate": "2015-04-21",
+      "source": "https://www.bandai.co.jp/candy/products/2015/4543112951229000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 12,
+      "items": [
+        "メガレックウザ",
+        "メガラティオス",
+        "メガボーマンダ",
+        "メガヘラクロス",
+        "メガハッサム",
+        "テールナー",
+        "フレフワン",
+        "ヌメイル",
+        "ヌメルゴン",
+        "オーロット",
+        "カメール",
+        "ライチュウ"
+      ]
+    },
+    {
+      "series": "ポケモンキッズＸＹ　おでまし！フーパ編",
+      "releaseDate": "2015-07-07",
+      "source": "https://www.bandai.co.jp/candy/products/2015/4543112952097000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 8,
+      "items": [
+        "フーパ",
+        "ルギア",
+        "ディアルガ",
+        "パルキア",
+        "アルセウス",
+        "メガラティアス",
+        "ゲコガシラ",
+        "ピカチュウ"
+      ]
+    },
+    {
+      "series": "ポケモンキッズ サン＆ムーン　ソルガレオ編",
+      "releaseDate": "2017-11-21",
+      "source": "https://www.bandai.co.jp/candy/products/2017/4549660189954000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 7,
+      "items": [
+        "ソルガレオ",
+        "コスモッグ",
+        "ピカチュウ(1000まんボルトver.)",
+        "ミミッキュ(こうげきver.)",
+        "ルガルガン(たそがれのすがた)",
+        "ウツロイド",
+        "シルヴァディ"
+      ]
+    },
+    {
+      "series": "ポケモンキッズサン＆ムーン 新発見！メルタン編",
+      "releaseDate": "2019-04-22",
+      "source": "https://www.bandai.co.jp/candy/products/2019/4549660339274000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 15,
+      "items": [
+        "メルタン",
+        "サトシのメルタン（シークレット）",
+        "ピカチュウ",
+        "モクロー",
+        "ニャビー",
+        "アシマリ",
+        "ニャヒート",
+        "オシャマリ",
+        "ナギサ(スイレンのイーブイ)",
+        "ロコン(アローラのすがた)",
+        "シェイミ(ランドフォルム)",
+        "クワガノン",
+        "グソクムシャ",
+        "ルナアーラ",
+        "ウルトラネクロズマ"
+      ]
+    },
+    {
+      "series": "ポケモンキッズ ミュウツーの逆襲 EVOLUTION編",
+      "releaseDate": "2019-07-08",
+      "source": "https://www.bandai.co.jp/candy/products/2019/4549660392415000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 13,
+      "items": [
+        "ミュウツー",
+        "アーマードミュウツー",
+        "ミュウ",
+        "ピカチュウ",
+        "コピーピカチュウ（スペシャル）",
+        "サトシ",
+        "リザードン",
+        "カメックス",
+        "フシギバナ",
+        "ヒトカゲ",
+        "ゼニガメ",
+        "フシギダネ",
+        "カイリュー(郵便屋さん)"
+      ]
+    },
+    {
+      "series": "ポケモンキッズ サトシ＆ゴウ編",
+      "releaseDate": "2020-04-27",
+      "source": "https://www.bandai.co.jp/candy/products/2020/4549660464433000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 11,
+      "items": [
+        "サトシ",
+        "ゴウ",
+        "モルペコ(まんぷくもよう)",
+        "モルペコ(はらぺこもよう)",
+        "マホイップ",
+        "ヒメンカ",
+        "タンドン",
+        "ジュラルドン",
+        "バンギラス",
+        "リオル",
+        "ペリッパー"
+      ]
+    },
+    {
+      "series": "ポケモンキッズ ココ編",
+      "releaseDate": "2020-07-13",
+      "source": "https://www.bandai.co.jp/candy/products/2020/4549660503378000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 10,
+      "items": [
+        "劇場版ザルード",
+        "ココ",
+        "劇場版ピカチュウ",
+        "セレビィ(色ちがい)",
+        "ウッウ",
+        "ホシガリス",
+        "カジリガメ",
+        "バイウールー",
+        "コノハナ",
+        "フライゴン"
+      ]
+    },
+    {
+      "series": "ポケモンキッズ ムゲンダイナ編",
+      "releaseDate": "2020-10-19",
+      "source": "https://www.bandai.co.jp/candy/products/2020/4549660504511000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 12,
+      "items": [
+        "エースバーン",
+        "ルカリオ",
+        "バチンキー",
+        "ラビフット",
+        "ジメレオン",
+        "カモネギ(ガラルのすがた)",
+        "ポニータ(ガラルのすがた)",
+        "サンダー",
+        "ヘラクロス",
+        "ザシアン(れきせんのゆうしゃ)",
+        "ザマゼンタ(れきせんのゆうしゃ)",
+        "ムゲンダイナ"
+      ]
+    },
+    {
+      "series": "キョダイマックス ポケモンキッズ",
+      "releaseDate": "2020-11-16",
+      "source": "https://www.bandai.co.jp/candy/products/2020/4549660504528000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 6,
+      "items": [
+        "ピカチュウ(キョダイマックス)",
+        "リザードン(キョダイマックス)",
+        "カビゴン(キョダイマックス)",
+        "ゲンガー(キョダイマックス)",
+        "アーマーガア(キョダイマックス)",
+        "マホイップ(キョダイマックス)"
+      ]
+    },
+    {
+      "series": "ポケモンキッズ 夢に向かってゴー！編",
+      "releaseDate": "2021-02-08",
+      "source": "https://www.bandai.co.jp/candy/products/2021/4549660550815000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 17,
+      "items": [
+        "ヒバニー(キック.ver)",
+        "ピカチュウ&ワンパチ",
+        "サトシ",
+        "ゴウ",
+        "コハル",
+        "イーブイ(メスのすがた)",
+        "ネギガナイト",
+        "スイクン(クリア.ver)",
+        "ストリンダー(ハイなすがた)",
+        "ストリンダー(ローなすがた)",
+        "ポットデス(がんさくフォルム)",
+        "ポットデス(しんさくフォルム)【スペシャル】",
+        "ユキハミ",
+        "ドラパルト",
+        "ダクマ",
+        "ウーラオス(いちげきのかた)",
+        "ウーラオス(れんげきのかた)"
+      ]
+    },
+    {
+      "series": "キョダイマックスポケモンキッズ2",
+      "releaseDate": "2021-03-15",
+      "source": "https://www.bandai.co.jp/candy/products/2021/4549660551362000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 6,
+      "items": [
+        "イーブイ(キョダイマックス)",
+        "カメックス(キョダイマックス)",
+        "フシギバナ(キョダイマックス)",
+        "ストリンダー(キョダイマックス)",
+        "ウーラオス(いちげきのかた・キョダイマックス)",
+        "ウーラオス(れんげきのかた・キョダイマックス)"
+      ]
+    },
+    {
+      "series": "ポケモンキッズ ピカチュウピカピカ大集合！編",
+      "releaseDate": "2021-05-31",
+      "source": "https://www.bandai.co.jp/candy/products/2021/4549660582915000.html",
+      "sourceGrade": "bandai_official_secondary_page_cache",
+      "expected": 12,
+      "items": [
+        "お祝いピカチュウ",
+        "おめかしピカチュウ",
+        "もぐもぐピカチュウ",
+        "ねおきピカチュウ",
+        "むすっとピカチュウ",
+        "うるうるピカチュウ",
+        "パチパチピカチュウ",
+        "バチバチピカチュウ",
+        "ピカチュウ＆ライチュウ",
+        "なかよしピカチュウ",
+        "ピカチュウ＆ウッウ",
+        "ピカチュウ＆ミミッキュ"
+      ]
+    },
+    {
+      "series": "ポケモンキッズ シンオウ地方＆ガラル地方編",
+      "releaseDate": "2021-10-11",
+      "source": "https://www.bandai.co.jp/candy/products/2021/4549660627746000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 14,
+      "items": [
+        "ナエトル",
+        "ヒコザル",
+        "ポッチャマ",
+        "インテレオン",
+        "ゴリランダー",
+        "バチンウニ",
+        "パルスワン",
+        "バドレックス",
+        "ブリザポス",
+        "レイスポス",
+        "シロナ",
+        "ガブリアス",
+        "ダークライ",
+        "クレセリア"
+      ]
+    },
+    {
+      "series": "ポケモンキッズ ポケモンワールドチャンピオンシップス編",
+      "releaseDate": "2022-08-08",
+      "source": "https://www.bandai.co.jp/candy/products/2022/4549660737919000.html",
+      "sourceGrade": "bandai_official",
+      "expected": 15,
+      "items": [
+        "メガリザードンX",
+        "メガリザードンY",
+        "メガルカリオ",
+        "ドラパルト",
+        "メタグロス",
+        "サーナイト",
+        "カイリュー",
+        "サンダース",
+        "ブースター",
+        "ニンフィア",
+        "エレズン",
+        "ベロバー",
+        "ココガラ",
+        "アオガラス",
+        "カジッチュ"
+      ]
+    }
+  ]
+}
