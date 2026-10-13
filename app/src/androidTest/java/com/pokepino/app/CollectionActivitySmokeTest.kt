@@ -52,7 +52,7 @@ class CollectionActivitySmokeTest {
         assertEquals("true", js("records.some(r=>r[3]==='ミュウ（シークレット）' && r[5]==='2018-12-03')"))
         assertEquals("true", js("records.some(r=>r[3].includes('しんさくフォルム') && r[5]==='2022-11-21')"))
         assertEquals("true", js("records.some(r=>r[4].includes('2008 ポケモンキッズDP ぜんこく図鑑版'))"))
-        assertEquals("true", js("typeof searchInput==='function' && typeof changeCount==='function'"))
+        assertEquals("true", js("typeof searchInput==='function' && typeof changeCount==='function' && typeof N.exportBackup==='function'"))
         assertEquals("true", js("records.some(r=>r[6]==='official')"))
         assertEquals("true", js("records.some(r=>r[7] && !r[7].includes('noimage'))"))
         assertEquals("true", js("records.some(r=>r[0]==='WHF1997-078')"))
