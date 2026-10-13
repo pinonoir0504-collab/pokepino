@@ -322,7 +322,7 @@ def scrape_skydramon(species_names, workers=4):
                 for node in img.parents:
                     if getattr(node,"name",None) in {"body","html"}:
                         break
-                    candidate=re.sub(r"\\s+"," ",node.get_text(" ",strip=True)).strip()
+                    candidate=re.sub(r"\s+"," ",node.get_text(" ",strip=True)).strip()
                     if len(candidate)>500:
                         continue
                     if re.search(r"bandai",candidate,re.I) and re.search(r"pok.?mon kids",candidate,re.I):
@@ -331,7 +331,7 @@ def scrape_skydramon(species_names, workers=4):
                             break
                 if not caption:
                     continue
-                year_match=re.search(r"\\b(19\\d{2}|20\\d{2})\\b",caption)
+                year_match=re.search(r"\b(19\d{2}|20\d{2})\b",caption)
                 year=year_match.group(1) if year_match else ""
                 variant=caption[:180]
                 rid="SKY-" + hashlib.sha1((url+"|"+img_url).encode()).hexdigest()[:14]
