@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -12,13 +11,9 @@ android {
         minSdk = 26
         targetSdk = 35
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionCode = 37
-        versionName = "1.5.1"
-        ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
-        }
+        versionCode = 38
+        versionName = "1.6.0"
     }
-    buildFeatures { compose = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -26,32 +21,12 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-    buildTypes {
-        getByName("debug") {
-            ndk {
-                abiFilters += "x86_64"
-            }
-        }
-    }
 }
 
 dependencies {
-    implementation(platform("androidx.compose:compose-bom:2025.01.00"))
-    implementation("androidx.activity:activity-compose:1.10.0")
+    implementation("androidx.activity:activity:1.10.0")
     implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.exifinterface:exifinterface:1.3.7")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.foundation:foundation")
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("io.coil-kt:coil-compose:2.7.0")
-    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.30.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2025.01.00"))
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test:rules:1.6.1")
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

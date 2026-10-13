@@ -6,24 +6,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  recognition-eval:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 35
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install evaluation dependencies
-        run: python -m pip install --disable-pip-version-check requests pillow numpy onnxruntime
-      - name: Evaluate recognition on held-out transforms
-        run: python tools/evaluate_recognition.py --sample 180 --model-sample 120
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pokepino-recognition-eval
-          path: recognition_eval.json
-          if-no-files-found: error
-
   emulator-smoke:
     runs-on: ubuntu-24.04
     timeout-minutes: 35

@@ -19,7 +19,6 @@ import java.util.zip.GZIPInputStream
 
 class CollectionActivity : ComponentActivity() {
     private val prefs by lazy { getSharedPreferences("owned", MODE_PRIVATE) }
-    private val picked by lazy { getSharedPreferences("picked_gallery_photo", MODE_PRIVATE) }
     private lateinit var webView: WebView
 
     private fun buildCatalog(): String {
@@ -213,18 +212,6 @@ class CollectionActivity : ComponentActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val galleryMain = JSONObject(assets.open("official_galleries_2024_2026.json")
-            .bufferedReader().use { it.readText() })
-        val galleryObjects = galleryMain.getJSONObject("series")
-        val olderGalleries = JSONObject(assets.open("historical_official_galleries.json")
-            .bufferedReader().use { it.readText() }).getJSONObject("series")
-        for (key in olderGalleries.keys()) galleryObjects.put(key, olderGalleries.getJSONObject(key))
-        val galleryData = galleryMain.toString()
-        val galleryUrls = HashSet<String>()
-        for (key in galleryObjects.keys()) {
-            val imgs = galleryObjects.getJSONObject(key).getJSONArray("images")
-            for (i in 0 until imgs.length()) galleryUrls.add(imgs.getString(i))
-        }
         val catalog = runCatching { buildCatalog() }.getOrElse {
             Log.e("PokepinoCatalog", "Failed to open catalog", it)
             "[]"
@@ -237,30 +224,7 @@ class CollectionActivity : ComponentActivity() {
         webView.webViewClient = WebViewClient()
         webView.webChromeClient = WebChromeClient()
         webView.addJavascriptInterface(object {
-            @JavascriptInterface fun openScanner() {
-                runOnUiThread {
-                    startActivity(Intent(this@CollectionActivity, MainActivity::class.java))
-                }
-            }
             @JavascriptInterface fun getCatalog(): String = catalog
-            @JavascriptInterface fun getGalleries(): String = galleryData
-            @JavascriptInterface fun getPickedPhotos(): String {
-                val obj = JSONObject()
-                for ((key, value) in picked.all) if (value is String) obj.put(key, value)
-                return obj.toString()
-            }
-            @JavascriptInterface fun setPickedPhoto(id: String, url: String) {
-                if (!id.matches(Regex("(OFF-[0-9]{2}-[0-9]{2}|HIS-[0-9]{2}-[0-9]{3})"))) return
-                if (url !in galleryUrls) return
-                // Do not allow cross-series photos to be saved under the wrong figurine.
-                val item = JSONArray(catalog)
-                val record = (0 until item.length()).mapNotNull { n -> item.optJSONArray(n) }
-                    .firstOrNull { it.optString(0) == id } ?: return
-                val release = galleryObjects.optJSONObject(record.optString(8)) ?: return
-                val permitted = release.optJSONArray("images") ?: return
-                if ((0 until permitted.length()).none { permitted.optString(it) == url }) return
-                picked.edit().putString(id, url).apply()
-            }
             @JavascriptInterface fun getOwned(): String {
                 val result = JSONObject()
                 for ((key, value) in prefs.all) if (value is Int && value > 0) result.put(key, value)

@@ -42,7 +42,7 @@ class CollectionActivitySmokeTest {
             Thread.sleep(300)
         }
         assertTrue("Collection catalog must load without JS syntax errors", ready)
-        assertEquals("true", js("typeof galleries==='object' && Object.keys(galleries.series||{}).length===26"))
+        assertEquals("true", js("typeof galleries==='undefined' && typeof chosen==='undefined'"))
         assertEquals("true", js("records.filter(r=>r[0].startsWith('HIS-')).length===440"))
         assertEquals("true", js("records.filter(r=>r[0].startsWith('CHK-')).length===182"))
         assertEquals("true", js("records.every(r=>r[6]!=='planned')"))
@@ -52,7 +52,7 @@ class CollectionActivitySmokeTest {
         assertEquals("true", js("records.some(r=>r[3]==='ミュウ（シークレット）' && r[5]==='2018-12-03')"))
         assertEquals("true", js("records.some(r=>r[3].includes('しんさくフォルム') && r[5]==='2022-11-21')"))
         assertEquals("true", js("records.some(r=>r[4].includes('2008 ポケモンキッズDP ぜんこく図鑑版'))"))
-        assertEquals("true", js("records.some(r=>r[0].startsWith('HIS-') && releaseImages(r).length>0)"))
+        assertEquals("true", js("typeof searchInput==='function' && typeof changeCount==='function'"))
         assertEquals("true", js("records.some(r=>r[6]==='official')"))
         assertEquals("true", js("records.some(r=>r[7] && !r[7].includes('noimage'))"))
         assertEquals("true", js("records.some(r=>r[0]==='WHF1997-078')"))
@@ -62,7 +62,7 @@ class CollectionActivitySmokeTest {
         assertEquals("true", js("(()=>{setFilter('missing');return !!document.querySelector('.group')})()"))
     }
 
-    @Test fun ownedCountsAndOfficialGalleryAreUsable() {
+    @Test fun ownedCountsAndNameSearchAreUsable() {
         var ready = false
         repeat(25) {
             if (js("typeof records!=='undefined' && records.length>1500 && records.length<2800") == "true") {
@@ -74,7 +74,7 @@ class CollectionActivitySmokeTest {
         assertTrue(ready)
         val count = js("(()=>{const r=records.find(x=>x[6]==='official');if(!r)return false;const old=getCount(r);changeCount(r[0],1);const ok=getCount(r)===old+1;changeCount(r[0],-1);return ok && getCount(r)===old})()")
         assertEquals("true", count)
-        val gallery = js("(()=>{const r=records.find(x=>x[6]==='official'&&releaseImages(x).length>0);if(!r)return false;term='';setFilter('all');showGroup(groupKey(r));chooseGallery(r[0]);return !!document.querySelector('.gallery-image')})()")
-        assertEquals("true",gallery)
+        val search = js("(()=>{term='ピカチュウ';switchTab('dex');setFilter('all');const groups=document.querySelectorAll('.group');return groups.length>0 && [...groups].every(g=>g.textContent.includes('ピカチュウ'));})()")
+        assertEquals("true",search)
     }
 }

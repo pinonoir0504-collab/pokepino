@@ -43,8 +43,8 @@ class CollectionRegressionTest {
     @Test fun productImageMustNotBeAnotherRandomFigureFromSeries() {
         waitForCatalog()
         assertEquals("true", js("records.filter(r=>r[0].startsWith('OFF-')||r[0].startsWith('CHK-')).every(r=>{ const image=art(r); return !image || !image.includes('/published/bnc_files/product/'); })"))
-        assertEquals("true", js("typeof galleryPanel==='function' && typeof setGalleryPicture==='function'"))
-        assertEquals("true", js("!!document.querySelector('#nav-scan') && typeof N.openScanner==='function'"))
+        assertEquals("true", js("typeof chooseGallery==='undefined' && typeof openScanner==='undefined'"))
+        assertEquals("true", js("!document.querySelector('#nav-scan') && document.querySelectorAll('nav button').length===3"))
     }
 
     @Test fun publishedBeforeOctoberCutoffOnly() {
@@ -60,8 +60,8 @@ class CollectionRegressionTest {
         assertEquals("true", js("(()=>{term='';switchTab('about');const a=window.goBackFromAndroid();const b=window.goBackFromAndroid();return a===true&&b===false;})()"))
     }
 
-    @Test fun officialCountAndCollectionCanBeChangedWithoutOverwritingOthers() {
+    @Test fun manualNameSearchAndOwnedCountDoNotAffectOtherItems() {
         waitForCatalog()
-        assertEquals("true", js("(()=>{const a=records.find(r=>r[0].startsWith('CHK-')),b=records.find(r=>r[0].startsWith('HIS-'));if(!a||!b)return false;const prev=getCount(a),other=getCount(b);changeCount(a[0],1);const ok=getCount(a)===prev+1 && getCount(b)===other;changeCount(a[0],-1);return ok && getCount(a)===prev;})()"))
+        assertEquals("true", js("(()=>{const a=records.find(r=>r[0].startsWith('CHK-')),b=records.find(r=>r[0].startsWith('HIS-'));if(!a||!b)return false;const prev=getCount(a),other=getCount(b);changeCount(a[0],1);const ok=getCount(a)===prev+1 && getCount(b)===other;term=a[2];switchTab('owned');const searched=!!document.querySelector('#query') && document.querySelectorAll('.record').length>0;changeCount(a[0],-1);return ok && searched && getCount(a)===prev;})()"))
     }
 }
