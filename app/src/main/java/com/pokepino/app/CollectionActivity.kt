@@ -13,6 +13,7 @@ import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.Normalizer
 import java.io.ByteArrayInputStream
 import java.util.zip.GZIPInputStream
 
@@ -49,8 +50,16 @@ class CollectionActivity : ComponentActivity() {
             rows.put(JSONArray().put(id).put(dex).put(pokemon).put(variant)
                 .put(series).put(year).put(kind).put(photo).put(url))
         }
+        fun releaseKey(text: String): String = Normalizer.normalize(text, Normalizer.Form.NFKC)
+            .lowercase()
+            .replace(Regex("2024|2025|2026|発売予定|ポケモンキッズ|スペシャル|30周年|30|編|vol\\.?|[^\\p{L}\\p{N}]+"), "")
         val official = JSONObject(assets.open("official_catalog_2024_2026.json").bufferedReader().use { it.readText() })
             .getJSONArray("series")
+        val officialKeys = HashSet<String>()
+        for (i in 0 until official.length()) {
+            val s = official.getJSONObject(i)
+            officialKeys.add(releaseKey(s.getString("series")) + ":" + s.getString("releaseDate").take(4))
+        }
         val byLength = names.entries.sortedByDescending { it.key.length }
         for (s in 0 until official.length()) {
             val series = official.getJSONObject(s)
@@ -58,17 +67,29 @@ class CollectionActivity : ComponentActivity() {
             val year = series.getString("releaseDate")
             for (i in 0 until list.length()) {
                 val variant = list.getString(i)
-                val species = byLength.firstOrNull { variant.contains(it.key) }
-                val name = species?.key ?: variant.substringBefore('（').substringBefore('／')
+                val preferred = when {
+                    variant.contains("ソウブレイズ") -> "ソウブレイズ"
+                    variant.startsWith("ピカチュウ&") || variant.startsWith("ピカチュウ＆") -> "ピカチュウ"
+                    else -> ""
+                }
+                val species = if (preferred.isNotBlank()) names[preferred]?.let { preferred to it }
+                    else null
+                val speciesFound = species ?: byLength.firstOrNull { variant.contains(it.key) }?.let { it.key to it.value }
+                val name = speciesFound?.first ?: variant.substringBefore('（').substringBefore('／')
                 val id = "OFF-" + s.toString().padStart(2, '0') + "-" + i.toString().padStart(2, '0')
-                insert(id, species?.value ?: 0, name, variant, series.getString("series"), year,
+                insert(id, speciesFound?.second ?: 0, name, variant, series.getString("series"), year,
                     if (series.optBoolean("planned")) "planned" else "official", "", series.getString("source"))
             }
         }
+        // Generic legacy records are species placeholders, not proven release variants.
+        // Preserve any legacy items the user had actually marked as owned, clearly flagged.
         for (collection in listOf(references, legacy)) {
             for (i in 0 until collection.length()) {
                 val r = collection.optJSONArray(i) ?: continue
                 if (r.optString(4) == "ポケモンキッズ一覧") continue
+                if (collection === references &&
+                    (releaseKey(r.optString(4)) + ":" + r.optString(5).take(4)) in officialKeys) continue
+                if (collection === legacy && prefs.getInt(r.optString(0),0) <= 0) continue
                 val refs = r.optJSONArray(8)
                 var photo = ""
                 if (refs != null) for (j in 0 until refs.length()) {
@@ -90,11 +111,17 @@ class CollectionActivity : ComponentActivity() {
                         233 to "ポリゴン２"
                     else -> r.optInt(1) to originalName
                 }
-                insert(r.optString(0), corrected.first, corrected.second, variant,
-                    r.optString(4), r.optString(5), "reference", photo,
+                insert(r.optString(0), corrected.first, corrected.second,
+                    if (collection === legacy) "旧版の仮登録（発売年・造形未確定）" else variant,
+                    r.optString(4), r.optString(5),
+                    if (collection === legacy) "legacy_unverified" else "reference", photo,
                     meta?.optString("source", "") ?: "")
             }
         }
+        // One provable hole in the 1997 WHF 60-figure lineup: No.078 ハクリュー.
+        insert("WHF1997-078",148,"ハクリュー","No078 ハクリュー（クリア版）",
+            "次世代ワールドホビーフェア限定バージョン1997","1997",
+            "reference","","https://www.yubi-nin.jp/pokemon/poke_clear/WHF1997.html")
         Log.i("PokepinoCatalog", "Bundled records: " + rows.length() + ", official groups: " + official.length())
         return rows.toString()
     }
@@ -141,6 +168,11 @@ class CollectionActivity : ComponentActivity() {
             @JavascriptInterface fun setOwned(id: String, n: Int) {
                 if (id.length > 100 || n < 0 || n > 999) return
                 prefs.edit().putInt(id, n).apply()
+            }
+            @JavascriptInterface fun openReference(url: String) {
+                val host = Uri.parse(url).host ?: return
+                if (!url.startsWith("https://") || host !in listOf("www.yubi-nin.jp","yubi-nin.jp")) return
+                runOnUiThread { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } }
             }
             @JavascriptInterface fun openOfficial(url: String) {
                 if (!url.startsWith("https://www.bandai.co.jp/candy/")) return
