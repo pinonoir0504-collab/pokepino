@@ -4,6 +4,14 @@ from pathlib import Path
 a=Path(__file__).resolve().parents[1]/"app/src/main/assets"
 history=json.loads((a/"historical_releases_1996_2023.json").read_text(encoding="utf-8"))["series"]
 galleries=json.loads((a/"historical_official_galleries.json").read_text(encoding="utf-8"))["series"]
+extra=json.loads((a/"audit_verified_official_2014_2022.json").read_text(encoding="utf-8"))["series"]
+assert len(extra)==16
+assert sum(len(t["items"]) for t in extra)==182
+assert all(t["releaseDate"]<="2026-10-01" for t in extra)
+assert all(t["source"].startswith("https://www.bandai.co.jp/candy/products/") for t in extra)
+assert all(len(t["items"])==t["expected"] for t in extra)
+assert "サトシのメルタン（シークレット）" in next(t for t in extra if "メルタン編" in t["series"])["items"]
+
 official=json.loads((a/"official_catalog_2024_2026.json").read_text(encoding="utf-8"))["series"]
 assert len(history)==29, len(history)
 assert sum(len(s["items"]) for s in history)==440
