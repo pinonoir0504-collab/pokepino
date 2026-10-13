@@ -27,7 +27,7 @@ jobs:
       - name: Install catalog dependencies
         run: python -m pip install --disable-pip-version-check requests beautifulsoup4 pillow numpy
       - name: Build catalog
-        run: python tools/build_catalog.py --max-pages 1200 --max-images 3000
+        run: python tools/build_catalog.py --max-pages 1200 --max-images 5000
       - name: Commit generated catalog
         shell: bash
         run: |
