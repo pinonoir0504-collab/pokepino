@@ -44,6 +44,7 @@ class CollectionRegressionTest {
         waitForCatalog()
         assertEquals("true", js("records.filter(r=>r[0].startsWith('OFF-')||r[0].startsWith('CHK-')).every(r=>{ const image=art(r); return !image || !image.includes('/published/bnc_files/product/'); })"))
         assertEquals("true", js("typeof galleryPanel==='function' && typeof setGalleryPicture==='function'"))
+        assertEquals("true", js("!!document.querySelector('#nav-scan') && typeof N.openScanner==='function'"))
     }
 
     @Test fun publishedBeforeOctoberCutoffOnly() {
