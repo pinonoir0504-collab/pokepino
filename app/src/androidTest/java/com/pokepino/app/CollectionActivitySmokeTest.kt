@@ -74,7 +74,7 @@ class CollectionActivitySmokeTest {
         assertTrue(ready)
         val count = js("(()=>{const r=records.find(x=>x[6]==='official');if(!r)return false;const old=getCount(r);changeCount(r[0],1);const ok=getCount(r)===old+1;changeCount(r[0],-1);return ok && getCount(r)===old})()")
         assertEquals("true", count)
-        val search = js("(()=>{term='ピカチュウ';switchTab('dex');setFilter('all');const groups=document.querySelectorAll('.group');return groups.length>0 && [...groups].every(g=>g.textContent.includes('ピカチュウ'));})()")
+        val search = js("(()=>{term='ピカチュウ';switchTab('dex');setFilter('all');const groups=document.querySelectorAll('.group');return groups.length>0 && [...groups].every(g=>records.some(r=>groupKey(r)===g.dataset.key && searchMatch(r) && recordVisible(r)));})()")
         assertEquals("true",search)
     }
 }
