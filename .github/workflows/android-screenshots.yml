@@ -42,11 +42,11 @@ jobs:
             mkdir -p screenshots
             adb shell screencap -p /sdcard/screen.png
             adb pull /sdcard/screen.png screenshots/01_catalog.png
-            adb shell input tap 90 385
+            adb shell input tap 125 540
             sleep 3
             adb shell screencap -p /sdcard/screen.png
             adb pull /sdcard/screen.png screenshots/02_figure_details.png
-            adb shell input tap 335 916
+            adb shell input tap 330 889
             sleep 2
             adb shell screencap -p /sdcard/screen.png
             adb pull /sdcard/screen.png screenshots/03_owned_list.png
@@ -54,9 +54,9 @@ jobs:
             sleep 2
             adb shell screencap -p /sdcard/screen.png
             adb pull /sdcard/screen.png screenshots/04_backup_settings.png
-            adb shell input tap 100 915
+            adb shell input tap 110 889
             sleep 2
-            adb shell input tap 130 235
+            adb shell input tap 90 248
             sleep 2
             adb shell screencap -p /sdcard/screen.png
             adb pull /sdcard/screen.png screenshots/05_filters.png
