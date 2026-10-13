@@ -56,9 +56,15 @@ class CollectionActivity : ComponentActivity() {
         val official = JSONObject(assets.open("official_catalog_2024_2026.json").bufferedReader().use { it.readText() })
             .getJSONArray("series")
         val officialKeys = HashSet<String>()
+        val modernSources = HashSet<String>()
+        val futureSources = HashSet<String>()
         for (i in 0 until official.length()) {
             val s = official.getJSONObject(i)
             officialKeys.add(releaseKey(s.getString("series")) + ":" + s.getString("releaseDate").take(4))
+            modernSources.add(s.getString("source"))
+            if (s.optBoolean("planned") || s.getString("releaseDate") > "2026-10-01") {
+                futureSources.add(s.getString("source"))
+            }
         }
         val byLength = names.entries.sortedByDescending { it.key.length }
         for (s in 0 until official.length()) {
@@ -157,7 +163,13 @@ class CollectionActivity : ComponentActivity() {
                 val r = collection.optJSONArray(i) ?: continue
                 if (r.optString(4) == "ポケモンキッズ一覧") continue
                 if (collection === references) {
-                    if (r.optJSONObject(9)?.optString("source") in newOfficialSources) continue
+                    val source = r.optJSONObject(9)?.optString("source").orEmpty()
+                    // Old reference rows can have already-announced December 2026 figures.
+                    if (source in futureSources || source in modernSources ||
+                        source in newOfficialSources) continue
+                    val releaseDate = r.optString(5)
+                    if (releaseDate.length >= 7 && releaseDate > "2026-10-01" &&
+                        releaseDate.startsWith("2026-")) continue
                     val releaseMatch = releaseKey(r.optString(4)) + ":" + r.optString(5).take(4)
                     if (releaseMatch in officialKeys || releaseMatch in historicalKeys) continue
                 }
@@ -269,6 +281,15 @@ class CollectionActivity : ComponentActivity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        webView.evaluateJavascript("window.goBackFromAndroid && window.goBackFromAndroid()", null)
+        if (!::webView.isInitialized) {
+            finish()
+            return
+        }
+        webView.evaluateJavascript(
+            "window.goBackFromAndroid ? window.goBackFromAndroid() : false"
+        ) { result ->
+            // Return to Android when already on the collection root.
+            if (result != "true") finish()
+        }
     }
 }
