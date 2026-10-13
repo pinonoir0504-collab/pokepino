@@ -96,6 +96,7 @@ class CollectionActivity : ComponentActivity() {
         val rows = JSONArray()
         val seenId = HashSet<String>()
         val seenProduct = HashSet<String>()
+        val photoOwners = HashMap<String, String>()
         val original = listOf("dbgz_00.txt", "dbgz_01a.txt", "dbgz_01b.txt", "dbgz_02a.txt",
             "dbgz_02b.txt", "dbgz_03a.txt", "dbgz_03b.txt")
             .joinToString("") { assets.open(it).bufferedReader().use { r -> r.readText() } }
@@ -113,17 +114,21 @@ class CollectionActivity : ComponentActivity() {
         }
         fun insert(id:String, dex:Int, pokemon:String, variant:String, series:String, year:String,
                    kind:String, photo:String, url:String) {
-            if (id.isBlank() || !seenId.add(id)) return
+            if (id.isBlank() || id in seenId) return
             val identity = listOf(pokemon, variant, series, year).joinToString("|")
-            if (!seenProduct.add(identity)) return
+            if (identity in seenProduct && prefs.getInt(id, 0) <= 0) return
+            seenId.add(id)
+            seenProduct.add(identity)
             val review = setOf("poke1_139.jpg", "poke_XY_098.jpg",
                 "poke_SS_774.jpg", "poke_SS_816.jpg", "poke_SV_889.jpg",
                 "poke_kimeBW01_530.jpg")
             val imageStatus = when {
                 photo.isBlank() -> "none"
                 review.any { photo.endsWith(it) } -> "needs_review"
+                photoOwners[photo] != null && photoOwners[photo] != pokemon -> "needs_review"
                 else -> "reference_unverified"
             }
+            if (photo.isNotBlank()) photoOwners.putIfAbsent(photo, pokemon)
             rows.put(JSONArray().put(id).put(dex).put(pokemon).put(variant)
                 .put(series).put(year).put(kind).put(photo).put(url).put(imageStatus))
         }
@@ -143,7 +148,7 @@ class CollectionActivity : ComponentActivity() {
                 futureSources.add(s.getString("source"))
             }
         }
-        val byLength = names.entries.sortedByDescending { it.key.length }
+        val byLength = names.entries.sortedWith(compareByDescending<Map.Entry<String, Int>> { it.key.length }.thenBy { it.key })
         for (s in 0 until official.length()) {
             val series = official.getJSONObject(s)
             val list = series.getJSONArray("items")
@@ -317,7 +322,7 @@ class CollectionActivity : ComponentActivity() {
                 return result.toString()
             }
             @JavascriptInterface fun setOwned(id: String, n: Int) {
-                if (id.length > 100 || n < 0 || n > 999) return
+                if (id.isBlank() || id.length > 100 || n < 0 || n > 999) return
                 prefs.edit().putInt(id, n).apply()
             }
             @JavascriptInterface fun openReference(url: String) {
