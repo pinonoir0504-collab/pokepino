@@ -121,7 +121,7 @@ class CollectionActivity : ComponentActivity() {
             seenProduct.add(identity)
             val review = setOf("poke1_139.jpg", "poke_XY_098.jpg",
                 "poke_SS_774.jpg", "poke_SS_816.jpg", "poke_SV_889.jpg",
-                "poke_kimeBW01_530.jpg")
+                "poke_kimeBW01_530.jpg", "poke2_220.jpg")
             val imageStatus = when {
                 photo.isBlank() -> "none"
                 review.any { photo.endsWith(it) } -> "needs_review"
