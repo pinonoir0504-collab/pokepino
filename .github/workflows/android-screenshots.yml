@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [feat/collection-catalog-20261013]
-    paths: [.github/workflows/android-screenshots.yml]
+    paths: [.github/workflows/android-screenshots.yml, app/src/main/java/com/pokepino/app/CollectionActivity.kt]
 permissions:
   contents: read
 jobs:
