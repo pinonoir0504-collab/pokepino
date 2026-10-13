@@ -35,7 +35,7 @@ class CollectionActivitySmokeTest {
     @Test fun launchesCatalogAndLoadsOfficialImages() {
         var ready = false
         repeat(25) {
-            if (js("typeof records!=='undefined' && records.length>2500") == "true") {
+            if (js("typeof records!=='undefined' && records.length>1400 && records.length<1500") == "true") {
                 ready = true
                 return@repeat
             }
@@ -45,6 +45,9 @@ class CollectionActivitySmokeTest {
         assertEquals("true", js("typeof galleries==='object' && Object.keys(galleries.series||{}).length===14"))
         assertEquals("true", js("records.some(r=>r[6]==='official')"))
         assertEquals("true", js("records.some(r=>r[7] && !r[7].includes('noimage'))"))
+        assertEquals("true", js("records.some(r=>r[0]==='WHF1997-078')"))
+        assertEquals("true", js("records.every(r=>r[6]!=='legacy_unverified' || getCount(r)>0)"))
+        assertEquals("true", js("records.filter(r=>r[1]===25).length>=60"))
         assertEquals("true", js("(()=>{term='ピカチュウ';render();return !!document.querySelector('.group')})()"))
         assertEquals("true", js("(()=>{setFilter('missing');return !!document.querySelector('.group')})()"))
     }
@@ -52,7 +55,7 @@ class CollectionActivitySmokeTest {
     @Test fun ownedCountsAndOfficialGalleryAreUsable() {
         var ready = false
         repeat(25) {
-            if (js("typeof records!=='undefined' && records.length>2500") == "true") {
+            if (js("typeof records!=='undefined' && records.length>1400 && records.length<1500") == "true") {
                 ready=true
                 return@repeat
             }
