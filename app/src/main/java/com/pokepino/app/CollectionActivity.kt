@@ -65,6 +65,8 @@ class CollectionActivity : ComponentActivity() {
             val series = official.getJSONObject(s)
             val list = series.getJSONArray("items")
             val year = series.getString("releaseDate")
+            // The user's inventory is as of 2026-10-01, not advertised future stock.
+            if (series.optBoolean("planned", false) || year > "2026-10-01") continue
             for (i in 0 until list.length()) {
                 val variant = list.getString(i)
                 val preferred = when {
@@ -81,6 +83,35 @@ class CollectionActivity : ComponentActivity() {
                     if (series.optBoolean("planned")) "planned" else "official", "", series.getString("source"))
             }
         }
+        // Double-audited official release groups missing from the previous historical index.
+        val auditExtra = JSONObject(
+            assets.open("audit_verified_official_2014_2022.json")
+                .bufferedReader().use { it.readText() }
+        ).getJSONArray("series")
+        val newOfficialSources = HashSet<String>()
+        for (s in 0 until auditExtra.length()) {
+            val release = auditExtra.getJSONObject(s)
+            val source = release.getString("source")
+            val date = release.getString("releaseDate")
+            if (date > "2026-10-01") continue
+            val title = release.getString("series")
+            newOfficialSources.add(source)
+            val items = release.getJSONArray("items")
+            for (i in 0 until items.length()) {
+                val variant = items.getString(i)
+                val species = when {
+                    variant.startsWith("ピカチュウ＆") || variant.startsWith("ピカチュウ&") -> "ピカチュウ"
+                    variant.contains("サトシのメルタン") -> "メルタン"
+                    variant.contains("ソウブレイズ") -> "ソウブレイズ"
+                    else -> byLength.firstOrNull { variant.contains(it.key) }?.key
+                }
+                val pokemon = species ?: variant.substringBefore('（').substringBefore('(')
+                val id = "CHK-" + s.toString().padStart(2,'0') + "-" + i.toString().padStart(3,'0')
+                insert(id, names[pokemon] ?: 0, pokemon, variant, title, date,
+                    "official", "", source)
+            }
+        }
+        Log.i("PokepinoCatalog", "New official releases: " + auditExtra.length())
         // Track documented historic launches separately from visually identical reissues.
         val historical = JSONObject(
             assets.open("historical_releases_1996_2023.json")
@@ -126,6 +157,7 @@ class CollectionActivity : ComponentActivity() {
                 val r = collection.optJSONArray(i) ?: continue
                 if (r.optString(4) == "ポケモンキッズ一覧") continue
                 if (collection === references) {
+                    if (r.optJSONObject(9)?.optString("source") in newOfficialSources) continue
                     val releaseMatch = releaseKey(r.optString(4)) + ":" + r.optString(5).take(4)
                     if (releaseMatch in officialKeys || releaseMatch in historicalKeys) continue
                 }
