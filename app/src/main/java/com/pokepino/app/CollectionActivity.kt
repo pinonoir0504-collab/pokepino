@@ -85,9 +85,9 @@ class CollectionActivity : ComponentActivity() {
             require(bytes.size <= 2_000_000) { "ファイルが大きすぎます" }
             mergeBackup(String(bytes, Charsets.UTF_8))
         }.onSuccess {
-            reportBackup(true, "復元しました（" + it + "件を更新）")
             if (::webView.isInitialized) webView.evaluateJavascript(
                 "window.reloadOwnedFromAndroid && window.reloadOwnedFromAndroid()", null)
+            reportBackup(true, "復元しました（" + it + "件を更新）")
         }.onFailure { reportBackup(false, it.message ?: "復元に失敗しました") }
     }
 
