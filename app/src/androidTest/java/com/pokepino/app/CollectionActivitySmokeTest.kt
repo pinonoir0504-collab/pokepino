@@ -35,14 +35,19 @@ class CollectionActivitySmokeTest {
     @Test fun launchesCatalogAndLoadsOfficialImages() {
         var ready = false
         repeat(25) {
-            if (js("typeof records!=='undefined' && records.length>1400 && records.length<1500") == "true") {
+            if (js("typeof records!=='undefined' && records.length>1500 && records.length<2800") == "true") {
                 ready = true
                 return@repeat
             }
             Thread.sleep(300)
         }
         assertTrue("Collection catalog must load without JS syntax errors", ready)
-        assertEquals("true", js("typeof galleries==='object' && Object.keys(galleries.series||{}).length===14"))
+        assertEquals("true", js("typeof galleries==='object' && Object.keys(galleries.series||{}).length===26"))
+        assertEquals("true", js("records.filter(r=>r[0].startsWith('HIS-')).length===440"))
+        assertEquals("true", js("records.some(r=>r[3]==='ミュウ（シークレット）' && r[5]==='2018-12-03')"))
+        assertEquals("true", js("records.some(r=>r[3].includes('しんさくフォルム') && r[5]==='2022-11-21')"))
+        assertEquals("true", js("records.some(r=>r[4].includes('2008 ポケモンキッズDP ぜんこく図鑑版'))"))
+        assertEquals("true", js("records.some(r=>r[0].startsWith('HIS-') && releaseImages(r).length>0)"))
         assertEquals("true", js("records.some(r=>r[6]==='official')"))
         assertEquals("true", js("records.some(r=>r[7] && !r[7].includes('noimage'))"))
         assertEquals("true", js("records.some(r=>r[0]==='WHF1997-078')"))
@@ -55,7 +60,7 @@ class CollectionActivitySmokeTest {
     @Test fun ownedCountsAndOfficialGalleryAreUsable() {
         var ready = false
         repeat(25) {
-            if (js("typeof records!=='undefined' && records.length>1400 && records.length<1500") == "true") {
+            if (js("typeof records!=='undefined' && records.length>1500 && records.length<2800") == "true") {
                 ready=true
                 return@repeat
             }
