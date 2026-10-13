@@ -43,11 +43,13 @@ jobs:
         run: python3 tools/validate_historical_collection.py
       - name: Validate collection JavaScript
         run: python3 tools/validate_collection_ui.py
+      - name: Validate cutoff and ten-machine followup index
+        run: python3 tools/validate_cutoff_and_gap_audit.py
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: pokepino-v1.4.0-historical-catalog-apk
+          name: pokepino-v1.5.0-oct2026-cutoff-apk
           path: |
             app/build/outputs/apk/debug/app-debug.apk
             collection_audit.json
