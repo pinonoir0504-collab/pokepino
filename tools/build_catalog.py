@@ -56,6 +56,14 @@ BANDAI_PRODUCTS = [
 ]
 SPECIAL = ("クリア","色違","アローラ","ガラル","ヒスイ","パルデア","メガ","キョダイ","ゲンシ","テラスタル","なみのり","おきがえ","サトシ","キャプテン")
 TRAINERS = ("サトシ","ゴウ","シロナ","リコ","ロイ","フリード")
+# Explicitly labeled Pokémon Kids entries from SKYDRAMON'S COLLECTION.
+# Only images with a nearby Bandai Pokémon Kids caption are indexed.
+SKYDRAMON_PAGES = [
+    ("https://skydramon.weebly.com/figures.html", 383, "Groudon"),
+    ("https://skydramon.weebly.com/figures1.html", 253, "Grovyle"),
+    ("https://skydramon.weebly.com/zekrom.html", 644, "Zekrom"),
+    ("https://skydramon.weebly.com/dialga.html", 483, "Dialga"),
+]
 
 session = requests.Session()
 session.headers.update({"User-Agent": UA, "Accept-Language":"ja,en;q=0.7"})
@@ -231,7 +239,7 @@ def scrape_pokefig_munchcollector(species_names, workers=8):
     # PokéFig species pages give each image a Pokémon label and identify
     # Munchcollector/Tim as the photographer. Store image URLs and attribution,
     # not copied source photos, in the personal reference catalog.
-    urls=[f"https://pokefig.com/ja/catalogo/{dex}" for dex in range(1,152)]
+    urls=[f"https://pokefig.com/ja/catalogo/{dex}" for dex in range(1,1026)]
     records=[]
     def scrape(url):
         try:
@@ -287,6 +295,63 @@ def scrape_pokefig_munchcollector(species_names, workers=8):
             return []
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs=[ex.submit(scrape,url) for url in urls]
+        for future in as_completed(futs):
+            records.extend(future.result())
+    return records
+
+def scrape_skydramon(species_names, workers=4):
+    # A second collector source. Page titles identify the Pokémon; the adjacent
+    # item caption must explicitly identify Bandai Pokémon Kids. Keep only URL
+    # references plus features and link back to the collector page.
+    records=[]
+    def scrape(entry):
+        url,dex,pokemon=entry
+        try:
+            response=get(url,timeout=30)
+            soup=BeautifulSoup(response.text,"html.parser")
+            found=[]
+            seen=set()
+            for img in soup.find_all("img"):
+                src=img.get("src") or img.get("data-src") or img.get("data-original")
+                if not src:
+                    continue
+                img_url=urljoin(url,src)
+                if img_url in seen:
+                    continue
+                caption=""
+                for node in img.parents:
+                    if getattr(node,"name",None) in {"body","html"}:
+                        break
+                    candidate=re.sub(r"\\s+"," ",node.get_text(" ",strip=True)).strip()
+                    if len(candidate)>500:
+                        continue
+                    if re.search(r"bandai",candidate,re.I) and re.search(r"pok.?mon kids",candidate,re.I):
+                        if len(re.findall(r"pok.?mon kids",candidate,re.I))==1:
+                            caption=candidate
+                            break
+                if not caption:
+                    continue
+                year_match=re.search(r"\\b(19\\d{2}|20\\d{2})\\b",caption)
+                year=year_match.group(1) if year_match else ""
+                variant=caption[:180]
+                rid="SKY-" + hashlib.sha1((url+"|"+img_url).encode()).hexdigest()[:14]
+                found.append({
+                    "id":rid,"dex":dex,"pokemon":pokemon,"variant":variant,
+                    "series":"Pokémon Kids (SKYDRAMON collector photo)",
+                    "year":year,
+                    "visualGroupId":f"SKY-{dex:04d}-{hashlib.sha1((caption+'|'+img_url).encode()).hexdigest()[:8]}",
+                    "status":"reference_pending","refs":[img_url],"kidsNo":0,
+                    "source":url,"feature":"",
+                    "photoCredit":"SKYDRAMON'S COLLECTION (collector photo; caption labels Bandai Pokémon Kids)",
+                    "photoSource":url,
+                })
+                seen.add(img_url)
+            return found
+        except Exception as e:
+            print(f"SKYDRAMON scrape failed {url}: {e}",file=sys.stderr)
+            return []
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        futs=[ex.submit(scrape,entry) for entry in SKYDRAMON_PAGES]
         for future in as_completed(futs):
             records.extend(future.result())
     return records
@@ -475,7 +540,9 @@ def main():
     names=load_species_names()
     scraped,pages=crawl(names,args.max_pages)
     collector_records=scrape_pokefig_munchcollector(names)
+    skydramon_records=scrape_skydramon(names)
     scraped.extend(collector_records)
+    scraped.extend(skydramon_records)
     dedup={}
     for r in scraped:
         key=(r["source"],r["refs"][0],r["variant"])
@@ -501,6 +568,7 @@ def main():
         "pages_with_records":sum(1 for v in pages.values() if v>0),
         "pages_failed":sum(1 for v in pages.values() if v<0),
         "munchcollector_records":sum(1 for r in scraped if r.get("photoCredit","").startswith("Munchcollector")),
+        "skydramon_records":sum(1 for r in scraped if r.get("photoCredit","").startswith("SKYDRAMON")),
         "scraped_records":len(scraped),
         "scraped_with_features":sum(1 for r in scraped if r["feature"]),
         "scraped_species":len({r["dex"] for r in scraped if r["dex"]>0}),
