@@ -128,14 +128,20 @@ def main():
     refs = []
     seen = set()
     collector_ids = set()
+    skydramon_ids = set()
     for r in rows:
         if not isinstance(r, list) or len(r) < 9:
             continue
         rid, dex, group = str(r[0]), int(r[1]), str(r[6])
         metadata = r[9] if len(r) > 9 and isinstance(r[9], dict) else {}
-        is_collector_photo = str(metadata.get("photoCredit", "")).startswith("Munchcollector")
-        if is_collector_photo:
+        photo_credit = str(metadata.get("photoCredit", ""))
+        is_munchcollector_photo = photo_credit.startswith("Munchcollector")
+        is_skydramon_photo = photo_credit.startswith("SKYDRAMON")
+        is_collector_photo = is_munchcollector_photo or is_skydramon_photo
+        if is_munchcollector_photo:
             collector_ids.add(rid)
+        if is_skydramon_photo:
+            skydramon_ids.add(rid)
         urls = r[8] if isinstance(r[8], list) else []
         for u in urls[:4]:
             if dex <= 0 or not isinstance(u, str) or not u.startswith("http"):
@@ -226,6 +232,10 @@ def main():
         "munchcollector_reference_images_requested": len({x["url"] for x in refs if x["collector"]}),
         "munchcollector_reference_images_downloaded": len({x["url"] for x in refs if x["collector"] and x["url"] in downloaded}),
         "munchcollector_embedding_prototypes": sum(1 for x in output if x[0] in collector_ids),
+        "skydramon_catalog_records": len(skydramon_ids),
+        "skydramon_reference_images_requested": len({x["url"] for x in refs if x["id"] in skydramon_ids}),
+        "skydramon_reference_images_downloaded": len({x["url"] for x in refs if x["id"] in skydramon_ids and x["url"] in downloaded}),
+        "skydramon_embedding_prototypes": sum(1 for x in output if x[0] in skydramon_ids),
         "embedding_prototypes": len(output),
         "embedding_species": len(species),
         "embedding_groups": len(groups),
