@@ -10,6 +10,7 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
 import org.json.JSONArray
 import org.json.JSONObject
@@ -20,6 +21,75 @@ import java.util.zip.GZIPInputStream
 class CollectionActivity : ComponentActivity() {
     private val prefs by lazy { getSharedPreferences("owned", MODE_PRIVATE) }
     private lateinit var webView: WebView
+
+    private fun reportBackup(ok: Boolean, message: String) {
+        if (::webView.isInitialized) {
+            webView.evaluateJavascript(
+                "window.pokepinoBackupResult && window.pokepinoBackupResult(" +
+                    ok + "," + JSONObject.quote(message) + ")", null
+            )
+        }
+    }
+    private fun backupJson(): String {
+        val counts = JSONObject()
+        for ((id, value) in prefs.all) if (value is Int && value > 0) {
+            counts.put(id, value)
+        }
+        return JSONObject().put("format", "pokepino-collection")
+            .put("schema", 1)
+            .put("exportedAt", java.time.Instant.now().toString())
+            .put("owned", counts).toString(2)
+    }
+    private fun mergeBackup(text: String): Int {
+        val root = JSONObject(text)
+        require(root.optString("format") == "pokepino-collection" &&
+            root.optInt("schema") == 1) { "ポケピーノ形式のファイルではありません" }
+        val items = root.optJSONObject("owned")
+            ?: throw IllegalArgumentException("所持データがありません")
+        require(items.length() <= 10000) { "件数が多すぎます" }
+        val checked = LinkedHashMap<String, Int>()
+        for (id in items.keys()) {
+            val count = items.opt(id)
+            require(id.isNotBlank() && id.length <= 100 &&
+                count is Int && count in 0..999) { "不正な所持数が含まれています" }
+            checked[id] = count
+        }
+        // Never delete locally owned figures on import.
+        val editor = prefs.edit()
+        var changed = 0
+        for ((id, count) in checked) {
+            if (count > prefs.getInt(id, 0)) {
+                editor.putInt(id, count)
+                changed++
+            }
+        }
+        check(editor.commit()) { "所持データの保存に失敗しました" }
+        return changed
+    }
+    private val exportFile = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) runCatching {
+            contentResolver.openOutputStream(uri)?.bufferedWriter(Charsets.UTF_8)?.use {
+                it.write(backupJson())
+            } ?: error("保存先を開けません")
+        }.onSuccess { reportBackup(true, "所持データを書き出しました") }
+         .onFailure { reportBackup(false, it.message ?: "書き出し失敗") }
+    }
+    private val restoreFile = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) runCatching {
+            val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                ?: error("ファイルを開けません")
+            require(bytes.size <= 2_000_000) { "ファイルが大きすぎます" }
+            mergeBackup(String(bytes, Charsets.UTF_8))
+        }.onSuccess {
+            reportBackup(true, "復元しました（" + it + "件を更新）")
+            if (::webView.isInitialized) webView.evaluateJavascript(
+                "window.reloadOwnedFromAndroid && window.reloadOwnedFromAndroid()", null)
+        }.onFailure { reportBackup(false, it.message ?: "復元に失敗しました") }
+    }
 
     private fun buildCatalog(): String {
         val names = HashMap<String, Int>()
@@ -46,8 +116,16 @@ class CollectionActivity : ComponentActivity() {
             if (id.isBlank() || !seenId.add(id)) return
             val identity = listOf(pokemon, variant, series, year).joinToString("|")
             if (!seenProduct.add(identity)) return
+            val review = setOf("poke1_139.jpg", "poke_XY_098.jpg",
+                "poke_SS_774.jpg", "poke_SS_816.jpg", "poke_SV_889.jpg",
+                "poke_kimeBW01_530.jpg")
+            val imageStatus = when {
+                photo.isBlank() -> "none"
+                review.any { photo.endsWith(it) } -> "needs_review"
+                else -> "reference_unverified"
+            }
             rows.put(JSONArray().put(id).put(dex).put(pokemon).put(variant)
-                .put(series).put(year).put(kind).put(photo).put(url))
+                .put(series).put(year).put(kind).put(photo).put(url).put(imageStatus))
         }
         fun releaseKey(text: String): String = Normalizer.normalize(text, Normalizer.Form.NFKC)
             .lowercase()
@@ -225,6 +303,14 @@ class CollectionActivity : ComponentActivity() {
         webView.webChromeClient = WebChromeClient()
         webView.addJavascriptInterface(object {
             @JavascriptInterface fun getCatalog(): String = catalog
+            @JavascriptInterface fun exportBackup() {
+                runOnUiThread {
+                    exportFile.launch("Pokepino_所持データ_" + java.time.LocalDate.now() + ".json")
+                }
+            }
+            @JavascriptInterface fun restoreBackup() {
+                runOnUiThread { restoreFile.launch(arrayOf("application/json", "text/plain")) }
+            }
             @JavascriptInterface fun getOwned(): String {
                 val result = JSONObject()
                 for ((key, value) in prefs.all) if (value is Int && value > 0) result.put(key, value)
