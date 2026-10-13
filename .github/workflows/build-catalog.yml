@@ -3,9 +3,13 @@ name: Build Figure Catalog
 permissions:
   contents: write
 
+concurrency:
+  group: pokepino-catalog-build
+  cancel-in-progress: true
+
 on:
   push:
-    branches: [ "feat/full-figure-catalog", "feat/recognition-v3" ]
+    branches: [ "feat/full-figure-catalog", "feat/recognition-v3", "codex/scan-ensemble-20261010" ]
     paths:
       - "tools/build_catalog.py"
       - ".github/workflows/build-catalog.yml"
@@ -23,7 +27,7 @@ jobs:
       - name: Install catalog dependencies
         run: python -m pip install --disable-pip-version-check requests beautifulsoup4 pillow numpy
       - name: Build catalog
-        run: python tools/build_catalog.py --max-pages 1200 --max-images 2500
+        run: python tools/build_catalog.py --max-pages 1200 --max-images 5000
       - name: Commit generated catalog
         shell: bash
         run: |

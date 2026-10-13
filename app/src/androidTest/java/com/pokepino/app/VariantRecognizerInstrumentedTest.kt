@@ -45,11 +45,13 @@ class VariantRecognizerInstrumentedTest {
         val figures=loadFigures().filter{it.dex>0&&it.feature.isNotBlank()&&it.refs.firstOrNull()?.startsWith("http")==true}
         assertTrue("reference catalog should be large",figures.size>=1000)
 
-        val step=(figures.size/10).coerceAtLeast(1)
-        val sample=(0 until figures.size step step).map{figures[it]}.take(10)
+        val stableFigures=figures.sortedBy{it.id}
+        val step=(stableFigures.size/10).coerceAtLeast(1)
+        val sample=(0 until stableFigures.size step step).map{stableFigures[it]}.take(10)
         val recognizer=VariantRecognizer(context)
         var tested=0
         var correct=0
+        val mismatches=mutableListOf<String>()
 
         sample.forEach{target->
             val conn=(URL(target.refs.first()).openConnection() as HttpURLConnection).apply{
@@ -67,6 +69,7 @@ class VariantRecognizerInstrumentedTest {
                         val first=result.candidates.firstOrNull()
                         tested++
                         if(first?.recordIds?.contains(target.id)==true)correct++
+                        else mismatches+="target=${target.id}/${target.pokemon} top=${first?.recordIds?.take(3)} score=${first?.score}"
                         bitmap.recycle()
                     }
                 }
@@ -76,6 +79,6 @@ class VariantRecognizerInstrumentedTest {
         }
 
         assertTrue("not enough reference images could be tested: $tested",tested>=8)
-        assertTrue("Kotlin matcher exact-reference accuracy too low: $correct/$tested",correct>=tested-1)
+        assertTrue("Kotlin matcher exact-reference accuracy too low: $correct/$tested; ${mismatches.joinToString("; ")}",correct>=tested-1)
     }
 }
