@@ -237,6 +237,11 @@ class CollectionActivity : ComponentActivity() {
         webView.webViewClient = WebViewClient()
         webView.webChromeClient = WebChromeClient()
         webView.addJavascriptInterface(object {
+            @JavascriptInterface fun openScanner() {
+                runOnUiThread {
+                    startActivity(Intent(this@CollectionActivity, MainActivity::class.java))
+                }
+            }
             @JavascriptInterface fun getCatalog(): String = catalog
             @JavascriptInterface fun getGalleries(): String = galleryData
             @JavascriptInterface fun getPickedPhotos(): String {
