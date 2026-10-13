@@ -73,7 +73,8 @@ class CollectionActivity : ComponentActivity() {
                 var photo = ""
                 if (refs != null) for (j in 0 until refs.length()) {
                     val url = refs.optString(j)
-                    if (url.startsWith("https://") && !url.contains("pokeapi", true)) {
+                    if (url.startsWith("https://") && !url.contains("pokeapi", true) &&
+                        !url.contains("noimage", true) && !url.contains("placeholder", true)) {
                         photo = url
                         break
                     }
