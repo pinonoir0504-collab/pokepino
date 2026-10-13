@@ -5,7 +5,7 @@ import subprocess
 from pathlib import Path
 
 html=(Path(__file__).resolve().parents[1]/"app/src/main/assets/collection.html").read_text(encoding="utf-8")
-scripts=re.findall(r"<script[^>]*>([\\s\\S]*?)</script>",html)
+scripts=re.findall(r"(?s)<script[^>]*>(.*?)</script>",html)
 if not scripts:
     raise SystemExit("No script in collection.html")
 for js in scripts:
