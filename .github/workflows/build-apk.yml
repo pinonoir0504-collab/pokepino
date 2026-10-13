@@ -43,7 +43,7 @@ jobs:
         run: gradle :app:assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: pokepino-v1.2.0-collection-debug-apk
+          name: pokepino-v1.3.0-variant-catalog-apk
           path: |
             app/build/outputs/apk/debug/app-debug.apk
             collection_audit.json
