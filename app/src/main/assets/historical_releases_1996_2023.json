@@ -631,6 +631,51 @@
         "トゲピー",
         "ポポッコ"
       ]
+    },
+    {
+      "series": "2008 ポケモンキッズ ぼうけんのなかまたちSpecial",
+      "releaseDate": "2008-09",
+      "source": "https://www.bandai.co.jp/candy/products/2008/54334.html",
+      "secondarySource": "https://www.suruga-ya.jp/product/detail/663014875",
+      "sourceGrade": "official_count_collector_names",
+      "items": [
+        "ゼニガメ",
+        "フシギダネ",
+        "ヒトカゲ",
+        "ヒノアラシ",
+        "ワニノコ",
+        "チコリータ",
+        "アチャモ",
+        "ミズゴロウ",
+        "キモリ",
+        "ナエトル",
+        "ポッチャマ",
+        "ヒコザル"
+      ]
+    },
+    {
+      "series": "2008 ポケモンキッズDP ぜんこく図鑑版",
+      "releaseDate": "2008-10",
+      "source": "https://www.bandai.co.jp/candy/products/2008/54320.html",
+      "secondarySource": "https://www.yubi-nin.jp/pokemon/poke_kids06DP/pokeDP_Zen01.html",
+      "sourceGrade": "official_count_collector_names",
+      "items": [
+        "リザードン",
+        "イーブイ",
+        "エレブー",
+        "サイドン",
+        "ブーバー",
+        "アリゲイツ",
+        "トゲチック",
+        "ジュプトル",
+        "サマヨール",
+        "ユキワラシ",
+        "パチリス",
+        "フィオネ",
+        "ギラティナ（オリジンフォルム）",
+        "レントラー",
+        "ダークライ"
+      ]
     }
   ]
 }
