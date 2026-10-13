@@ -80,7 +80,17 @@ class CollectionActivity : ComponentActivity() {
                     }
                 }
                 val meta = r.optJSONObject(9)
-                insert(r.optString(0), r.optInt(1), r.optString(2), r.optString(3),
+                val variant = r.optString(3)
+                val originalName = r.optString(2)
+                // Two confirmed substring-matcher mistakes in the historical source.
+                val corrected = when {
+                    originalName == "ゴースト" && variant.contains("ソウブレイズ") ->
+                        937 to "ソウブレイズ"
+                    originalName == "ポリゴン" && (variant.contains("ポリゴン２") || variant.contains("ポリゴン2")) ->
+                        233 to "ポリゴン２"
+                    else -> r.optInt(1) to originalName
+                }
+                insert(r.optString(0), corrected.first, corrected.second, variant,
                     r.optString(4), r.optString(5), "reference", photo,
                     meta?.optString("source", "") ?: "")
             }
