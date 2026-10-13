@@ -97,6 +97,19 @@ class CollectionActivity : ComponentActivity() {
         val seenId = HashSet<String>()
         val seenProduct = HashSet<String>()
         val photoOwners = HashMap<String, String>()
+        val conflictingPhotos = HashSet<String>()
+        // A shared image URL cannot prove two different Pokemon are the same figure.
+        val photoSpecies = HashMap<String, Int>()
+        for (i in 0 until references.length()) {
+            val r = references.optJSONArray(i) ?: continue
+            val refs = r.optJSONArray(8) ?: continue
+            val url = refs.optString(0)
+            val dex = r.optInt(1)
+            if (url.startsWith("https://") && dex > 0) {
+                val old = photoSpecies.putIfAbsent(url, dex)
+                if (old != null && old != dex) conflictingPhotos.add(url)
+            }
+        }
         val original = listOf("dbgz_00.txt", "dbgz_01a.txt", "dbgz_01b.txt", "dbgz_02a.txt",
             "dbgz_02b.txt", "dbgz_03a.txt", "dbgz_03b.txt")
             .joinToString("") { assets.open(it).bufferedReader().use { r -> r.readText() } }
@@ -116,7 +129,8 @@ class CollectionActivity : ComponentActivity() {
                    kind:String, photo:String, url:String) {
             if (id.isBlank() || id in seenId) return
             val identity = listOf(pokemon, variant, series, year).joinToString("|")
-            if (identity in seenProduct && prefs.getInt(id, 0) <= 0) return
+            // An identical title can describe distinct colors, sculpts or photo angles.
+            // Keep the candidate and its stable ID until product identity is verified.
             seenId.add(id)
             seenProduct.add(identity)
             val review = setOf("poke1_139.jpg", "poke_XY_098.jpg",
@@ -124,7 +138,7 @@ class CollectionActivity : ComponentActivity() {
                 "poke_kimeBW01_530.jpg", "poke2_220.jpg")
             val imageStatus = when {
                 photo.isBlank() -> "none"
-                review.any { photo.endsWith(it) } -> "needs_review"
+                review.any { photo.endsWith(it) } || photo in conflictingPhotos -> "needs_review"
                 photoOwners[photo] != null && photoOwners[photo] != pokemon -> "needs_review"
                 else -> "reference_unverified"
             }
