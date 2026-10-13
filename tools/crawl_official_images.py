@@ -29,8 +29,9 @@ def crawl(row):
         if urlparse(final).hostname!="www.bandai.co.jp":
             raise ValueError("unexpected redirect")
         # Both direct src and lazy-loaded gallery attributes appear in Bandai product HTML.
-        raw=re.findall(r'(?:https?:)?//(?:www\\.)?bandai\\.co\\.jp/candy/published/bnc_files/product/[^"\\\'<>\\s]+?\\.(?:jpg|jpeg|png|webp)',html.unescape(body),flags=re.I)
-        raw += re.findall(r'(?<![a-z])(/candy/published/bnc_files/product/[^"\\\'<>\\s]+?\\.(?:jpg|jpeg|png|webp))',html.unescape(body),flags=re.I)
+        raw=re.findall(r'https?://[^\\s"<>]+?\\.(?:jpg|jpeg|png|webp)',html.unescape(body),flags=re.I)
+        raw += re.findall(r'/candy/published/bnc_files/product/[^\\s"<>]+?\\.(?:jpg|jpeg|png|webp)',html.unescape(body),flags=re.I)
+        raw=[x for x in raw if "/candy/published/bnc_files/product/" in x and urlparse(urljoin(url,x)).hostname=="www.bandai.co.jp"]
         images=sorted(set(urljoin(url,x) for x in raw))
         return {"source":url,"series":row["series"],"itemCount":len(row["items"]),
                 "images":images,"pageSha256":hashlib.sha256(body.encode()).hexdigest(),
