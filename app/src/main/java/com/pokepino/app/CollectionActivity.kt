@@ -98,6 +98,13 @@ class CollectionActivity : ComponentActivity() {
         val seenProduct = HashSet<String>()
         val photoOwners = HashMap<String, String>()
         val conflictingPhotos = HashSet<String>()
+        val original = listOf("dbgz_00.txt", "dbgz_01a.txt", "dbgz_01b.txt", "dbgz_02a.txt",
+            "dbgz_02b.txt", "dbgz_03a.txt", "dbgz_03b.txt")
+            .joinToString("") { assets.open(it).bufferedReader().use { r -> r.readText() } }
+        val legacyText = GZIPInputStream(ByteArrayInputStream(Base64.decode(original, Base64.DEFAULT)))
+            .bufferedReader().use { it.readText() }
+        val legacy = JSONArray(legacyText)
+        val references = JSONArray(assets.open("catalog_v2.json").bufferedReader().use { it.readText() })
         // A shared image URL cannot prove two different Pokemon are the same figure.
         val photoSpecies = HashMap<String, Int>()
         for (i in 0 until references.length()) {
@@ -110,13 +117,6 @@ class CollectionActivity : ComponentActivity() {
                 if (old != null && old != dex) conflictingPhotos.add(url)
             }
         }
-        val original = listOf("dbgz_00.txt", "dbgz_01a.txt", "dbgz_01b.txt", "dbgz_02a.txt",
-            "dbgz_02b.txt", "dbgz_03a.txt", "dbgz_03b.txt")
-            .joinToString("") { assets.open(it).bufferedReader().use { r -> r.readText() } }
-        val legacyText = GZIPInputStream(ByteArrayInputStream(Base64.decode(original, Base64.DEFAULT)))
-            .bufferedReader().use { it.readText() }
-        val legacy = JSONArray(legacyText)
-        val references = JSONArray(assets.open("catalog_v2.json").bufferedReader().use { it.readText() })
         for (collection in listOf(legacy, references)) {
             for (i in 0 until collection.length()) {
                 val r = collection.optJSONArray(i) ?: continue
