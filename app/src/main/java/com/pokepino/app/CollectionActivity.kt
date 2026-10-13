@@ -94,6 +94,9 @@ class CollectionActivity : ComponentActivity() {
     private fun buildCatalog(): String {
         val names = HashMap<String, Int>()
         val rows = JSONArray()
+        // Official release gallery previews: these are NOT item-specific verified photos.
+        val officialGalleries = JSONObject(assets.open("official_galleries_2024_2026.json")
+            .bufferedReader().use { it.readText() }).getJSONObject("series")
         val seenId = HashSet<String>()
         val seenProduct = HashSet<String>()
         val photoOwners = HashMap<String, String>()
@@ -144,8 +147,11 @@ class CollectionActivity : ComponentActivity() {
                 else -> "reference_unverified"
             }
             if (photo.isNotBlank()) photoOwners.putIfAbsent(photo, pokemon)
+            val gallery = if (kind == "official")
+                officialGalleries.optJSONObject(url)?.optJSONArray("images")?.optString(0).orEmpty()
+                else ""
             rows.put(JSONArray().put(id).put(dex).put(pokemon).put(variant)
-                .put(series).put(year).put(kind).put(photo).put(url).put(imageStatus))
+                .put(series).put(year).put(kind).put(photo).put(url).put(imageStatus).put(gallery))
         }
         fun releaseKey(text: String): String = Normalizer.normalize(text, Normalizer.Form.NFKC)
             .lowercase()
