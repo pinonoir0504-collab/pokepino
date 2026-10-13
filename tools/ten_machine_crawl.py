@@ -75,23 +75,27 @@ def get(url):
 def norm(text):
     return re.sub(r"\s+"," ",str(text)).strip()
 
-def get_month_date(text, url):
+def get_month_date(title, body, url):
+    # Crucial: a related-product widget includes old dates; NEVER use its first date.
+    # The product's title supplies the correct month even for a future release.
+    import unicodedata
+    for text in (title, body[:1600]):
+        text=unicodedata.normalize("NFKC",text)
+        match=re.search(r"(?:発売日\s*[:：]?\s*)?((?:19|20)\d\d)[年./-](\d{1,2})(?:[月./-](\d{1,2}))?",text)
+        if match:
+            year,month,day=map(int,[match.group(1),match.group(2),match.group(3) or "1"])
+            try:
+                return dt.date(year,month,day).isoformat()
+            except ValueError:
+                pass
     year = re.search(r"/(19\d\d|20\d\d)/",url)
-    yr = year.group(1) if year else "0000"
-    match = re.search(r"(?:発売日\s*[:：]?\s*)?(20\d\d|19\d\d)[年./-](\d{1,2})[月./-](\d{1,2})",text)
-    if match:
-        try:
-            value=dt.date(*map(int,match.groups()))
-            return value.isoformat()
-        except ValueError:
-            pass
-    return yr
+    return year.group(1) if year else "0000"
 
 def parse_bandai(url, soup):
     # Prefer the product content, but support legacy pages as well.
     body = soup.get_text("\n", strip=True)
     title = norm(soup.title.get_text(" ",strip=True) if soup.title else "")
-    date = get_month_date(body[:2500] + title, url)
+    date = get_month_date(title, body, url)
     if date > CUTOFF.isoformat():
         output["claims"].append({"source":url,"claim":"excluded_future","date":date})
         return
@@ -125,6 +129,18 @@ def parse_bandai(url, soup):
             if not name.startswith(("円","月","種","人形","カード")) and (len(name)>0):
                 variants.append(name)
     # Often numbered lines are delivered in a single text element; recover from raw body.
+    # Mid-2010s Bandai releases often list figures on a single line split by ・
+    # instead of numbered lines, e.g. "全12種)・クズモー ・ウデッポウ ..."
+    if len(variants)<3 and "・" in segment:
+        listed=re.split(r"(?:[●\n](?:シール|ラムネ|ガム)|©|\(C\))",segment)[0]
+        start=re.search(r"(?:全\d+種\)|全\d+種）|全\d+種類)",listed)
+        if start:
+            listed=listed[start.end():]
+        options=[norm(x) for x in listed.split("・")]
+        clean=[x for x in options if x and len(x)<80 and not
+              re.search(r"全\d+種|ソフビ人形|チューインガム|シール\d|ラムネ菓子|※",x)]
+        if len(clean)>len(variants):
+            variants=clean
     variants=list(dict.fromkeys(variants))
     expected=None
     m=re.search(r"(?:全|人形全)(\d{1,2})種類",body[:3000])
@@ -191,7 +207,7 @@ def wiki_candidates(soup, low, high, url):
                 if str(year) in row and "ポケモンキッズ" in row:
                     output["candidates"].append({"series":row[:230],"date":str(year),"source":url,"reason":"independent chronology"})
 
-def brand_pages(offsets):
+def brand_pages(offsets,year_min=1996,year_max=2026):
     for offset in offsets:
         url="https://www.bandai.co.jp/candy/brand/brand88/index.html?"+urlencode({"__limit":20,"__offset":offset,"__order":"sale_start_date_year:desc, sale_start_date_month:desc, sale_start_date_week:desc, sale_start_date_day:desc"})
         s=get(url)
@@ -203,6 +219,8 @@ def brand_pages(offsets):
                 links[href]=norm(a.get_text(" ",strip=True))
         for link,label in links.items():
             output["candidates"].append({"series":label,"source":link,"reason":"brand_index","offset":offset})
+            m=re.search(r"/(19\d\d|20\d\d)/",link)
+            if not m or not year_min<=int(m.group(1))<=year_max:continue
             detail=get(link)
             if detail is not None:parse_bandai(link,detail)
 
@@ -231,32 +249,19 @@ def yubi_inventory(minyear,maxyear):
             if re.search(r"(19\d\d|20\d\d)",caption) and not any(str(y) in caption for y in range(minyear,maxyear+1)):continue
             output["candidates"].append({"series":caption[:180],"source":link,"reason":"specialist_archive_link"})
 
-# Ten distinct physical execution environments, each with its own public-source task.
+# Independent assignments. Some third-party hosts prohibit bot crawling:
+# for those, use Bandai-origin alternate tracks rather than bypass restrictions.
 id=ARGS.worker
-if id==0:brand_pages([0,20])
-elif id==1:brand_pages([40,60,80])
-elif id==2:
-    page=get("https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9mon_Kids")
-    if page:parse_bulbapedia(page,1996,2002)
-elif id==3:
-    page=get("https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9mon_Kids")
-    if page:parse_bulbapedia(page,2003,2006)
-elif id==4:
-    page=get("https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9mon_Kids")
-    if page:parse_bulbapedia(page,2007,2010)
-elif id==5:
-    page=get("https://bulbapedia.bulbagarden.net/wiki/Pok%C3%A9mon_Kids")
-    if page:parse_bulbapedia(page,2011,2017)
+if id==0:brand_pages([0,20],2019,2026)
+elif id==1:brand_pages([40,60,80],2010,2018)
+elif id==2:old_bandai_urls(1996,2000)
+elif id==3:old_bandai_urls(2001,2006)
+elif id==4:brand_pages([40,60,80],2010,2013)
+elif id==5:brand_pages([40,60,80],2014,2017)
 elif id==6:yubi_inventory(1996,2005)
 elif id==7:yubi_inventory(2006,2026)
-elif id==8:
-    old_bandai_urls(1996,2005)
-    page=get("https://ja.wikid.org/ポケモンキッズ")
-    if page:wiki_candidates(page,1996,2005,"https://ja.wikid.org/ポケモンキッズ")
-elif id==9:
-    old_bandai_urls(2006,2023)
-    page=get("https://ja.wikid.org/ポケモンキッズ")
-    if page:wiki_candidates(page,2006,2026,"https://ja.wikid.org/ポケモンキッズ")
+elif id==8:old_bandai_urls(1996,2005)
+elif id==9:old_bandai_urls(2006,2023)
 
 # Remove duplicate source/series reports within a worker.
 dedupe=set()
