@@ -18,6 +18,7 @@ import java.util.zip.GZIPInputStream
 
 class CollectionActivity : ComponentActivity() {
     private val prefs by lazy { getSharedPreferences("owned", MODE_PRIVATE) }
+    private val picked by lazy { getSharedPreferences("picked_gallery_photo", MODE_PRIVATE) }
     private lateinit var webView: WebView
 
     private fun buildCatalog(): String {
@@ -90,6 +91,13 @@ class CollectionActivity : ComponentActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val galleryData = assets.open("official_galleries_2024_2026.json").bufferedReader().use { it.readText() }
+        val galleryUrls = HashSet<String>()
+        val galleryObjects = JSONObject(galleryData).getJSONObject("series")
+        for (key in galleryObjects.keys()) {
+            val imgs = galleryObjects.getJSONObject(key).getJSONArray("images")
+            for (i in 0 until imgs.length()) galleryUrls.add(imgs.getString(i))
+        }
         val catalog = runCatching { buildCatalog() }.getOrElse {
             Log.e("PokepinoCatalog", "Failed to open catalog", it)
             "[]"
@@ -103,6 +111,17 @@ class CollectionActivity : ComponentActivity() {
         webView.webChromeClient = WebChromeClient()
         webView.addJavascriptInterface(object {
             @JavascriptInterface fun getCatalog(): String = catalog
+            @JavascriptInterface fun getGalleries(): String = galleryData
+            @JavascriptInterface fun getPickedPhotos(): String {
+                val obj = JSONObject()
+                for ((key, value) in picked.all) if (value is String) obj.put(key, value)
+                return obj.toString()
+            }
+            @JavascriptInterface fun setPickedPhoto(id: String, url: String) {
+                if (!id.matches(Regex("OFF-[0-9]{2}-[0-9]{2}"))) return
+                if (url !in galleryUrls) return
+                picked.edit().putString(id, url).apply()
+            }
             @JavascriptInterface fun getOwned(): String {
                 val result = JSONObject()
                 for ((key, value) in prefs.all) if (value is Int && value > 0) result.put(key, value)
