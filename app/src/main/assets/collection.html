@@ -18,7 +18,8 @@ const groupKey=r=>r[1]>0?'n'+r[1]:'p'+r[2];
 function releaseImages(r){const obj=galleries.series&&galleries.series[r[8]];return obj&&Array.isArray(obj.images)?obj.images:[];}
 function pictureKind(r){return chosen[r[0]]?'selected':r[7]?'reference':'illustration';}
 function art(r){return chosen[r[0]]||r[7]|| (r[1]>0&&r[1]<=1025?'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/'+r[1]+'.png':'');}
-function image(r,large=false){const u=art(r);return u?'<img class="thumb '+(large?'big':'')+'" loading="lazy" referrerpolicy="no-referrer" src="'+esc(u)+'" onerror="const d=document.createElement('div');d.className=this.className;d.textContent='画像読込失敗';d.style.display='grid';d.style.placeItems='center';this.replaceWith(d)">':'<div class="thumb '+(large?'big':'')+'" style="display:grid;place-items:center;color:#aaa">画像なし</div>';}
+function imageFailed(el){const d=document.createElement('div');d.className=el.className;d.textContent='画像読込失敗';d.style.display='grid';d.style.placeItems='center';el.replaceWith(d);}
+function image(r,large=false){const u=art(r);return u?'<img class="thumb '+(large?'big':'')+'" loading="lazy" referrerpolicy="no-referrer" src="'+esc(u)+'" onerror="imageFailed(this)">':'<div class="thumb '+(large?'big':'')+'" style="display:grid;place-items:center;color:#aaa">画像なし</div>';}
 function recordVisible(r){return (!onlyOfficial||isOfficial(r))&&(filter==='all'||filter==='missing'&&getCount(r)===0||filter==='owned'&&getCount(r)>0);}
 function countOwned(){return records.filter(r=>getCount(r)>0).length;}
 function updateNav(){document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));const id=view==='owned'?'nav-owned':'nav-dex';if(view!=='about')$('#'+id).classList.add('active');}
