@@ -169,9 +169,14 @@ class CollectionActivity : ComponentActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val galleryData = assets.open("official_galleries_2024_2026.json").bufferedReader().use { it.readText() }
+        val galleryMain = JSONObject(assets.open("official_galleries_2024_2026.json")
+            .bufferedReader().use { it.readText() })
+        val galleryObjects = galleryMain.getJSONObject("series")
+        val olderGalleries = JSONObject(assets.open("historical_official_galleries.json")
+            .bufferedReader().use { it.readText() }).getJSONObject("series")
+        for (key in olderGalleries.keys()) galleryObjects.put(key, olderGalleries.getJSONObject(key))
+        val galleryData = galleryMain.toString()
         val galleryUrls = HashSet<String>()
-        val galleryObjects = JSONObject(galleryData).getJSONObject("series")
         for (key in galleryObjects.keys()) {
             val imgs = galleryObjects.getJSONObject(key).getJSONArray("images")
             for (i in 0 until imgs.length()) galleryUrls.add(imgs.getString(i))
@@ -196,8 +201,15 @@ class CollectionActivity : ComponentActivity() {
                 return obj.toString()
             }
             @JavascriptInterface fun setPickedPhoto(id: String, url: String) {
-                if (!id.matches(Regex("OFF-[0-9]{2}-[0-9]{2}"))) return
+                if (!id.matches(Regex("(OFF-[0-9]{2}-[0-9]{2}|HIS-[0-9]{2}-[0-9]{3})"))) return
                 if (url !in galleryUrls) return
+                // Do not allow cross-series photos to be saved under the wrong figurine.
+                val item = JSONArray(catalog)
+                val record = (0 until item.length()).mapNotNull { n -> item.optJSONArray(n) }
+                    .firstOrNull { it.optString(0) == id } ?: return
+                val release = galleryObjects.optJSONObject(record.optString(8)) ?: return
+                val permitted = release.optJSONArray("images") ?: return
+                if ((0 until permitted.length()).none { permitted.optString(it) == url }) return
                 picked.edit().putString(id, url).apply()
             }
             @JavascriptInterface fun getOwned(): String {
