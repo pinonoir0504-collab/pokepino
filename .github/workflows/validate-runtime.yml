@@ -2,7 +2,7 @@ name: Validate Pokepino Runtime
 
 on:
   push:
-    branches: [ "main", "test/runtime-validation-20261005" ]
+    branches: [ "main", "test/runtime-validation-20261005", "feat/collection-catalog-20261013" ]
   workflow_dispatch:
 
 jobs:
