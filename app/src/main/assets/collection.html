@@ -17,10 +17,10 @@ const normalizeQuery=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[
 const isVariant=r=>/メガ|フォルム|フォーム|すがた|クリア|テラスタル|なみのり|お祝い|アーマード|キョダイ|ポーズ|色違い|色ちがい|特別|限定|シークレット|スペシャル/.test(r[3]+' '+r[4]);
 const isOfficial=r=>r[6]==='official'||r[6]==='planned';
 const groupKey=r=>r[1]>0?'n'+r[1]:'p'+r[2];
-function pictureKind(r){return r[7]?'reference':'illustration';}
+function pictureKind(r){return art(r)?'reference':'missing';}
 function art(r){return r[9]==='needs_review'?'':(r[7]||'');}
-function imageFailed(el){const d=document.createElement('div');d.className=el.className;d.textContent='画像読込失敗';d.style.display='grid';d.style.placeItems='center';el.replaceWith(d);}
-function image(r,large=false){const u=art(r);return u?'<img class="thumb '+(large?'big':'')+'" loading="lazy" referrerpolicy="no-referrer" src="'+esc(u)+'" onerror="imageFailed(this)">':'<div class="thumb '+(large?'big':'')+'" style="display:grid;place-items:center;color:#aaa">画像なし</div>';}
+function imageFailed(el){const d=document.createElement('div');d.className=el.className;d.textContent='実物写真未確認';d.style.display='grid';d.style.placeItems='center';el.replaceWith(d);}
+function image(r,large=false){const u=art(r);return u?'<img class="thumb '+(large?'big':'')+'" loading="lazy" referrerpolicy="no-referrer" src="'+esc(u)+'" onerror="imageFailed(this)">':'<div class="thumb '+(large?'big':'')+'" style="display:grid;place-items:center;color:#aaa">実物写真未確認</div>';}
 function recordVisible(r){return (!onlyOfficial||isOfficial(r))&&(!specialOnly||isVariant(r))&&(!photosOnly||!!art(r))&&(era==='all'||String(r[5]).startsWith(era.slice(0,3)))&&(filter==='all'||filter==='missing'&&getCount(r)===0||filter==='owned'&&getCount(r)>0);}
 function countOwned(){return records.filter(r=>getCount(r)>0).length;}
 function updateNav(){document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));const id=view==='owned'?'nav-owned':'nav-dex';if(view!=='settings')$('#'+id).classList.add('active');}
@@ -55,7 +55,7 @@ function groupRow(key,list){let r=list[0];const n=list.filter(x=>getCount(x)>0).
 function figureTags(r){const s=String(r[3]||'')+' '+String(r[4]||'');const tags=[];if(/復刻|再販/.test(s))tags.push('復刻・再販');if(/限定|配布|抽選|懸賞/.test(s))tags.push('限定');if(/クリア/.test(s))tags.push('クリア');if(/色ちがい|色違い/.test(s))tags.push('色違い');if(/メガ|フォルム|フォーム|すがた|キョダイ|ポーズ/.test(s))tags.push('姿・ポーズ違い');if(/シークレット|スペシャル/.test(s))tags.push('特別版');return tags;}
 function productCard(r){
 const n=getCount(r),status=r[6],u=r[8],kind=pictureKind(r);const types=figureTags(r).map(t=>'<span class="typeTag">'+esc(t)+'</span>').join('');
-const note=r[9]==='needs_review'?'【写真要照合】参考写真の一致を確認できないため表示していません。':kind==='reference'?'資料の実物参考写真（造形の完全一致は未確認）':'実物写真がまだ確認できていません。';
+const note=r[9]==='needs_review'?'【写真要照合】ほかのポケモンとの画像重複・管理番号の相違が疑われるため画像を非表示にしています。':kind==='reference'?'資料の実物参考写真（同一造形かは未確認）':'商品ごとの実物写真はまだ確認できていません。';
 const year=esc(r[5]||'発売年不明')+((r[5]||'').includes('–')?'（年代目安）':'');
 const flag=status==='official'?'● 公式ラインナップ確認済':status==='planned'?'● 公式発表・発売予定':status==='legacy_unverified'?'△ 旧版の仮登録（発売商品として未確定）':'△ 歴代参考資料・個別商品確認待ち';
 const links=(u&&u.startsWith('https://www.bandai.co.jp/candy/'))?'<div class="footer"><button class="link" data-url="'+esc(u)+'" onclick="officialLink(this.dataset.url)">発売元の商品ページを見る ↗</button></div>':(u&&u.startsWith('https://www.yubi-nin.jp/pokemon/'))?'<div class="footer"><button class="link" data-url="'+esc(u)+'" onclick="referenceLink(this.dataset.url)">参考図鑑を見る ↗</button></div>':'';
