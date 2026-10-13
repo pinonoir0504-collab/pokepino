@@ -81,14 +81,54 @@ class CollectionActivity : ComponentActivity() {
                     if (series.optBoolean("planned")) "planned" else "official", "", series.getString("source"))
             }
         }
+        // Track documented historic launches separately from visually identical reissues.
+        val historical = JSONObject(
+            assets.open("historical_releases_1996_2023.json")
+                .bufferedReader().use { it.readText() }
+        ).getJSONArray("series")
+        val historicalKeys = HashSet<String>()
+        for (s in 0 until historical.length()) {
+            val release = historical.getJSONObject(s)
+            val name = release.getString("series")
+            val date = release.getString("releaseDate")
+            val source = release.getString("source")
+            val grade = release.getString("sourceGrade")
+            val list = release.getJSONArray("items")
+            historicalKeys.add(releaseKey(name) + ":" + date.take(4))
+            for (i in 0 until list.length()) {
+                val variant = list.getString(i)
+                val preferred = when {
+                    variant.startsWith("ピカチュウ＆") || variant.startsWith("ピカチュウ&") -> "ピカチュウ"
+                    variant.contains("ソウブレイズ") -> "ソウブレイズ"
+                    else -> ""
+                }
+                val named = if (preferred.isNotEmpty())
+                    names[preferred]?.let { preferred to it } else null
+                val species = named ?: byLength.firstOrNull {
+                    variant.contains(it.key)
+                }?.let { it.key to it.value }
+                val pokemon = species?.first ?: variant
+                    .substringBefore('（').substringBefore('(').substringBefore('＆')
+                val key = "HIS-" + s.toString().padStart(2, '0') +
+                    "-" + i.toString().padStart(3, '0')
+                // The 1996 first wave has official total but independent source for names.
+                val status = if (grade == "official") "official"
+                    else "reference"
+                insert(key, species?.second ?: 0, pokemon, variant, name, date,
+                    status, "", source)
+            }
+        }
+        Log.i("PokepinoCatalog", "Historic launches indexed: " + historical.length())
         // Generic legacy records are species placeholders, not proven release variants.
         // Preserve any legacy items the user had actually marked as owned, clearly flagged.
         for (collection in listOf(references, legacy)) {
             for (i in 0 until collection.length()) {
                 val r = collection.optJSONArray(i) ?: continue
                 if (r.optString(4) == "ポケモンキッズ一覧") continue
-                if (collection === references &&
-                    (releaseKey(r.optString(4)) + ":" + r.optString(5).take(4)) in officialKeys) continue
+                if (collection === references) {
+                    val releaseMatch = releaseKey(r.optString(4)) + ":" + r.optString(5).take(4)
+                    if (releaseMatch in officialKeys || releaseMatch in historicalKeys) continue
+                }
                 if (collection === legacy && prefs.getInt(r.optString(0),0) <= 0) continue
                 val refs = r.optJSONArray(8)
                 var photo = ""
