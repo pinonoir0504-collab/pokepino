@@ -21,7 +21,7 @@ function pictureKind(r){return r[7]?'reference':'illustration';}
 function art(r){return r[9]==='needs_review'?'':(r[7]||'');}
 function imageFailed(el){const d=document.createElement('div');d.className=el.className;d.textContent='画像読込失敗';d.style.display='grid';d.style.placeItems='center';el.replaceWith(d);}
 function image(r,large=false){const u=art(r);return u?'<img class="thumb '+(large?'big':'')+'" loading="lazy" referrerpolicy="no-referrer" src="'+esc(u)+'" onerror="imageFailed(this)">':'<div class="thumb '+(large?'big':'')+'" style="display:grid;place-items:center;color:#aaa">画像なし</div>';}
-function recordVisible(r){return (!onlyOfficial||isOfficial(r))&&(!specialOnly||isVariant(r))&&(!photosOnly||!!r[7])&&(era==='all'||String(r[5]).startsWith(era.slice(0,3)))&&(filter==='all'||filter==='missing'&&getCount(r)===0||filter==='owned'&&getCount(r)>0);}
+function recordVisible(r){return (!onlyOfficial||isOfficial(r))&&(!specialOnly||isVariant(r))&&(!photosOnly||!!art(r))&&(era==='all'||String(r[5]).startsWith(era.slice(0,3)))&&(filter==='all'||filter==='missing'&&getCount(r)===0||filter==='owned'&&getCount(r)>0);}
 function countOwned(){return records.filter(r=>getCount(r)>0).length;}
 function updateNav(){document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));const id=view==='owned'?'nav-owned':'nav-dex';if(view!=='settings')$('#'+id).classList.add('active');}
 function switchTab(t){view=t;selected='';displayLimit=100;render();window.scrollTo(0,0);}
