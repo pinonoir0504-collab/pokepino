@@ -44,7 +44,7 @@ class CollectionRegressionTest {
         waitForCatalog()
         assertEquals("true", js("records.filter(r=>r[0].startsWith('OFF-')||r[0].startsWith('CHK-')).every(r=>{ const image=art(r); return !image || !image.includes('/published/bnc_files/product/'); })"))
         assertEquals("true", js("typeof chooseGallery==='undefined' && typeof openScanner==='undefined'"))
-        assertEquals("true", js("!document.querySelector('#nav-scan') && document.querySelectorAll('nav button').length===3"))
+        assertEquals("true", js("!document.querySelector('#nav-scan') && document.querySelectorAll('nav button').length===2"))
     }
 
     @Test fun backupAndKanaSearchAndSorting() {
