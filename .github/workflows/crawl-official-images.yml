@@ -1,0 +1,45 @@
+name: Pokepino 10 Official Image Crawlers
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/collection-catalog-20261013]
+    paths:
+      - 'tools/crawl_official_images.py'
+      - 'tools/aggregate_official_crawls.py'
+      - '.github/workflows/crawl-official-images.yml'
+jobs:
+  crawl:
+    name: Independent crawler ${{ matrix.worker }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: [0,1,2,3,4,5,6,7,8,9]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Crawl assigned official release pages
+        run: python tools/crawl_official_images.py --worker ${{ matrix.worker }} --out crawl-results/worker-${{ matrix.worker }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: crawler-${{ matrix.worker }}
+          path: crawl-results/worker-${{ matrix.worker }}.json
+  consensus:
+    name: Compare independent crawls
+    needs: crawl
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: crawler-*
+          path: crawl-results
+          merge-multiple: true
+      - run: python tools/aggregate_official_crawls.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: official-image-consensus
+          path: crawl-consensus.json
