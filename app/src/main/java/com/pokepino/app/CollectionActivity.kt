@@ -129,10 +129,11 @@ class CollectionActivity : ComponentActivity() {
                    kind:String, photo:String, url:String) {
             if (id.isBlank() || id in seenId) return
             val identity = listOf(pokemon, variant, series, year).joinToString("|")
-            // An identical title can describe distinct colors, sculpts or photo angles.
-            // Keep the candidate and its stable ID until product identity is verified.
+            // Merge only exact duplicates (same title, release and image URL).
+            // Different images can represent color/pose variants; retain them for review.
+            if (identity + "|" + photo in seenProduct && prefs.getInt(id, 0) <= 0) return
             seenId.add(id)
-            seenProduct.add(identity)
+            seenProduct.add(identity + "|" + photo)
             val review = setOf("poke1_139.jpg", "poke_XY_098.jpg",
                 "poke_SS_774.jpg", "poke_SS_816.jpg", "poke_SV_889.jpg",
                 "poke_kimeBW01_530.jpg", "poke2_220.jpg")
