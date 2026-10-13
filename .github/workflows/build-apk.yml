@@ -37,10 +37,14 @@ jobs:
         run: python3 tools/validate_catalog.py
       - name: Validate new collection catalog
         run: python3 tools/validate_official_collection.py
+      - name: Triple-check product/photo coverage
+        run: python3 tools/audit_collection.py
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
         with:
           name: pokepino-v1.2.0-collection-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            collection_audit.json
           if-no-files-found: error
