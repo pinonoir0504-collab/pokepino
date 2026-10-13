@@ -1,0 +1,68 @@
+name: Pokepino Real Android Screenshots
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/collection-catalog-20261013]
+    paths: [.github/workflows/android-screenshots.yml]
+permissions:
+  contents: read
+jobs:
+  screenshots:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Allow KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true
+      - name: Capture screenshots of actual app in Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            set -e
+            gradle :app:assembleDebug
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb shell wm size 440x956
+            adb shell wm density 160
+            adb shell am start -n com.pokepino.app/.CollectionActivity
+            sleep 12
+            mkdir -p screenshots
+            adb shell screencap -p /sdcard/screen.png
+            adb pull /sdcard/screen.png screenshots/01_catalog.png
+            adb shell input tap 90 385
+            sleep 3
+            adb shell screencap -p /sdcard/screen.png
+            adb pull /sdcard/screen.png screenshots/02_figure_details.png
+            adb shell input tap 335 916
+            sleep 2
+            adb shell screencap -p /sdcard/screen.png
+            adb pull /sdcard/screen.png screenshots/03_owned_list.png
+            adb shell input tap 380 35
+            sleep 2
+            adb shell screencap -p /sdcard/screen.png
+            adb pull /sdcard/screen.png screenshots/04_backup_settings.png
+            adb shell input tap 100 915
+            sleep 2
+            adb shell input tap 130 235
+            sleep 2
+            adb shell screencap -p /sdcard/screen.png
+            adb pull /sdcard/screen.png screenshots/05_filters.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pokepino-v1.7.2-actual-android-screenshots
+          path: screenshots/
+          if-no-files-found: error
