@@ -44,6 +44,11 @@ class CollectionActivitySmokeTest {
         assertTrue("Collection catalog must load without JS syntax errors", ready)
         assertEquals("true", js("typeof galleries==='object' && Object.keys(galleries.series||{}).length===26"))
         assertEquals("true", js("records.filter(r=>r[0].startsWith('HIS-')).length===440"))
+        assertEquals("true", js("records.filter(r=>r[0].startsWith('CHK-')).length===182"))
+        assertEquals("true", js("records.every(r=>r[6]!=='planned')"))
+        assertEquals("true", js("records.some(r=>r[3].includes('サトシのメルタン'))"))
+        assertEquals("true", js("records.some(r=>r[4].includes('ピカチュウピカピカ大集合'))"))
+
         assertEquals("true", js("records.some(r=>r[3]==='ミュウ（シークレット）' && r[5]==='2018-12-03')"))
         assertEquals("true", js("records.some(r=>r[3].includes('しんさくフォルム') && r[5]==='2022-11-21')"))
         assertEquals("true", js("records.some(r=>r[4].includes('2008 ポケモンキッズDP ぜんこく図鑑版'))"))
