@@ -39,11 +39,15 @@ jobs:
         run: python3 tools/validate_official_collection.py
       - name: Triple-check product/photo coverage
         run: python3 tools/audit_collection.py
+      - name: Validate historical variants and official image galleries
+        run: python3 tools/validate_historical_collection.py
+      - name: Validate collection JavaScript
+        run: python3 tools/validate_collection_ui.py
       - name: Build debug APK
         run: gradle :app:assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: pokepino-v1.3.0-variant-catalog-apk
+          name: pokepino-v1.4.0-historical-catalog-apk
           path: |
             app/build/outputs/apk/debug/app-debug.apk
             collection_audit.json
