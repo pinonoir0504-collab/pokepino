@@ -47,6 +47,14 @@ class CollectionRegressionTest {
         assertEquals("true", js("!document.querySelector('#nav-scan') && document.querySelectorAll('nav button').length===3"))
     }
 
+    @Test fun backupAndKanaSearchAndSorting() {
+        waitForCatalog()
+        assertEquals("true", js("(()=>{term='ぴかちゅう';return records.some(r=>r[2]==='ピカチュウ' && searchMatch(r))})()"))
+        assertEquals("true", js("(()=>{term='ピカチュウ';return records.some(r=>r[2]==='ピカチュウ' && searchMatch(r))})()"))
+        assertEquals("true", js("(()=>{switchTab('settings');return !!document.querySelector('.backupBtn.primary') && typeof N.exportBackup==='function' && typeof N.restoreBackup==='function'})()"))
+        assertEquals("true", js("(()=>{setSort('name');setEra('2010');toggleSpecial();const v=sortMode==='name'&&era==='2010'&&specialOnly;setSort('dex');setEra('all');toggleSpecial();return v})()"))
+        assertEquals("true", js("records.some(r=>r.length===10 && r[9]==='needs_review')"))
+    }
     @Test fun publishedBeforeOctoberCutoffOnly() {
         waitForCatalog()
         assertEquals("true", js("records.every(r=>r[6]!=='planned')"))
