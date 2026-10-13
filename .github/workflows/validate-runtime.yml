@@ -43,6 +43,10 @@ jobs:
           sudo udevadm trigger --name-match=kvm || true
       - name: Validate database before runtime test
         run: python3 tools/validate_catalog.py
+      - name: Validate historical catalog
+        run: python3 tools/validate_historical_collection.py
+      - name: Validate collection JavaScript
+        run: python3 tools/validate_collection_ui.py
       - name: Run Android emulator UI smoke test
         uses: reactivecircus/android-emulator-runner@v2
         with:
